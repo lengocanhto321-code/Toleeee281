@@ -11,12 +11,14 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LoginCommand:
-    email: str
+    """Command for login use case."""
+    username: str
     password: str
 
 
 @dataclass
 class LoginResult:
+    """Result of successful login."""
     access_token: str
     refresh_token: str
     user: Dict[str, Any]
@@ -25,74 +27,63 @@ class LoginResult:
 
 
 class LoginUseCase:
+    """Use case for user login."""
+
     def __init__(self, unit_of_work, auth_service: AuthService):
         self.unit_of_work = unit_of_work
         self.auth_service = auth_service
 
     async def execute(self, command: LoginCommand) -> Result[LoginResult, Error]:
-        # Log command input (mask password for security)
-        logger.info(f"Received LoginCommand: email='{command.email}'")
+        """Execute login use case."""
+        logger.info(f"Login attempt for username: '{command.username}'")
 
         async with self.unit_of_work as uow:
-            # Access repositories directly from the UnitOfWork
             user_repository = uow.user_repository
 
-            # Log repository call
-            logger.debug(f"Finding user by email: '{command.email}'")
-
-            # Find user by email
-            user = await user_repository.find_by_email(command.email)
+            # Find user by username
+            user = await user_repository.find_by_username(command.username)
 
             if not user:
-                logger.warning(
-                    f"Login failed: User not found with email='{command.email}'"
-                )
+                logger.warning(f"Login failed: User not found with username='{command.username}'")
                 return Return.err(
                     Error(
                         code="invalid_credentials",
-                        message="Invalid email or password",
+                        message="Sai tên đăng nhập hoặc mật khẩu",
                         reason="User not found",
                     )
                 )
 
-            logger.debug(f"User found: id='{user.id}', email='{user.email}'")
+            logger.debug(f"User found: id='{user.id}', username='{user.ten_dang_nhap}'")
 
-            # Check if user is active
-            if not user.is_active:
-                logger.warning(
-                    f"Login failed: User account is inactive, id='{user.id}', email='{user.email}'"
-                )
+            # Check if user is active (trang_thai)
+            if not user.trang_thai:
+                logger.warning(f"Login failed: User account is inactive, id='{user.id}'")
                 return Return.err(
                     Error(
                         code="inactive_account",
-                        message="Your account is inactive",
+                        message="Tài khoản của bạn đã bị khóa",
                         reason="User account is inactive",
                     )
                 )
 
             # Verify password
-            valid = await AuthService.verify_password(command.password, user.password)
+            valid = await AuthService.verify_password(command.password, user.mat_khau_hash)
             if not valid:
-                logger.warning(
-                    f"Login failed: Invalid password for user id='{user.id}', email='{user.email}'"
-                )
+                logger.warning(f"Login failed: Invalid password for user id='{user.id}'")
                 return Return.err(
                     Error(
                         code="invalid_credentials",
-                        message="Invalid email or password",
+                        message="Sai tên đăng nhập hoặc mật khẩu",
                         reason="Invalid password",
                     )
                 )
-
-            # Log repository call
-            logger.info(f"Finding organizations with roles for user: '{user.id}'")
 
             # Generate access token
             logger.info(f"Generating JWT token for user '{user.id}'")
             token, expire = await self.auth_service.create_access_token(
                 user.id,
                 email=user.email,
-                username=user.name,
+                username=user.ten_dang_nhap,
             )
 
             # Generate refresh token
@@ -102,6 +93,7 @@ class LoginUseCase:
             )
 
             await uow.commit()
+
             # Return success result
             return Return.ok(
                 LoginResult(
@@ -109,10 +101,11 @@ class LoginUseCase:
                     refresh_token=refresh_token,
                     user={
                         "id": str(user.id),
+                        "username": user.ten_dang_nhap,
                         "email": user.email,
-                        "name": user.name,
-                        "avatar": user.avatar,
-                        "last_login": user.last_login,
+                        "role": user.vai_tro,
+                        "is_active": user.trang_thai,
+                        "nhan_vien_id": str(user.nhan_vien_id) if user.nhan_vien_id else None,
                     },
                     access_expire=expire,
                     refresh_expire=refresh_expire,
