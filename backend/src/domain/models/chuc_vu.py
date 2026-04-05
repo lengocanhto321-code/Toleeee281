@@ -6,6 +6,7 @@ from .base import Base, generate_uuid
 
 class ChucVu(Base):
     """Danh mục chức vụ trong trường."""
+
     __tablename__ = "chuc_vu"
 
     id = Column(String(32), primary_key=True, default=generate_uuid)
@@ -16,4 +17,6 @@ class ChucVu(Base):
     tieu_chuan = Column(Text)
     trang_thai = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

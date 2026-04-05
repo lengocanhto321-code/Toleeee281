@@ -6,10 +6,13 @@ from .base import Base, generate_uuid
 
 class KhenThuongKyLuat(Base):
     """Khen thưởng & kỷ luật - cơ sở xét thi đua hàng năm."""
+
     __tablename__ = "khen_thuong_ky_luat"
 
     id = Column(String(32), primary_key=True, default=generate_uuid)
-    nhan_vien_id = Column(String(32), ForeignKey("nhan_vien.id", ondelete="CASCADE"), nullable=False)
+    nhan_vien_id = Column(
+        String(32), ForeignKey("nhan_vien.id", ondelete="CASCADE"), nullable=False
+    )
     loai = Column(String(15), nullable=False)
     hinh_thuc = Column(String(150), nullable=False)
     ly_do = Column(Text, nullable=False)
@@ -21,4 +24,6 @@ class KhenThuongKyLuat(Base):
     ghi_chu = Column(Text)
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

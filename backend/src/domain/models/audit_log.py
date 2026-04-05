@@ -6,6 +6,7 @@ from .base import Base, generate_uuid
 
 class AuditLog(Base):
     """Log toàn bộ thao tác - bắt buộc để đảm bảo an toàn dữ liệu."""
+
     __tablename__ = "audit_log"
 
     id = Column(String(32), primary_key=True, default=generate_uuid)

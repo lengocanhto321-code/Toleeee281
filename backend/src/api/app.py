@@ -1,11 +1,13 @@
 import logging
 
 from fastapi import FastAPI, Request, status
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import ApplicationConfig
-from .error import ClientError, ServerError
+from src.api.routes import router
+from src.api.error import ClientError, ServerError
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +37,16 @@ def create_app(config_app: ApplicationConfig) -> FastAPI:
     config = config_app
 
     app = FastAPI(
-        title="Code Intelligence Backend",
+        title="HR Management API",
         version="0.1.0",
+        description="API for HR management system",
+        docs_url="/docs",
+        redoc_url="/redoc",
     )
+
+    @app.get("/")
+    async def root() -> RedirectResponse:
+        return RedirectResponse(url="/docs")
 
     @app.get("/health", tags=["system"])
     async def health() -> dict[str, str]:
@@ -54,6 +63,8 @@ def create_app(config_app: ApplicationConfig) -> FastAPI:
     app.add_exception_handler(ClientError, handle_client_error)
     app.add_exception_handler(ServerError, handle_server_error)
     app.add_exception_handler(Exception, handle_unexpected_error)
+
+    app.include_router(router, prefix="/api/v1")
 
     return app
 

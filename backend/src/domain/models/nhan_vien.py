@@ -6,6 +6,7 @@ from .base import Base, generate_uuid
 
 class NhanVien(Base):
     """Bảng trung tâm: cán bộ, giáo viên, nhân viên."""
+
     __tablename__ = "nhan_vien"
 
     id = Column(String(32), primary_key=True, default=generate_uuid)
@@ -43,4 +44,6 @@ class NhanVien(Base):
     trang_thai = Column(String(20), nullable=False, default="dang_lam")
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

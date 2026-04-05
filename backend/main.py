@@ -24,4 +24,6 @@ if __name__ == "__main__":
         app,
         host=config.HOST,
         port=config.PORT,
+        log_level="info",
+        timeout_keep_alive=30,
     )

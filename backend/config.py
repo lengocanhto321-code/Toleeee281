@@ -13,11 +13,19 @@ else:
 
 
 class ApplicationConfig:
-    # Database configuration
-    DB_URI = data["DB_URI"]
-    MIGRATION_DB_URI = data["MIGRATION_DB_URI"]
+    # Basic application settings
     HOST = data["HOST"]
     PORT = data["PORT"]
     CORS_ORIGINS = data["CORS_ORIGINS"]
+
+    # Database configuration
+    DB_URI = data["DB_URI"]
+    MIGRATION_DB_URI = data["MIGRATION_DB_URI"]
+
+    # JWT configuration
+    JWT_SECRET = data["JWT_SECRET"]
+    JWT_ALGORITHM = data["JWT_ALGORITHM"]
+    JWT_EXP_MIN = data.get("JWT_EXP_MIN", 60)
+
 
 config = ApplicationConfig()
