@@ -1,26 +1,51 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
+from src.repository.user_repository import UserRepository
+
 
 class UnitOfWork:
+    """
+    Unit of Work pattern for managing database transactions and repositories.
+
+    This class ensures that all repository operations are executed within
+    a single transaction, providing consistency and atomicity.
+    """
+
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
-        self.session_factory: AsyncSession = session_factory()
+        self._session_factory = session_factory
+        self._session: AsyncSession | None = None
+        self.user_repository: UserRepository
 
     async def __aenter__(self):
+        self._session = self._session_factory()
+        self.user_repository = UserRepository(session=self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         try:
-            if exc_type:
-                await self.rollback()
-            else:
-                await self.commit()
+            if self._session:
+                if exc_type:
+                    await self.rollback()
+                else:
+                    await self.commit()
         finally:
-            if self.session_factory:
-                await self.session_factory.close()
-            self.session = None
+            if self._session:
+                await self._session.close()
+            self._session = None
 
     async def commit(self):
-        await self.session.commit()
+        """Commit the current transaction."""
+        if self._session:
+            await self._session.commit()
 
     async def rollback(self):
-        await self.session.rollback()
+        """Rollback the current transaction."""
+        if self._session:
+            await self._session.rollback()
+
+    @property
+    def session(self) -> AsyncSession:
+        """Get the current database session."""
+        if self._session is None:
+            raise RuntimeError("UnitOfWork is not active. Use 'async with' context manager.")
+        return self._session

@@ -21,7 +21,7 @@ async def login(
     auth_service=Depends(get_auth_service),
 ):
     logger.info(f"Request: {body}")
-    command = LoginCommand(email=body.email, password=body.password)
+    command = LoginCommand(username=body.username, password=body.password)
 
     use_case = LoginUseCase(unit_of_work, auth_service)
     result = await use_case.execute(command)
