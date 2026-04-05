@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Text, BigInteger, Date, Numeric, ForeignKey, DateTime
+from sqlalchemy import (
+    Column,
+    String,
+    Text,
+    BigInteger,
+    Date,
+    Numeric,
+    ForeignKey,
+    DateTime,
+)
 from datetime import datetime
 
 from .base import Base, generate_uuid
@@ -6,10 +15,13 @@ from .base import Base, generate_uuid
 
 class Luong(Base):
     """Bảng lương theo ngạch bậc viên chức + phụ cấp."""
+
     __tablename__ = "luong"
 
     id = Column(String(32), primary_key=True, default=generate_uuid)
-    nhan_vien_id = Column(String(32), ForeignKey("nhan_vien.id", ondelete="CASCADE"), nullable=False)
+    nhan_vien_id = Column(
+        String(32), ForeignKey("nhan_vien.id", ondelete="CASCADE"), nullable=False
+    )
 
     # Thu nhập
     luong_co_ban = Column(BigInteger, nullable=False, default=0)
@@ -32,4 +44,6 @@ class Luong(Base):
     ghi_chu = Column(Text)
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

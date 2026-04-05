@@ -24,7 +24,7 @@ class APIError(Exception, ABC):
         pass
 
     def __init__(
-            self, base_error: Error, status_code: int, headers: Optional[dict] = None
+        self, base_error: Error, status_code: int, headers: Optional[dict] = None
     ):
         self.base_error = base_error
         self.status_code = status_code
@@ -34,10 +34,10 @@ class APIError(Exception, ABC):
 
 class ClientError(APIError):
     def __init__(
-            self,
-            base_error: Error,
-            status_code: int = status.HTTP_400_BAD_REQUEST,
-            headers: Optional[dict] = None,
+        self,
+        base_error: Error,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        headers: Optional[dict] = None,
     ):
         super().__init__(base_error, status_code, headers)
 
@@ -56,10 +56,10 @@ class ClientError(APIError):
 
 class ServerError(APIError):
     def __init__(
-            self,
-            base_error: Error,
-            status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-            headers: Optional[dict] = None,
+        self,
+        base_error: Error,
+        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        headers: Optional[dict] = None,
     ):
         super().__init__(base_error, status_code, headers)
 
@@ -79,10 +79,10 @@ class ServerError(APIError):
 
 class AuthError(ClientError):
     def __init__(
-            self,
-            base_error: Error,
-            status_code: int = status.HTTP_403_FORBIDDEN,
-            headers: Optional[dict] = None,
+        self,
+        base_error: Error,
+        status_code: int = status.HTTP_403_FORBIDDEN,
+        headers: Optional[dict] = None,
     ):
         super().__init__(
             base_error, status_code, headers or {"WWW-Authenticate": "Bearer"}
