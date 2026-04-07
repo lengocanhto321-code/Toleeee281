@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from src.repository.user_repository import UserRepository
-
+from src.repository.phong_ban_repository import PhongBanRepository
+from src.repository.audit_log_repository import AuditLogRepository
 
 class UnitOfWork:
     """
@@ -15,10 +16,14 @@ class UnitOfWork:
         self._session_factory = session_factory
         self._session: AsyncSession | None = None
         self.user_repository: UserRepository
+        self.phong_ban_repository: PhongBanRepository
+        self.audit_log_repository: AuditLogRepository
 
     async def __aenter__(self):
         self._session = self._session_factory()
         self.user_repository = UserRepository(session=self._session)
+        self.phong_ban_repository = PhongBanRepository(session=self._session)
+        self.audit_log_repository = AuditLogRepository(session=self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

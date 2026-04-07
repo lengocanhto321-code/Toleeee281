@@ -3,7 +3,6 @@ from .base import Base
 # Danh mục
 from .phong_ban import PhongBan
 from .chuc_vu import ChucVu
-from .trinh_do import TrinhDo
 
 # Nhân viên
 from .nhan_vien import NhanVien
@@ -31,7 +30,6 @@ __all__ = [
     # Danh mục
     "PhongBan",
     "ChucVu",
-    "TrinhDo",
     # Nhân viên
     "NhanVien",
     "BangCapChungChi",

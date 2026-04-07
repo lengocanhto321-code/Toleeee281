@@ -26,11 +26,6 @@ class NhanVien(Base):
     mon_day = Column(String(100))
     hang_chuc_danh = Column(String(50))
 
-    # Liên kết danh mục
-    phong_ban_id = Column(String(32), ForeignKey("phong_ban.id", ondelete="SET NULL"))
-    chuc_vu_id = Column(String(32), ForeignKey("chuc_vu.id", ondelete="SET NULL"))
-    trinh_do_id = Column(String(32), ForeignKey("trinh_do.id", ondelete="SET NULL"))
-
     # Hợp đồng
     loai_hop_dong = Column(String(30), nullable=False, default="vien_chuc")
     so_hop_dong = Column(String(50))
