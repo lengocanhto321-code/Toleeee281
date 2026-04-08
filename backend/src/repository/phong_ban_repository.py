@@ -1,7 +1,7 @@
 from typing import Optional, List, Tuple
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from libs.result import Result, Return, Error
 from src.domain.models.phong_ban import PhongBan
 from src.domain.models.nhan_vien import NhanVien
 
@@ -42,10 +42,10 @@ class PhongBanRepository:
         trang_thai: Optional[bool] = None,
         sort_by: str = "created_at",
         sort_desc: bool = True
-    ) -> Tuple[int, List[dict]]:
+    ) -> Result[Tuple[int, List[dict]], Error]:
         """
         Get paginated list of PhongBan with employee counts.
-        Returns (total_count, items).
+        Returns Result with (total_count, items).
         """
 
         # 1. Base query chứa join + aggregate (quan trọng)
@@ -103,22 +103,31 @@ class PhongBanRepository:
         base_stmt = base_stmt.offset((page - 1) * page_size).limit(page_size)
 
         # 6. Execute query
-        result = await self._session.execute(base_stmt)
-        rows = result.all()
+        try:
+            result = await self._session.execute(base_stmt)
+            rows = result.all()
 
-        # 7. Xử lý kết quả thành list dict
-        items = []
-        for phong_ban, count_nv, count_dl in rows:
-            d = phong_ban.__dict__.copy()
-            if "_sa_instance_state" in d:
-                del d["_sa_instance_state"]
-            d["so_luong_nhan_vien"] = count_nv
-            d["so_luong_dang_lam"] = count_dl
-            items.append(d)
+            # 7. Xử lý kết quả thành list dict
+            items = []
+            for phong_ban, count_nv, count_dl in rows:
+                d = phong_ban.__dict__.copy()
+                if "_sa_instance_state" in d:
+                    del d["_sa_instance_state"]
+                d["so_luong_nhan_vien"] = count_nv
+                d["so_luong_dang_lam"] = count_dl
+                items.append(d)
 
-        return total, items
+            return Return.ok((total, items))
+        except Exception as e:
+            return Return.err(
+                Error(
+                    code="database_error",
+                    message=f"Lỗi truy vấn: {str(e)}",
+                    reason="DatabaseError"
+                )
+            )
 
-    async def get_detail_with_stats(self, id: str) -> Optional[dict]:
+    async def get_detail_with_stats(self, id: str) -> Result[Optional[dict], Error]:
         """Get detail of Phong Ban including employee stats."""
         stmt = (
             select(
@@ -131,20 +140,29 @@ class PhongBanRepository:
             .group_by(PhongBan.id)
         )
         
-        result = await self._session.execute(stmt)
-        row = result.first()
-        
-        if not row:
-            return None
+        try:
+            result = await self._session.execute(stmt)
+            row = result.first()
             
-        phong_ban, count_nv, count_dl = row
-        d = phong_ban.__dict__.copy()
-        if "_sa_instance_state" in d:
-            del d["_sa_instance_state"]
-        d["so_luong_nhan_vien"] = count_nv
-        d["so_luong_dang_lam"] = count_dl
-        
-        return d
+            if not row:
+                return Return.ok(None)
+                
+            phong_ban, count_nv, count_dl = row
+            d = phong_ban.__dict__.copy()
+            if "_sa_instance_state" in d:
+                del d["_sa_instance_state"]
+            d["so_luong_nhan_vien"] = count_nv
+            d["so_luong_dang_lam"] = count_dl
+            
+            return Return.ok(d)
+        except Exception as e:
+            return Return.err(
+                Error(
+                    code="database_error",
+                    message=f"Lỗi truy vấn chi tiết: {str(e)}",
+                    reason="DatabaseError"
+                )
+            )
 
     async def count_employees(self, id: str, active_only: bool = False) -> int:
         """Count employees in a department."""

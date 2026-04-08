@@ -50,7 +50,7 @@ class GetPhongBanUseCase:
         """Fetch a paginated list of departments."""
         async with self.unit_of_work as uow:
             repo = uow.phong_ban_repository
-            total, rows = await repo.get_paginated(
+            result = await repo.get_paginated(
                 page=query.page,
                 page_size=query.page_size,
                 search=query.search,
@@ -59,7 +59,9 @@ class GetPhongBanUseCase:
                 sort_by=query.sort_by,
                 sort_desc=query.sort_desc
             )
-
+            if result.is_err():
+                return Return.err(result.err())
+            total, rows = result.ok()
             items = [PhongBanDataResponse(**row) for row in rows]
             total_pages = (total + query.page_size - 1) // query.page_size if total > 0 else 0
 
@@ -76,7 +78,12 @@ class GetPhongBanUseCase:
         """Fetch a single department."""
         async with self.unit_of_work as uow:
             repo = uow.phong_ban_repository
-            resp = await repo.get_detail_with_stats(query.id)
+            result = await repo.get_detail_with_stats(query.id)
+
+            if result.is_err():
+                return Return.err(result.err())
+
+            resp = result.ok()
 
             if not resp:
                 return Return.err(

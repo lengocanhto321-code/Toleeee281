@@ -75,6 +75,4 @@ class DeletePhongBanUseCase:
             )
             await audit_repo.create(audit_log)
 
-            await uow.commit()
-
             return Return.ok(DeletePhongBanResult(success=True))

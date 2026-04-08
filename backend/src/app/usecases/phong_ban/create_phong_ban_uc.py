@@ -71,8 +71,6 @@ class CreatePhongBanUseCase:
             )
             await audit_repo.create(audit_log)
 
-            await uow.commit()
-
             # For response mapping
             resp = serialize_model_to_dict(created_pb)
             resp["so_luong_nhan_vien"] = 0
