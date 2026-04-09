@@ -82,6 +82,7 @@ class PhongBanDataResponse(PhongBanBase):
     so_luong_dang_lam: int = Field(default=0, ge=0)
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(
         from_attributes=True,      # Rất quan trọng để convert từ ORM model

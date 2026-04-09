@@ -18,7 +18,7 @@ class DeletePhongBanCommand:
 @dataclass
 class DeletePhongBanResult:
     """Result of successful deletion."""
-    success: bool
+    phong_ban: dict
 
 
 class DeletePhongBanUseCase:
@@ -60,8 +60,8 @@ class DeletePhongBanUseCase:
             # Store old data for audit
             old_data = serialize_model_to_dict(existing)
 
-            # Delete
-            await phong_ban_repo.delete(existing)
+            # Soft-delete
+            deleted_phong_ban = await phong_ban_repo.delete(existing)
 
             # Audit Log
             audit_log = AuditLog(
@@ -70,9 +70,9 @@ class DeletePhongBanUseCase:
                 bang_du_lieu="phong_ban",
                 ban_ghi_id=command.id,
                 du_lieu_cu=old_data,
-                du_lieu_moi=None,
-                ghi_chu="Xoá phòng ban"
+                du_lieu_moi=serialize_model_to_dict(deleted_phong_ban),
+                ghi_chu="Xóa mềm phòng ban"
             )
             await audit_repo.create(audit_log)
 
-            return Return.ok(DeletePhongBanResult(success=True))
+            return Return.ok(DeletePhongBanResult(phong_ban=serialize_model_to_dict(deleted_phong_ban)))

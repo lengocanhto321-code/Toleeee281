@@ -24,15 +24,13 @@ from src.app.usecases.phong_ban.get_phong_ban_uc import (
 
 from src.api.error import ClientError, ServerError
 
-router = APIRouter(tags=["Phong Ban"],
-#  dependencies=[Depends(get_current_admin)]
-)
+router = APIRouter(tags=["Phong Ban"])
 
 
 @router.post("", response_model=APIResponse[PhongBanDataResponse], status_code=status.HTTP_201_CREATED)
 async def create_phong_ban(
     body: PhongBanCreateRequest,
-    # user_context: UserContext = Depends(get_current_admin),
+    user_context: UserContext = Depends(get_current_admin),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Tạo mới phòng ban."""
@@ -91,7 +89,7 @@ async def get_phong_ban_list(
 @router.get("/{id}", response_model=APIResponse[PhongBanDataResponse])
 async def get_phong_ban_detail(
     id: str = Path(...),
-    # user_context: UserContext = Depends(get_current_admin),
+    user_context: UserContext = Depends(get_current_admin),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Lấy chi tiết phòng ban."""

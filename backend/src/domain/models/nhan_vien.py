@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Boolean, Text, Date, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from .base import Base, generate_uuid
@@ -38,7 +39,18 @@ class NhanVien(Base):
     ghi_chu = Column(Text)
     trang_thai = Column(String(20), nullable=False, default="dang_lam")
 
+    # Soft-delete
+    deleted_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(
         DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    cong_tac = relationship(
+        "CongTac",
+        back_populates="nhan_vien",
+        lazy="selectin",
+        cascade="all, delete-orphan"
     )

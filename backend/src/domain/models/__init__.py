@@ -6,6 +6,7 @@ from .chuc_vu import ChucVu
 
 # Nhân viên
 from .nhan_vien import NhanVien
+from .cong_tac import CongTac
 from .bang_cap_chung_chi import BangCapChungChi
 from .lich_su_chuc_vu import LichSuChucVu
 
@@ -32,6 +33,7 @@ __all__ = [
     "ChucVu",
     # Nhân viên
     "NhanVien",
+    "CongTac",
     "BangCapChungChi",
     "LichSuChucVu",
     # Lương & Chấm công
