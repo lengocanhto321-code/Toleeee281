@@ -9,10 +9,12 @@ import {
   Award,
   GraduationCap,
   Info,
+  Wallet,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
 import { NhanVienSidebarPanel } from "@/components/forms/nhan-vien"
+import { LuongSidebarPanel } from "@/components/forms/luong"
 import {
   Sidebar,
   SidebarContent,
@@ -45,6 +47,11 @@ const navItems = [
     title: "Chức vụ",
     url: "/chuc-vu",
     icon: Award,
+  },
+  {
+    title: "Lương",
+    url: "/luong",
+    icon: Wallet,
   },
   {
     title: "Giới thiệu",
@@ -92,10 +99,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     window.dispatchEvent(new CustomEvent("sidebar:nhan-vien:add"))
   }
 
+  const handleAddLuong = () => {
+    window.dispatchEvent(new CustomEvent("sidebar:luong:add"))
+  }
+
   const renderPanel = () => {
     switch (activeItem?.url) {
       case "/nhan-vien":
         return <NhanVienSidebarPanel onAdd={handleAddNhanVien} />
+      case "/luong":
+        return <LuongSidebarPanel onAdd={handleAddLuong} />
       default:
         return <DefaultPanel title={activeItem?.title || ""} icon={activeItem?.icon || LayoutDashboard} />
     }

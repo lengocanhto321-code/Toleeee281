@@ -79,7 +79,7 @@ async def refresh(
     # TODO: Implement refresh logic using refresh_token cookie
     # For now, return error
     raise ClientError(
-        base_error={"code": "not_implemented", "message": "Refresh not implemented yet"},
+        base_error=Error(code="not_implemented", message="Refresh not implemented yet"),
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
     )
 
@@ -109,7 +109,7 @@ async def logout(response: Response):
     """
     response.delete_cookie("token")
     response.delete_cookie("refresh_token")
-    
+
     return APIResponse(
         message="Logout successful",
         data={},

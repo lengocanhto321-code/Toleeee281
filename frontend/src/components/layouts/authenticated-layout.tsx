@@ -38,6 +38,7 @@ export function AuthenticatedLayout({
     "nhan-vien": "Nhân viên",
     "phong-ban": "Phòng ban",
     "chuc-vu": "Chức vụ",
+    luong: "Lương",
     "gioi-thieu": "Giới thiệu",
   };
 

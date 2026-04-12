@@ -1,17 +1,42 @@
 "use client"
 
-import { use } from "react"
+import { use, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Pencil } from "lucide-react"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { Button } from "@/components/ui/button"
 import { NhanVienDetailInfo } from "@/components/forms/nhan-vien"
 import { useNhanVienDetail } from "@/hooks/nhan-vien"
+import { useLuongHienTai } from "@/hooks/luong/use-luong-query"
+import { useKyLuongList } from "@/hooks/luong/use-luong-query"
+import { useTraLuongByKyLuong } from "@/hooks/luong/use-luong-query"
+import type { TraLuong } from "@/types/luong.types"
 
 export default function NhanVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<string>("personal")
+  
   const { data: nhanVien, isLoading, isError } = useNhanVienDetail(id)
+  
+  const { data: luong } = useLuongHienTai(id)
+  const { data: kyLuongData } = useKyLuongList({ page_size: 100 })
+  
+  const recentKyLuong = kyLuongData?.data?.[0]
+  const { data: traLuongData } = useTraLuongByKyLuong(recentKyLuong?.id || "", { page_size: 20 })
+  
+  const traLuongs: TraLuong[] = traLuongData?.data?.filter(
+    (tl) => tl.nhan_vien_id === id
+  ) || []
+
+  const handleEdit = () => {
+    // TODO: Open edit dialog
+    console.log("Edit employee")
+  }
+
+  const handleViewSalary = () => {
+    setActiveTab("salary")
+  }
 
   return (
     <AuthenticatedLayout breadcrumbLabel={nhanVien ? `${nhanVien.ho_ten} - ${nhanVien.ma_nhan_vien}` : undefined}>
@@ -27,7 +52,12 @@ export default function NhanVienDetailPage({ params }: { params: Promise<{ id: s
           Quay lại
         </Button>
         {nhanVien && (
-          <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1.5 cursor-pointer"
+            onClick={handleEdit}
+          >
             <Pencil className="h-3.5 w-3.5" />
             Chỉnh sửa
           </Button>
@@ -47,7 +77,13 @@ export default function NhanVienDetailPage({ params }: { params: Promise<{ id: s
           </Button>
         </div>
       ) : (
-        <NhanVienDetailInfo nhanVien={nhanVien} />
+        <NhanVienDetailInfo 
+          nhanVien={nhanVien} 
+          luong={luong}
+          traLuongs={traLuongs}
+          onEdit={handleEdit}
+          onViewSalary={handleViewSalary}
+        />
       )}
     </AuthenticatedLayout>
   )

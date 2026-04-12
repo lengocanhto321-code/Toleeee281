@@ -15,6 +15,20 @@ from .luong import Luong
 from .cham_cong import ChamCong
 from .tra_luong import TraLuong
 
+# Cấu hình lương
+from .cau_hinh_luong import (
+    CauHinhHeThongLuong,
+    HeSoLuongDanhMuc,
+    PhuCapTheoCapHoc,
+    TamDinhChiCongTac,
+    KyLuatVienChuc,
+    CauHinhThuongTet,
+    LuongThang13,
+    KyLuong,
+    ChiTietPhuCap,
+    ChiTietKhauTru,
+)
+
 # Nghỉ phép
 from .nghi_phep import NghiPhep
 
@@ -40,6 +54,17 @@ __all__ = [
     "Luong",
     "ChamCong",
     "TraLuong",
+    # Cấu hình lương
+    "CauHinhHeThongLuong",
+    "HeSoLuongDanhMuc",
+    "PhuCapTheoCapHoc",
+    "TamDinhChiCongTac",
+    "KyLuatVienChuc",
+    "CauHinhThuongTet",
+    "LuongThang13",
+    "KyLuong",
+    "ChiTietPhuCap",
+    "ChiTietKhauTru",
     # Nghỉ phép
     "NghiPhep",
     # Khen thưởng & Kỷ luật

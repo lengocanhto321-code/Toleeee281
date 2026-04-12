@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Users, UserCheck, UserX } from "lucide-react"
+import { Users, UserCheck, UserX, UserMinus, Download, Printer } from "lucide-react"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { DataTable } from "@/components/ui/data-table"
+import { Button } from "@/components/ui/button"
 import {
   createNhanVienColumns,
   NhanVienToolbar,
@@ -12,12 +13,40 @@ import {
 } from "@/components/forms/nhan-vien"
 import { useNhanVienList, useCreateNhanVien, useUpdateNhanVien } from "@/hooks/nhan-vien"
 import type { NhanVien, NhanVienFormData } from "@/types/nhan-vien.types"
+import { LOAI_NHAN_VIEN_LABELS } from "@/types/nhan-vien.types"
+
+interface StatCardProps {
+  icon: React.ElementType
+  label: string
+  value: number
+  subLabel?: string
+  accent: string
+  active?: boolean
+}
+
+function StatCard({ icon: Icon, label, value, subLabel, accent, active }: StatCardProps) {
+  return (
+    <div className={`flex items-center gap-3 rounded-xl border bg-white p-4 transition-all ${active ? `${accent} border-current` : "border-slate-200 hover:border-slate-300"}`}>
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        <p className="text-xs text-slate-500">{label}</p>
+        {subLabel && <p className="text-[10px] text-slate-400">{subLabel}</p>}
+      </div>
+    </div>
+  )
+}
 
 export default function NhanVienPage() {
   // Filters
   const [search, setSearch] = useState("")
   const [trangThaiFilter, setTrangThaiFilter] = useState("all")
   const [loaiFilter, setLoaiFilter] = useState("all")
+  const [capHocFilter, setCapHocFilter] = useState("all")
+  const [phongBanFilter, setPhongBanFilter] = useState("all")
+  const [sortBy, setSortBy] = useState("ho_ten")
   const [viewMode, setViewMode] = useState<"table" | "grid">("table")
 
   // Dialog state
@@ -36,24 +65,96 @@ export default function NhanVienPage() {
     return () => window.removeEventListener("sidebar:nhan-vien:add", handler)
   }, [])
 
-  // Filtered data
+  // Extract unique phong bans for filter
+  const phongBanOptions = useMemo(() => {
+    const uniquePB = new Map<string, string>()
+    nhanViens.forEach((nv) => {
+      if (nv.phong_ban?.ten_phong_ban && !uniquePB.has(nv.phong_ban.id)) {
+        uniquePB.set(nv.phong_ban.id, nv.phong_ban.ten_phong_ban)
+      }
+    })
+    return Array.from(uniquePB.entries()).map(([value, label]) => ({ value, label }))
+  }, [nhanViens])
+
+  const stats = useMemo(() => {
+    const total = nhanViens.length
+    const dangLam = nhanViens.filter((nv) => nv.trang_thai === "dang_lam").length
+    const nghiViec = nhanViens.filter((nv) => nv.trang_thai === "nghi_viec").length
+    const nghiHuu = nhanViens.filter((nv) => nv.trang_thai === "nghi_huu").length
+    return { total, dangLam, nghiViec, nghiHuu }
+  }, [nhanViens])
+
+  // Filtered & Sorted data
   const filtered = useMemo(() => {
-    return nhanViens.filter((nv) => {
+    let result = [...nhanViens]
+
+    // Search filter
+    if (search) {
       const q = search.toLowerCase()
-      const matchSearch = !q ||
+      result = result.filter((nv) =>
         nv.ho_ten.toLowerCase().includes(q) ||
         nv.ma_nhan_vien.toLowerCase().includes(q) ||
-        nv.email?.toLowerCase().includes(q)
-      const matchTrangThai = trangThaiFilter === "all" || nv.trang_thai === trangThaiFilter
-      const matchLoai = loaiFilter === "all" || nv.loai_nhan_vien === loaiFilter
-      return matchSearch && matchTrangThai && matchLoai
-    })
-  }, [nhanViens, search, trangThaiFilter, loaiFilter])
+        nv.email?.toLowerCase().includes(q) ||
+        nv.so_cccd?.toLowerCase().includes(q) ||
+        nv.so_dien_thoai?.toLowerCase().includes(q) ||
+        nv.mon_day?.toLowerCase().includes(q)
+      )
+    }
 
-  // Stats
-  const total = nhanViens.length
-  const dangLam = nhanViens.filter((nv) => nv.trang_thai === "dang_lam").length
-  const nghiViec = nhanViens.filter((nv) => nv.trang_thai !== "dang_lam").length
+    // Status filter
+    if (trangThaiFilter !== "all") {
+      result = result.filter((nv) => nv.trang_thai === trangThaiFilter)
+    }
+
+    // Type filter
+    if (loaiFilter !== "all") {
+      result = result.filter((nv) => nv.loai_nhan_vien === loaiFilter)
+    }
+
+    // Cap hoc filter
+    if (capHocFilter !== "all") {
+      result = result.filter((nv) => nv.cap_hoc === capHocFilter)
+    }
+
+    // Phong ban filter
+    if (phongBanFilter !== "all") {
+      result = result.filter((nv) => nv.phong_ban?.id === phongBanFilter)
+    }
+
+    // Sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "ho_ten":
+          return a.ho_ten.localeCompare(b.ho_ten, "vi")
+        case "ho_ten_desc":
+          return b.ho_ten.localeCompare(a.ho_ten, "vi")
+        case "ngay_vao_lam": {
+          const dateA = a.ngay_vao_lam ? new Date(a.ngay_vao_lam).getTime() : 0
+          const dateB = b.ngay_vao_lam ? new Date(b.ngay_vao_lam).getTime() : 0
+          return dateA - dateB
+        }
+        case "ngay_vao_lam_desc": {
+          const dateA = a.ngay_vao_lam ? new Date(a.ngay_vao_lam).getTime() : Infinity
+          const dateB = b.ngay_vao_lam ? new Date(b.ngay_vao_lam).getTime() : Infinity
+          return dateA - dateB
+        }
+        case "thanh_nien": {
+          const daysA = a.ngay_vao_lam ? Math.floor((Date.now() - new Date(a.ngay_vao_lam).getTime()) / (1000 * 60 * 60 * 24)) : 0
+          const daysB = b.ngay_vao_lam ? Math.floor((Date.now() - new Date(b.ngay_vao_lam).getTime()) / (1000 * 60 * 60 * 24)) : 0
+          return daysA - daysB
+        }
+        case "thanh_nien_desc": {
+          const daysA = a.ngay_vao_lam ? Math.floor((Date.now() - new Date(a.ngay_vao_lam).getTime()) / (1000 * 60 * 60 * 24)) : Infinity
+          const daysB = b.ngay_vao_lam ? Math.floor((Date.now() - new Date(b.ngay_vao_lam).getTime()) / (1000 * 60 * 60 * 24)) : Infinity
+          return daysA - daysB
+        }
+        default:
+          return 0
+      }
+    })
+
+    return result
+  }, [nhanViens, search, trangThaiFilter, loaiFilter, capHocFilter, phongBanFilter, sortBy])
 
   // Column definitions
   const columns = useMemo(() => createNhanVienColumns({
@@ -69,37 +170,47 @@ export default function NhanVienPage() {
     }
   }
 
+  const handleExport = () => {
+    // TODO: Implement export to Excel
+    console.log("Export to Excel")
+  }
+
+  const handlePrint = () => {
+    // TODO: Implement print
+    console.log("Print list")
+  }
+
   return (
     <AuthenticatedLayout>
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-            <Users className="h-5 w-5 text-slate-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{total}</p>
-            <p className="text-xs text-slate-500">Tổng nhân viên</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-            <UserCheck className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-emerald-700">{dangLam}</p>
-            <p className="text-xs text-emerald-600">Đang làm việc</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-            <UserX className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-700">{nghiViec}</p>
-            <p className="text-xs text-amber-600">Nghỉ việc / Nghỉ hưu</p>
-          </div>
-        </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <StatCard
+          icon={Users}
+          label="Tổng cộng"
+          value={stats.total}
+          accent="bg-slate-100 text-slate-600"
+        />
+        <StatCard
+          icon={UserCheck}
+          label="Đang làm việc"
+          value={stats.dangLam}
+          accent="bg-emerald-100 text-emerald-600"
+          active={trangThaiFilter === "dang_lam"}
+        />
+        <StatCard
+          icon={UserX}
+          label="Nghỉ việc"
+          value={stats.nghiViec}
+          accent="bg-amber-100 text-amber-600"
+          active={trangThaiFilter === "nghi_viec"}
+        />
+        <StatCard
+          icon={UserMinus}
+          label="Nghỉ hưu"
+          value={stats.nghiHuu}
+          accent="bg-sky-100 text-sky-600"
+          active={trangThaiFilter === "nghi_huu"}
+        />
       </div>
 
       {/* Toolbar */}
@@ -111,9 +222,45 @@ export default function NhanVienPage() {
           onTrangThaiFilterChange={setTrangThaiFilter}
           loaiFilter={loaiFilter}
           onLoaiFilterChange={setLoaiFilter}
+          capHocFilter={capHocFilter}
+          onCapHocFilterChange={setCapHocFilter}
+          phongBanFilter={phongBanFilter}
+          onPhongBanFilterChange={setPhongBanFilter}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          onExport={handleExport}
+          onPrint={handlePrint}
+          phongBanOptions={phongBanOptions}
         />
+      </div>
+
+      {/* Results count */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-slate-500">
+          Hiển thị <span className="font-medium text-slate-900">{filtered.length}</span> / {nhanViens.length} nhân viên
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 cursor-pointer"
+            onClick={handleExport}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Xuất Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 cursor-pointer"
+            onClick={handlePrint}
+          >
+            <Printer className="h-3.5 w-3.5" />
+            In danh sách
+          </Button>
+        </div>
       </div>
 
       {/* Content View */}
