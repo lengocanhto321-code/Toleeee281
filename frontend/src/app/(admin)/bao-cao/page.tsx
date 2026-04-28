@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
@@ -19,69 +20,70 @@ import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
 import type { BaoCaoFilters } from "@/types/bao-cao.types"
 import { BarChart3, Filter, CalendarDays, Users, Clock, Wallet, Trophy, TrendingUp } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 
 const TAB_ITEMS = [
-  {
-    id: "nhan-su",
-    label: "Nhân sự",
-    icon: Users,
-  },
-  {
-    id: "cham-cong",
-    label: "Chấm công",
-    icon: Clock,
-  },
-  {
-    id: "luong",
-    label: "Lương",
-    icon: Wallet,
-  },
-  {
-    id: "khen-thuong",
-    label: "Khen thưởng",
-    icon: Trophy,
-  },
-  {
-    id: "xu-huong",
-    label: "Xu hướng",
-    icon: TrendingUp,
-  },
+  { id: "nhan-su", label: "Nhân sự", icon: Users },
+  { id: "cham-cong", label: "Chấm công", icon: Clock },
+  { id: "luong", label: "Lương", icon: Wallet },
+  { id: "khen-thuong", label: "Khen thưởng", icon: Trophy },
+  { id: "xu-huong", label: "Xu hướng", icon: TrendingUp },
 ]
 
-function ContentArea({ activeTab, filters }: { activeTab: string; filters: BaoCaoFilters }) {
-  const pathname = usePathname()
+const NHAN_SU_TABS = [
+  { id: "tong-hop", component: NhanSuTongHopTab },
+  { id: "bien-dong", component: NhanSuBienDongTab },
+  { id: "demo", component: NhanSuDemoGraphicsTab },
+  { id: "trinh-do", component: NhanSuTrinhDoTab },
+  { id: "hop-dong", component: HopDongTab },
+]
 
+const CHAM_CONG_TABS = [
+  { id: "tong-hop", component: ChamCongTongHopTab },
+  { id: "nghi-phep", component: ChamCongNghiPhepTab },
+  { id: "di-muon", component: DiMuonTab },
+]
+
+const LUONG_TABS = [
+  { id: "chi-phi", component: LuongChiPhiTab },
+  { id: "thue-bhxh", component: LuongThueBHXHTab },
+  { id: "so-sanh", component: LuongSoSanhTab },
+]
+
+function ContentArea({ type, subType, filters }: { type: string; subType: string; filters: BaoCaoFilters }) {
   const renderContent = () => {
-    switch (activeTab) {
-      case "nhan-su":
-        if (pathname.includes("/bien-dong")) return <NhanSuBienDongTab filters={filters} />
-        if (pathname.includes("/demo")) return <NhanSuDemoGraphicsTab filters={filters} />
-        if (pathname.includes("/trinh-do")) return <NhanSuTrinhDoTab filters={filters} />
-        if (pathname.includes("/hop-dong")) return <HopDongTab filters={filters} />
-        return <NhanSuTongHopTab filters={filters} />
-      case "cham-cong":
-        if (pathname.includes("/nghi-phep")) return <ChamCongNghiPhepTab filters={filters} />
-        if (pathname.includes("/di-muon")) return <DiMuonTab filters={filters} />
-        return <ChamCongTongHopTab filters={filters} />
-      case "luong":
-        if (pathname.includes("/thue-bhxh")) return <LuongThueBHXHTab filters={filters} />
-        if (pathname.includes("/so-sanh")) return <LuongSoSanhTab filters={filters} />
-        return <LuongChiPhiTab filters={filters} />
+    switch (type) {
+      case "nhan-su": {
+        const tab = NHAN_SU_TABS.find(t => t.id === subType) || NHAN_SU_TABS[0]
+        const Component = tab.component
+        return <Component filters={filters} />
+      }
+      case "cham-cong": {
+        const tab = CHAM_CONG_TABS.find(t => t.id === subType) || CHAM_CONG_TABS[0]
+        const Component = tab.component
+        return <Component filters={filters} />
+      }
+      case "luong": {
+        const tab = LUONG_TABS.find(t => t.id === subType) || LUONG_TABS[0]
+        const Component = tab.component
+        return <Component filters={filters} />
+      }
       case "khen-thuong":
         return <KhenThuongTab filters={filters} />
       case "xu-huong":
         return <XuHuongTab filters={filters} />
-      default:
-        return <NhanSuTongHopTab filters={filters} />
+      default: {
+        const tab = NHAN_SU_TABS[0]
+        const Component = tab.component
+        return <Component filters={filters} />
+      }
     }
   }
 
   return (
     <motion.div
-      key={activeTab}
+      key={`${type}-${subType}`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
@@ -92,7 +94,7 @@ function ContentArea({ activeTab, filters }: { activeTab: string; filters: BaoCa
   )
 }
 
-export default function BaoCaoPage() {
+function BaoCaoContent() {
   const [filters, setFilters] = useState<BaoCaoFilters>(() => {
     const now = new Date()
     return { thang: now.getMonth() + 1, nam: now.getFullYear() }
@@ -100,16 +102,25 @@ export default function BaoCaoPage() {
 
   const [thang, setThang] = useState(String(new Date().getMonth() + 1))
   const [nam, setNam] = useState(String(new Date().getFullYear()))
-  const [activeTab, setActiveTab] = useState("nhan-su")
 
-  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const router = useRouter()
+
+  const type = searchParams.get("type") || "nhan-su"
+  const subType = searchParams.get("sub") || ""
 
   const applyFilters = () => {
     setFilters({
       thang: parseInt(thang),
       nam: parseInt(nam),
     })
+  }
+
+  const handleTabChange = (newType: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("type", newType)
+    params.delete("sub")
+    router.push(`/bao-cao?${params.toString()}`)
   }
 
   return (
@@ -179,13 +190,10 @@ export default function BaoCaoPage() {
             {TAB_ITEMS.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id)
-                  router.push(`/bao-cao/${tab.id}`)
-                }}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
                   "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
-                  activeTab === tab.id
+                  type === tab.id
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
@@ -198,8 +206,16 @@ export default function BaoCaoPage() {
         </div>
 
         {/* Content */}
-        <ContentArea activeTab={activeTab} filters={filters} />
+        <ContentArea type={type} subType={subType} filters={filters} />
       </div>
     </AuthenticatedLayout>
+  )
+}
+
+export default function BaoCaoPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center p-6">Đang tải...</div>}>
+      <BaoCaoContent />
+    </Suspense>
   )
 }
