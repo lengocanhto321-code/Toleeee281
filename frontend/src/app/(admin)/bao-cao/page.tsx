@@ -17,14 +17,29 @@ import { LuongSoSanhTab } from "./_components/luong/so-sanh-tab"
 import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
 import type { BaoCaoFilters } from "@/types/bao-cao.types"
-import { BarChart3, Users, Clock, Wallet, Trophy, TrendingUp } from "lucide-react"
+import { BarChart3, Users, Clock, Wallet, Trophy, TrendingUp, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 
 const TAB_ITEMS = [
-  { id: "nhan-su", label: "Nhân sự", icon: Users },
-  { id: "cham-cong", label: "Chấm công", icon: Clock },
-  { id: "luong", label: "Lương", icon: Wallet },
+  { 
+    id: "nhan-su", 
+    label: "Nhân sự", 
+    icon: Users,
+    subs: ["tong-hop", "bien-dong", "demo", "trinh-do", "hop-dong"]
+  },
+  { 
+    id: "cham-cong", 
+    label: "Chấm công", 
+    icon: Clock,
+    subs: ["tong-hop", "nghi-phep", "di-muon"]
+  },
+  { 
+    id: "luong", 
+    label: "Lương", 
+    icon: Wallet,
+    subs: ["chi-phi", "thue-bhxh", "so-sanh"]
+  },
   { id: "khen-thuong", label: "Khen thưởng", icon: Trophy },
   { id: "xu-huong", label: "Xu hướng", icon: TrendingUp },
 ]
@@ -97,6 +112,7 @@ function BaoCaoContent() {
     const now = new Date()
     return { thang: now.getMonth() + 1, nam: now.getFullYear() }
   })
+  const [expandedTab, setExpandedTab] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -132,19 +148,55 @@ function BaoCaoContent() {
         <div className="border-b">
           <div className="flex gap-1">
             {TAB_ITEMS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors",
-                  type === tab.id
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+              <div key={tab.id} className="relative">
+                <button
+                  onClick={() => {
+                    handleTabChange(tab.id)
+                    if (tab.subs) {
+                      setExpandedTab(expandedTab === tab.id ? null : tab.id)
+                    }
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200",
+                    type === tab.id
+                      ? "border-blue-600 text-blue-600 bg-blue-50/50"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                  {tab.subs && (
+                    <ChevronDown className={cn(
+                      "w-3 h-3 transition-transform",
+                      expandedTab === tab.id && "rotate-180"
+                    )} />
+                  )}
+                </button>
+                {/* Expandable subcategories */}
+                {expandedTab === tab.id && tab.subs && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 py-1 min-w-[150px]"
+                  >
+                    {tab.subs.map((sub) => (
+                      <button
+                        key={sub}
+                        onClick={() => {
+                          const params = new URLSearchParams(searchParams)
+                          params.set("type", tab.id)
+                          params.set("sub", sub)
+                          router.push(`/bao-cao?${params.toString()}`)
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 text-muted-foreground hover:text-blue-600 transition-colors"
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </motion.div>
                 )}
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
+              </div>
             ))}
           </div>
         </div>
