@@ -5,6 +5,20 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { corporateCleanTheme } from "@/lib/echarts-theme"
 
+let echartsModule: any = null
+let echartsModulePromise: Promise<any> | null = null
+
+function getEcharts() {
+  if (echartsModule) return echartsModule
+  if (!echartsModulePromise) {
+    echartsModulePromise = import('echarts').then((mod) => {
+      echartsModule = mod
+      return mod
+    })
+  }
+  return null
+}
+
 interface EChartsWrapperProps {
   option: Record<string, unknown>
   className?: string
@@ -13,6 +27,7 @@ interface EChartsWrapperProps {
   loading?: boolean
   notMerge?: boolean
   lazyUpdate?: boolean
+  onEvents?: Record<string, (params: any) => void>
 }
 
 export function EChartsWrapper({
@@ -23,9 +38,19 @@ export function EChartsWrapper({
   loading = false,
   notMerge = true,
   lazyUpdate = true,
+  onEvents,
 }: EChartsWrapperProps) {
   const { theme } = useTheme()
   const [EChartsReact, setEChartsReact] = React.useState<React.ComponentType<any> | null>(null)
+  const [echarts, setEcharts] = React.useState<any>(getEcharts())
+
+  React.useEffect(() => {
+    if (!echarts) {
+      echartsModulePromise?.then(() => {
+        setEcharts(echartsModule)
+      })
+    }
+  }, [])
 
   React.useEffect(() => {
     import('echarts-for-react').then((mod) => {
@@ -33,7 +58,7 @@ export function EChartsWrapper({
     })
   }, [])
 
-  if (!EChartsReact) {
+  if (!EChartsReact || !echarts) {
     return (
       <div
         className={cn("flex items-center justify-center", className)}
@@ -51,7 +76,7 @@ export function EChartsWrapper({
   }
 
   const echartsProps: Record<string, unknown> = {
-    echarts: require('echarts'),
+    echarts,
     option: mergedOption,
     notMerge,
     lazyUpdate,
@@ -60,6 +85,9 @@ export function EChartsWrapper({
   }
   if (loading) {
     echartsProps.loading = loading
+  }
+  if (onEvents) {
+    echartsProps.onEvents = onEvents
   }
 
   return (
