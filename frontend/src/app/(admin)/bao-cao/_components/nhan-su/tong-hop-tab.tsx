@@ -7,67 +7,82 @@ import { Users, UserCheck, UserX, TrendingUp } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useBaoCaoNhanSuTongHop } from "@/hooks/bao-cao/use-bao-cao-nhan-su"
 import React, { useState } from 'react'
 
 interface NhanSuTongHopTabProps {
   filters: BaoCaoFilters
 }
 
-const statCards = [
-  { title: "Tổng nhân sự", value: "45", icon: Users, color: "text-blue-600 bg-blue-50", change: "+2" },
-  { title: "Đang làm việc", value: "42", icon: UserCheck, color: "text-emerald-600 bg-emerald-50", change: "93%" },
-  { title: "Nghỉ việc", value: "3", icon: UserX, color: "text-red-600 bg-red-50", change: "-1" },
-  { title: "Tuyển mới", value: "5", icon: TrendingUp, color: "text-amber-600 bg-amber-50", change: "+3" },
-]
-
 export const NhanSuTongHopTab = React.memo(function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
   const [modalData, setModalData] = useState<{ name: string; value: number; percent?: number } | null>(null)
+  const { data, isLoading, error } = useBaoCaoNhanSuTongHop(filters)
 
-  const pieOption = React.useMemo(() => ({
-    tooltip: { trigger: 'item' },
-    legend: {
-      orient: 'vertical',
-      right: 10,
-      top: 'center',
-      textStyle: { fontSize: 12, color: '#475569' },
-      icon: 'roundRect',
-      itemWidth: 12,
-      itemHeight: 12,
-    },
-    grid: {
-      left: '3%',
-      right: '20%',
-      top: '5%',
-      bottom: '3%',
-      containLabel: true,
-    },
-    series: [{
-      type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
-      itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
-      label: { show: false },
-      emphasis: {
-        label: { show: true, fontSize: 14, fontWeight: 'bold' },
-        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+  const statCards = React.useMemo(() => {
+    if (!data) return []
+    return [
+      { title: "Tổng nhân sự", value: String(data.tong_nhan_vien), icon: Users, color: "text-blue-600 bg-blue-50", change: String(data.dang_lam) },
+      { title: "Đang làm việc", value: String(data.dang_lam), icon: UserCheck, color: "text-emerald-600 bg-emerald-50", change: data.tong_nhan_vien > 0 ? `${Math.round((data.dang_lam / data.tong_nhan_vien) * 100)}%` : "0%" },
+      { title: "Nghỉ việc", value: String(data.nghi_viec), icon: UserX, color: "text-red-600 bg-red-50", change: String(data.nghi_viec) },
+      { title: "Nghỉ hưu", value: String(data.nghi_huu), icon: TrendingUp, color: "text-amber-600 bg-amber-50", change: String(data.nghi_huu) },
+    ]
+  }, [data])
+
+  const pieOption = React.useMemo(() => {
+    if (!data) return {}
+    return {
+      tooltip: { trigger: 'item' },
+      legend: {
+        orient: 'vertical',
+        right: 10,
+        top: 'center',
+        textStyle: { fontSize: 12, color: '#475569' },
+        icon: 'roundRect',
+        itemWidth: 12,
+        itemHeight: 12,
       },
-      select: { itemStyle: { shadowBlur: 10, shadowColor: '#1e40af' } },
-      data: [
-        { value: 25, name: 'Nam', itemStyle: { color: '#1e40af' } },
-        { value: 20, name: 'Nữ', itemStyle: { color: '#059669' } },
-      ],
-    }],
-  }), [])
+      grid: {
+        left: '3%',
+        right: '20%',
+        top: '5%',
+        bottom: '3%',
+        containLabel: true,
+      },
+      series: [{
+        type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
+        itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+        label: { show: false },
+        emphasis: {
+          label: { show: true, fontSize: 14, fontWeight: 'bold' },
+          itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+        },
+        select: { itemStyle: { shadowBlur: 10, shadowColor: '#1e40af' } },
+        data: [
+          { value: data.theo_gioi_tinh.nam, name: 'Nam', itemStyle: { color: '#1e40af' } },
+          { value: data.theo_gioi_tinh.nu, name: 'Nữ', itemStyle: { color: '#059669' } },
+        ],
+      }],
+    }
+  }, [data])
 
-  const barOption = React.useMemo(() => ({
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'category', data: ['Ban Giám hiệu', 'Tổ Toán', 'Tổ Văn', 'Tổ Anh', 'Tổ Lý', 'Tổ Hóa', 'Văn phòng'] },
-    yAxis: { type: 'value' },
-    series: [{
-      type: 'bar', data: [5, 8, 7, 6, 6, 5, 8],
-      itemStyle: { borderRadius: [4, 4, 0, 0], color: '#1e40af' },
-      barWidth: '40%',
-      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(30, 64, 175, 0.5)' } }
-    }],
-  }), [])
+  const barOption = React.useMemo(() => {
+    if (!data) return {}
+    return {
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      xAxis: { type: 'category', data: data.theo_phong_ban.map(pb => pb.ten_phong_ban) },
+      yAxis: { type: 'value' },
+      series: [{
+        type: 'bar', data: data.theo_phong_ban.map(pb => pb.so_luong),
+        itemStyle: { borderRadius: [4, 4, 0, 0], color: '#1e40af' },
+        barWidth: '40%',
+        emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(30, 64, 175, 0.5)' } }
+      }],
+    }
+  }, [data])
+
+  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>
+  if (error) return <div className="text-center py-8 text-red-500">Lỗi tải dữ liệu</div>
+  if (!data) return null
 
   return (
     <div className="space-y-6">
@@ -90,7 +105,6 @@ export const NhanSuTongHopTab = React.memo(function NhanSuTongHopTab({ filters }
         ))}
       </div>
 
-      {/* Charts Section */}
       <div className="grid grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
           <CardHeader>

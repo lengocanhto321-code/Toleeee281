@@ -3,46 +3,73 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
-import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
-import React, { useState } from 'react'
+import { useBaoCaoXuHuong } from "@/hooks/bao-cao/use-bao-cao"
+import React from 'react'
 
 export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
-  const lineOption = React.useMemo(() => ({
-    tooltip: { trigger: 'axis' },
-    legend: { data: ['Nhân sự', 'Lương (triệu)', 'Chấm công (%)'] },
-    xAxis: { type: 'category', data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'] },
-    yAxis: [
-      { type: 'value', name: 'Nhân sự' },
-      { type: 'value', name: 'Lương' },
-      { type: 'value', name: 'Chấm công', max: 100 },
-    ],
-    series: [
-      { name: 'Nhân sự', type: 'line', data: [40, 43, 42, 46, 47, 51, 53, 53, 52, 55, 56, 56], smooth: true, color: '#1e40af' },
-      { name: 'Lương (triệu)', type: 'line', yAxisIndex: 1, data: [120, 125, 122, 130, 128, 135, 140, 138, 142, 145, 148, 150], smooth: true, color: '#d97706' },
-      { name: 'Chấm công (%)', type: 'line', yAxisIndex: 2, data: [95, 96, 94, 98, 97, 96, 98, 99, 98, 98, 97, 98], smooth: true, color: '#dc2626' },
-    ],
-  }), [])
+  const { data, isLoading, error } = useBaoCaoXuHuong(filters)
+
+  const lineOption = React.useMemo(() => {
+    if (!data) return {}
+    const months = data.xu_huong_nhan_su.map(item => item.thang)
+    return {
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['Nhân sự', 'Lương (triệu)', 'Nghỉ phép (ngày)'] },
+      xAxis: { type: 'category', data: months },
+      yAxis: [
+        { type: 'value', name: 'Nhân sự' },
+        { type: 'value', name: 'Lương' },
+        { type: 'value', name: 'Nghỉ phép' },
+      ],
+      series: [
+        {
+          name: 'Nhân sự', type: 'line',
+          data: data.xu_huong_nhan_su.map(item => item.so_luong),
+          smooth: true, color: '#1e40af',
+        },
+        {
+          name: 'Lương (triệu)', type: 'line', yAxisIndex: 1,
+          data: data.xu_huong_luong.map(item => item.tong_luong),
+          smooth: true, color: '#d97706',
+        },
+        {
+          name: 'Nghỉ phép (ngày)', type: 'line', yAxisIndex: 2,
+          data: data.xu_huong_nghi_phep.map(item => item.so_ngay),
+          smooth: true, color: '#dc2626',
+        },
+      ],
+    }
+  }, [data])
+
+  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>
+  if (error) return <div className="text-center py-8 text-red-500">Lỗi tải dữ liệu</div>
+  if (!data) return null
 
   return (
     <div className="space-y-6">
-      {/* Table Section */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <TableProperties className="w-4 h-4" />
-            Danh sách xu hướng
+            Xu hướng thay đổi
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-8">
-            Bảng dữ liệu xu hướng sẽ hiển thị tại đây
+          <div className="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold">{data.change_thang_truoc.direction === 'up' ? '+' : ''}{data.change_thang_truoc.percent}%</div>
+              <div className="text-xs text-muted-foreground">So với tháng trước</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">{data.change_nam_truoc.direction === 'up' ? '+' : ''}{data.change_nam_truoc.percent}%</div>
+              <div className="text-xs text-muted-foreground">So với năm trước</div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Charts Section */}
       <Card className="border-border/50 shadow-sm">
-        <CardHeader><CardTitle className="text-base">Xu hướng nhân sự, lương & chấm công</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Xu hướng nhân sự, lương & nghỉ phép</CardTitle></CardHeader>
         <CardContent><EChartsWrapper option={lineOption} height={400} /></CardContent>
       </Card>
     </div>

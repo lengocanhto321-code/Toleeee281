@@ -3,41 +3,76 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
-import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
-import React, { useState } from 'react'
+import { useBaoCaoLuongSoSanh } from "@/hooks/bao-cao/use-bao-cao"
+import React from 'react'
 
 export const LuongSoSanhTab = React.memo(function LuongSoSanhTab({ filters }: { filters: BaoCaoFilters }) {
-  const groupedBarOption = React.useMemo(() => ({
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: { data: ['Tháng này', 'Tháng trước'] },
-    xAxis: { type: 'category', data: ['Tổng lương', 'Thuế', 'BHXH', 'Thực lĩnh'] },
-    yAxis: { type: 'value' },
-    series: [
-      { name: 'Tháng này', type: 'bar', data: [150, 14, 11, 125], barWidth: '30%', color: '#d97706' },
-      { name: 'Tháng trước', type: 'bar', data: [145, 13, 10, 122], barWidth: '30%', color: '#7c3aed' },
-    ],
-  }), [])
+  const { data, isLoading, error } = useBaoCaoLuongSoSanh(filters)
+
+  const groupedBarOption = React.useMemo(() => {
+    if (!data) return {}
+    return {
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      legend: { data: ['Lương TB', 'Số lượng NV'] },
+      xAxis: { type: 'category', data: data.theo_phong_ban.map(pb => pb.phong_ban) },
+      yAxis: [
+        { type: 'value', name: 'Lương TB' },
+        { type: 'value', name: 'Số lượng' },
+      ],
+      series: [
+        {
+          name: 'Lương TB', type: 'bar',
+          data: data.theo_phong_ban.map(pb => pb.luong_tb),
+          barWidth: '30%', color: '#d97706',
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+        },
+        {
+          name: 'Số lượng NV', type: 'bar', yAxisIndex: 1,
+          data: data.theo_phong_ban.map(pb => pb.so_luong),
+          barWidth: '30%', color: '#1e40af',
+          itemStyle: { borderRadius: [4, 4, 0, 0] },
+        },
+      ],
+    }
+  }, [data])
+
+  if (isLoading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>
+  if (error) return <div className="text-center py-8 text-red-500">Lỗi tải dữ liệu</div>
+  if (!data) return null
 
   return (
     <div className="space-y-6">
-      {/* Table Section */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <TableProperties className="w-4 h-4" />
-            Danh sách so sánh lương
+            Tổng hợp so sánh lương
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-8">
-            Bảng dữ liệu so sánh lương sẽ hiển thị tại đây
+          <div className="grid grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold">{data.luong_tb.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">Lương TB</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-emerald-600">{data.luong_cao_nhat.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">Lương cao nhất</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">{data.luong_thap_nhat.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">Lương thấp nhất</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-amber-600">{data.chenh_lech.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">Chênh lệch</div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Charts Section */}
       <Card className="border-border/50 shadow-sm">
-        <CardHeader><CardTitle className="text-base">So sánh lương tháng này vs tháng trước</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">So sánh lương theo phòng ban</CardTitle></CardHeader>
         <CardContent><EChartsWrapper option={groupedBarOption} height={400} /></CardContent>
       </Card>
     </div>
