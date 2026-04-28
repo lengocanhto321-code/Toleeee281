@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import { BarChart3, FileSpreadsheet, Download, TrendingUp, Users, Clock, Wallet, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ interface BaoCaoSidebarPanelProps {}
 export function BaoCaoSidebarPanel({}: BaoCaoSidebarPanelProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("nhan-su")
+  const [expandedCat, setExpandedCat] = useState<string | null>(null)
 
   const quickStats = [
     { label: "Nhân sự", icon: Users, count: 45, color: "text-blue-600 bg-blue-50" },
@@ -96,25 +98,56 @@ export function BaoCaoSidebarPanel({}: BaoCaoSidebarPanelProps) {
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Danh mục báo cáo</p>
                 {reportLinks.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setActiveTab(cat.id)
-                      router.push(cat.href)
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                      activeTab === cat.id
-                        ? "bg-blue-50 text-blue-700 font-medium border border-blue-200"
-                        : "hover:bg-muted text-muted-foreground border border-transparent"
+                  <div key={cat.id}>
+                    <button
+                      onClick={() => {
+                        setActiveTab(cat.id)
+                        if (cat.sub && cat.sub.length > 0) {
+                          setExpandedCat(expandedCat === cat.id ? null : cat.id)
+                        }
+                        router.push(cat.href)
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                        activeTab === cat.id
+                          ? "bg-blue-50 text-blue-700 font-medium border border-blue-200"
+                          : "hover:bg-muted text-muted-foreground border border-transparent hover:border-border/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <cat.icon className="w-4 h-4" />
+                        <span className="flex-1">{cat.label}</span>
+                        {cat.sub && cat.sub.length > 0 && (
+                          <ChevronRight className={cn(
+                            "w-3 h-3 transition-transform",
+                            expandedCat === cat.id && "rotate-90"
+                          )} />
+                        )}
+                      </div>
+                    </button>
+                    {/* Expandable subcategories */}
+                    {expandedCat === cat.id && cat.sub && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-6 mt-1 space-y-1">
+                          {cat.sub.map((sub) => (
+                            <button
+                              key={sub}
+                              onClick={() => router.push(`${cat.href}?sub=${sub.toLowerCase().replace(/ /g, '-')}`)}
+                              className="w-full text-left px-3 py-1.5 text-xs rounded-md hover:bg-blue-50 text-muted-foreground hover:text-blue-600 transition-colors"
+                            >
+                              {sub}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
                     )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <cat.icon className="w-4 h-4" />
-                      <span>{cat.label}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 ml-6">{cat.sub.join(" • ")}</div>
-                  </button>
+                  </div>
                 ))}
               </div>
 
