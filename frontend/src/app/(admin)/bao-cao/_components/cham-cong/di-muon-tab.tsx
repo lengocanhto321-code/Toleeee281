@@ -2,10 +2,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
-import { useState } from "react"
+import React, { useState } from "react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
 
-export function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
+export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
   const hours = ['7:30', '7:40', '7:50', '8:00', '8:10', '8:20']
   const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7']
   
@@ -19,7 +20,7 @@ export function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
     return result
   })
 
-  const heatmapOption = {
+  const heatmapOption = React.useMemo(() => ({
     tooltip: { position: 'top' },
     grid: { top: '10%', bottom: '15%' },
     xAxis: { type: 'category', data: hours, splitArea: { show: true } },
@@ -38,7 +39,7 @@ export function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
       label: { show: true },
       emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } },
     }],
-  }
+  }), [data])
 
   return (
     <div className="space-y-6">
@@ -64,4 +65,4 @@ export function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
+import React, { useState } from 'react'
 
-export function LuongThueBHXHTab({ filters }: { filters: BaoCaoFilters }) {
-  const stackedBarOption = {
+export const LuongThueBHXHTab = React.memo(function LuongThueBHXHTab({ filters }: { filters: BaoCaoFilters }) {
+  const stackedBarOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: { data: ['Lương cơ bản', 'Thuế TNCN', 'BHXH'] },
     xAxis: { type: 'category', data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'] },
@@ -15,7 +17,7 @@ export function LuongThueBHXHTab({ filters }: { filters: BaoCaoFilters }) {
       { name: 'Thuế TNCN', type: 'bar', stack: 'total', data: [10, 12, 11, 13, 12, 14], color: '#7c3aed' },
       { name: 'BHXH', type: 'bar', stack: 'total', data: [8, 9, 8, 10, 9, 11], color: '#1e40af' },
     ],
-  }
+  }), [])
 
   return (
     <div className="space-y-6">
@@ -41,4 +43,4 @@ export function LuongThueBHXHTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

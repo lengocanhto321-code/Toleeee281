@@ -4,10 +4,10 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender, type SortingState } from '@tanstack/react-table'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-export function NhanSuDemoGraphicsTab({ filters }: { filters: BaoCaoFilters }) {
-  const stackedBarOption = {
+export const NhanSuDemoGraphicsTab = React.memo(function NhanSuDemoGraphicsTab({ filters }: { filters: BaoCaoFilters }) {
+  const stackedBarOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: { data: ['22-30 tuổi', '31-40 tuổi', '41-50 tuổi', '51+ tuổi'] },
     xAxis: { type: 'category', data: ['THPT', 'Cử nhân', 'Thạc sĩ', 'Tiến sĩ'] },
@@ -18,19 +18,19 @@ export function NhanSuDemoGraphicsTab({ filters }: { filters: BaoCaoFilters }) {
       { name: '41-50 tuổi', type: 'bar', stack: 'total', data: [1, 5, 3, 2], color: '#d97706' },
       { name: '51+ tuổi', type: 'bar', stack: 'total', data: [0, 2, 1, 1], color: '#7c3aed' },
     ],
-  }
+  }), [])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { accessorKey: 'hoTen', header: 'Họ tên', cell: (info: any) => info.getValue() },
     { accessorKey: 'doTuoi', header: 'Độ tuổi', cell: (info: any) => info.getValue() },
     { accessorKey: 'trinhDo', header: 'Trình độ', cell: (info: any) => info.getValue() },
     { accessorKey: 'phongBan', header: 'Phòng ban', cell: (info: any) => info.getValue() },
-  ]
+  ], [])
 
-  const data = [
+  const data = React.useMemo(() => [
     { hoTen: 'Nguyễn Văn A', doTuoi: '22-30', trinhDo: 'Cử nhân', phongBan: 'Tổ Toán' },
     { hoTen: 'Trần Thị B', doTuoi: '31-40', trinhDo: 'Cử nhân', phongBan: 'Tổ Văn' },
     { hoTen: 'Lê Văn C', doTuoi: '22-30', trinhDo: 'Cử nhân', phongBan: 'Tổ Anh' },
@@ -41,7 +41,7 @@ export function NhanSuDemoGraphicsTab({ filters }: { filters: BaoCaoFilters }) {
     { hoTen: 'Bùi Thị H', doTuoi: '22-30', trinhDo: 'Cử nhân', phongBan: 'Tổ Toán' },
     { hoTen: 'Vũ Văn I', doTuoi: '41-50', trinhDo: 'Thạc sĩ', phongBan: 'Tổ Văn' },
     { hoTen: 'Đỗ Thị K', doTuoi: '22-30', trinhDo: 'Cử nhân', phongBan: 'Văn phòng' },
-  ]
+  ], [])
 
   const table = useReactTable({
     data,
@@ -139,4 +139,4 @@ export function NhanSuDemoGraphicsTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

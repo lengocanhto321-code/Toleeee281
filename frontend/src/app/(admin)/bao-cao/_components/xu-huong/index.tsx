@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
+import React, { useState } from 'react'
 
-export function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
-  const lineOption = {
+export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
+  const lineOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis' },
     legend: { data: ['Nhân sự', 'Lương (triệu)', 'Chấm công (%)'] },
     xAxis: { type: 'category', data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'] },
@@ -19,7 +21,7 @@ export function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
       { name: 'Lương (triệu)', type: 'line', yAxisIndex: 1, data: [120, 125, 122, 130, 128, 135, 140, 138, 142, 145, 148, 150], smooth: true, color: '#d97706' },
       { name: 'Chấm công (%)', type: 'line', yAxisIndex: 2, data: [95, 96, 94, 98, 97, 96, 98, 99, 98, 98, 97, 98], smooth: true, color: '#dc2626' },
     ],
-  }
+  }), [])
 
   return (
     <div className="space-y-6">
@@ -45,4 +47,4 @@ export function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

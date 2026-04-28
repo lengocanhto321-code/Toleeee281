@@ -8,7 +8,7 @@ import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender, type SortingState } from '@tanstack/react-table'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 interface NhanSuTongHopTabProps {
   filters: BaoCaoFilters
@@ -21,10 +21,10 @@ const statCards = [
   { title: "Tuyển mới", value: "5", icon: TrendingUp, color: "text-amber-600 bg-amber-50", change: "+3" },
 ]
 
-export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
+export const NhanSuTongHopTab = React.memo(function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
   const [modalData, setModalData] = useState<{ name: string; value: number; percent?: number } | null>(null)
 
-  const pieOption = {
+  const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item' },
     legend: { orient: 'vertical', right: 10, top: 'center' },
     series: [{
@@ -41,9 +41,9 @@ export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
         { value: 20, name: 'Nữ', itemStyle: { color: '#059669' } },
       ],
     }],
-  }
+  }), [])
 
-  const barOption = {
+  const barOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     xAxis: { type: 'category', data: ['Ban Giám hiệu', 'Tổ Toán', 'Tổ Văn', 'Tổ Anh', 'Tổ Lý', 'Tổ Hóa', 'Văn phòng'] },
     yAxis: { type: 'value' },
@@ -53,19 +53,19 @@ export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
       barWidth: '40%',
       emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(30, 64, 175, 0.5)' } }
     }],
-  }
+  }), [])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { accessorKey: 'hoTen', header: 'Họ tên', cell: (info: any) => info.getValue() },
     { accessorKey: 'gioiTinh', header: 'Giới tính', cell: (info: any) => info.getValue() },
     { accessorKey: 'phongBan', header: 'Phòng ban', cell: (info: any) => info.getValue() },
     { accessorKey: 'chucVu', header: 'Chức vụ', cell: (info: any) => info.getValue() },
-  ]
+  ], [])
 
-  const data = [
+  const data = React.useMemo(() => [
     { hoTen: 'Nguyễn Văn A', gioiTinh: 'Nam', phongBan: 'Tổ Toán', chucVu: 'Giáo viên' },
     { hoTen: 'Trần Thị B', gioiTinh: 'Nữ', phongBan: 'Tổ Văn', chucVu: 'Giáo viên' },
     { hoTen: 'Lê Văn C', gioiTinh: 'Nam', phongBan: 'Tổ Anh', chucVu: 'Giáo viên' },
@@ -76,7 +76,7 @@ export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
     { hoTen: 'Bùi Thị H', gioiTinh: 'Nữ', phongBan: 'Tổ Toán', chucVu: 'Giáo viên' },
     { hoTen: 'Vũ Văn I', gioiTinh: 'Nam', phongBan: 'Tổ Văn', chucVu: 'Tổ trưởng' },
     { hoTen: 'Đỗ Thị K', gioiTinh: 'Nữ', phongBan: 'Văn phòng', chucVu: 'Kế toán' },
-  ]
+  ], [])
 
   const table = useReactTable({
     data,
@@ -224,4 +224,4 @@ export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
       </div>
     </div>
   )
-}
+})

@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
+import React, { useState } from 'react'
 
-export function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
-  const barOption = {
+export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
+  const barOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     xAxis: { type: 'category', data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'] },
     yAxis: { type: 'value' },
@@ -15,9 +17,9 @@ export function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
       itemStyle: { borderRadius: [4, 4, 0, 0], color: '#7c3aed' },
       barWidth: '40%',
     }],
-  }
+  }), [])
 
-  const pieOption = {
+  const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { orient: 'vertical', right: 10, top: 'center' },
     series: [{
@@ -28,7 +30,7 @@ export function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
         { value: 8, name: 'Kỷ luật', itemStyle: { color: '#dc2626' } },
       ],
     }],
-  }
+  }), [])
 
   return (
     <div className="space-y-6">
@@ -60,4 +62,4 @@ export function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
       </div>
     </div>
   )
-}
+})

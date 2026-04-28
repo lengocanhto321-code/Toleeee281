@@ -4,10 +4,10 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender, type SortingState } from '@tanstack/react-table'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-export function NhanSuTrinhDoTab({ filters }: { filters: BaoCaoFilters }) {
-  const radarOption = {
+export const NhanSuTrinhDoTab = React.memo(function NhanSuTrinhDoTab({ filters }: { filters: BaoCaoFilters }) {
+  const radarOption = React.useMemo(() => ({
     tooltip: {},
     legend: { data: ['Nam', 'Nữ'] },
     radar: {
@@ -26,19 +26,19 @@ export function NhanSuTrinhDoTab({ filters }: { filters: BaoCaoFilters }) {
         { value: [5, 10, 5, 2, 8], name: 'Nữ', areaStyle: { opacity: 0.3 }, lineStyle: { color: '#d97706' } },
       ]
     }],
-  }
+  }), [])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { accessorKey: 'hoTen', header: 'Họ tên', cell: (info: any) => info.getValue() },
     { accessorKey: 'trinhDo', header: 'Trình độ', cell: (info: any) => info.getValue() },
     { accessorKey: 'chuyenNganh', header: 'Chuyên ngành', cell: (info: any) => info.getValue() },
     { accessorKey: 'namTotNghiep', header: 'Năm tốt nghiệp', cell: (info: any) => info.getValue() },
-  ]
+  ], [])
 
-  const data = [
+  const data = React.useMemo(() => [
     { hoTen: 'Nguyễn Văn A', trinhDo: 'Cử nhân', chuyenNganh: 'Toán học', namTotNghiep: 2020 },
     { hoTen: 'Trần Thị B', trinhDo: 'Thạc sĩ', chuyenNganh: 'Ngữ văn', namTotNghiep: 2018 },
     { hoTen: 'Lê Văn C', trinhDo: 'Cử nhân', chuyenNganh: 'Tiếng Anh', namTotNghiep: 2021 },
@@ -49,7 +49,7 @@ export function NhanSuTrinhDoTab({ filters }: { filters: BaoCaoFilters }) {
     { hoTen: 'Bùi Thị H', trinhDo: 'Cử nhân', chuyenNganh: 'Toán học', namTotNghiep: 2021 },
     { hoTen: 'Vũ Văn I', trinhDo: 'Thạc sĩ', chuyenNganh: 'Quản lý giáo dục', namTotNghiep: 2017 },
     { hoTen: 'Đỗ Thị K', trinhDo: 'Cử nhân', chuyenNganh: 'Kế toán', namTotNghiep: 2020 },
-  ]
+  ], [])
 
   const table = useReactTable({
     data,
@@ -147,4 +147,4 @@ export function NhanSuTrinhDoTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

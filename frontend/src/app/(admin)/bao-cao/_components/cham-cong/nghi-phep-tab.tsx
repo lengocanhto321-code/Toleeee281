@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender } from '@tanstack/react-table'
+import React, { useState } from 'react'
 
-export function ChamCongNghiPhepTab({ filters }: { filters: BaoCaoFilters }) {
-  const pieOption = {
+export const ChamCongNghiPhepTab = React.memo(function ChamCongNghiPhepTab({ filters }: { filters: BaoCaoFilters }) {
+  const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ngày ({d}%)' },
     legend: { orient: 'vertical', right: 10, top: 'center' },
     series: [{
@@ -17,7 +19,7 @@ export function ChamCongNghiPhepTab({ filters }: { filters: BaoCaoFilters }) {
         { value: 3, name: 'Nghỉ thai sản', itemStyle: { color: '#7c3aed' } },
       ],
     }],
-  }
+  }), [])
 
   return (
     <div className="space-y-6">
@@ -43,4 +45,4 @@ export function ChamCongNghiPhepTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

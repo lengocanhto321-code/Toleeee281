@@ -4,10 +4,10 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender, type SortingState } from '@tanstack/react-table'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
-  const lineOption = {
+export const NhanSuBienDongTab = React.memo(function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
+  const lineOption = React.useMemo(() => ({
     tooltip: { trigger: 'axis' },
     legend: { data: ['Tuyển mới', 'Nghỉ việc', 'Tổng nhân sự'] },
     xAxis: { type: 'category', data: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'] },
@@ -17,19 +17,19 @@ export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
       { name: 'Nghỉ việc', type: 'line', data: [1, 0, 2, 1, 1, 0, 1, 2, 1, 0, 1, 1], smooth: true, color: '#dc2626' },
       { name: 'Tổng nhân sự', type: 'line', data: [40, 43, 42, 46, 47, 51, 53, 53, 52, 55, 56, 56], smooth: true, color: '#059669' },
     ],
-  }
+  }), [])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { accessorKey: 'thang', header: 'Tháng', cell: (info: any) => info.getValue() },
     { accessorKey: 'tuyenMoi', header: 'Tuyển mới', cell: (info: any) => info.getValue() },
     { accessorKey: 'nghiViec', header: 'Nghỉ việc', cell: (info: any) => info.getValue() },
     { accessorKey: 'tongNhanSu', header: 'Tổng nhân sự', cell: (info: any) => info.getValue() },
-  ]
+  ], [])
 
-  const data = [
+  const data = React.useMemo(() => [
     { thang: 'T1', tuyenMoi: 2, nghiViec: 1, tongNhanSu: 40 },
     { thang: 'T2', tuyenMoi: 3, nghiViec: 0, tongNhanSu: 43 },
     { thang: 'T3', tuyenMoi: 1, nghiViec: 2, tongNhanSu: 42 },
@@ -40,7 +40,7 @@ export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
     { thang: 'T8', tuyenMoi: 2, nghiViec: 2, tongNhanSu: 53 },
     { thang: 'T9', tuyenMoi: 1, nghiViec: 1, tongNhanSu: 52 },
     { thang: 'T10', tuyenMoi: 3, nghiViec: 0, tongNhanSu: 55 },
-  ]
+  ], [])
 
   const table = useReactTable({
     data,
@@ -138,4 +138,4 @@ export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})

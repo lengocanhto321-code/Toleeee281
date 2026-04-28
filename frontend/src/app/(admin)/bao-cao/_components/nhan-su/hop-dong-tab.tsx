@@ -4,10 +4,10 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, flexRender, type SortingState } from '@tanstack/react-table'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
-export function HopDongTab({ filters }: { filters: BaoCaoFilters }) {
-  const pieOption = {
+export const HopDongTab = React.memo(function HopDongTab({ filters }: { filters: BaoCaoFilters }) {
+  const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { orient: 'vertical', right: 10, top: 'center' },
     series: [{
@@ -19,19 +19,19 @@ export function HopDongTab({ filters }: { filters: BaoCaoFilters }) {
         { value: 2, name: 'Hợp đồng thời vụ', itemStyle: { color: '#7c3aed' } },
       ],
     }],
-  }
+  }), [])
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columns = [
+  const columns = React.useMemo(() => [
     { accessorKey: 'hoTen', header: 'Họ tên', cell: (info: any) => info.getValue() },
     { accessorKey: 'loaiHopDong', header: 'Loại hợp đồng', cell: (info: any) => info.getValue() },
     { accessorKey: 'ngayBatDau', header: 'Ngày bắt đầu', cell: (info: any) => info.getValue() },
     { accessorKey: 'ngayKetThuc', header: 'Ngày kết thúc', cell: (info: any) => info.getValue() },
-  ]
+  ], [])
 
-  const data = [
+  const data = React.useMemo(() => [
     { hoTen: 'Nguyễn Văn A', loaiHopDong: 'Xác định thời hạn', ngayBatDau: '01/01/2024', ngayKetThuc: '31/12/2025' },
     { hoTen: 'Trần Thị B', loaiHopDong: 'Không xác định thời hạn', ngayBatDau: '01/06/2023', ngayKetThuc: 'N/A' },
     { hoTen: 'Lê Văn C', loaiHopDong: 'Xác định thời hạn', ngayBatDau: '15/08/2024', ngayKetThuc: '14/08/2026' },
@@ -42,7 +42,7 @@ export function HopDongTab({ filters }: { filters: BaoCaoFilters }) {
     { hoTen: 'Bùi Thị H', loaiHopDong: 'Xác định thời hạn', ngayBatDau: '01/09/2024', ngayKetThuc: '31/08/2026' },
     { hoTen: 'Vũ Văn I', loaiHopDong: 'Không xác định thời hạn', ngayBatDau: '01/01/2021', ngayKetThuc: 'N/A' },
     { hoTen: 'Đỗ Thị K', loaiHopDong: 'Xác định thời hạn', ngayBatDau: '15/10/2024', ngayKetThuc: '14/10/2026' },
-  ]
+  ], [])
 
   const table = useReactTable({
     data,
@@ -140,4 +140,4 @@ export function HopDongTab({ filters }: { filters: BaoCaoFilters }) {
       </Card>
     </div>
   )
-}
+})
