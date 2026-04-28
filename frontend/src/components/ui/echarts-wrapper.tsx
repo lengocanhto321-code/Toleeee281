@@ -50,17 +50,21 @@ export function EChartsWrapper({
     backgroundColor: 'transparent',
   }
 
+  const echartsProps: Record<string, unknown> = {
+    echarts: require('echarts'),
+    option: mergedOption,
+    notMerge,
+    lazyUpdate,
+    style: { height: '100%', width: '100%' },
+    theme: theme === 'dark' ? 'dark' : undefined,
+  }
+  if (loading) {
+    echartsProps.loading = loading
+  }
+
   return (
     <div className={cn("w-full", className)} style={{ height, ...style }}>
-      <EChartsReact
-        echarts={require('echarts')}
-        option={mergedOption}
-        notMerge={notMerge}
-        lazyUpdate={lazyUpdate}
-        style={{ height: '100%', width: '100%' }}
-        loading={loading}
-        theme={theme === 'dark' ? 'dark' : undefined}
-      />
+      <EChartsReact {...echartsProps} />
     </div>
   )
 }
