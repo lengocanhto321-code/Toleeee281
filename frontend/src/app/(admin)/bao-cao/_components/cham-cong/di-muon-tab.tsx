@@ -1,18 +1,22 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
+import { useState } from "react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 
 export function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
   const hours = ['7:30', '7:40', '7:50', '8:00', '8:10', '8:20']
   const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7']
   
-  const data = []
-  for (let i = 0; i < days.length; i++) {
-    for (let j = 0; j < hours.length; j++) {
-      data.push([j, i, Math.floor(Math.random() * 5)])
+  const [data] = useState(() => {
+    const result = []
+    for (let i = 0; i < days.length; i++) {
+      for (let j = 0; j < hours.length; j++) {
+        result.push([j, i, Math.floor(Math.random() * 5)])
+      }
     }
-  }
+    return result
+  })
 
   const heatmapOption = {
     tooltip: { position: 'top' },
