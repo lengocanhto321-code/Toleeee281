@@ -17,7 +17,11 @@ import { LuongSoSanhTab } from "./_components/luong/so-sanh-tab"
 import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
 import type { BaoCaoFilters } from "@/types/bao-cao.types"
-import { Users, Clock, Wallet, Trophy, TrendingUp, ChevronDown, CalendarIcon } from "lucide-react"
+import {
+  Users, Clock, Wallet, Trophy, TrendingUp, CalendarIcon, ChevronDown,
+  PieChart, Activity, BarChart3, GraduationCap, FileText,
+  CalendarCheck, CalendarOff, Timer, Receipt, ShieldCheck, GitCompareArrows,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -27,32 +31,61 @@ import { format, subDays, subMonths, subYears, startOfDay, endOfDay } from "date
 import { vi } from "date-fns/locale"
 
 const TAB_ITEMS = [
-  { id: "nhan-su", label: "Nhân sự", icon: Users, subs: ["tong-hop", "bien-dong", "demo", "trinh-do", "hop-dong"] },
-  { id: "cham-cong", label: "Chấm công", icon: Clock, subs: ["tong-hop", "nghi-phep", "di-muon"] },
-  { id: "luong", label: "Lương", icon: Wallet, subs: ["chi-phi", "thue-bhxh", "so-sanh"] },
+  {
+    id: "nhan-su",
+    label: "Nhân sự",
+    icon: Users,
+    subs: [
+      { id: "tong-hop", label: "Tổng hợp", icon: PieChart },
+      { id: "bien-dong", label: "Biến động", icon: Activity },
+      { id: "demo", label: "Demographics", icon: BarChart3 },
+      { id: "trinh-do", label: "Trình độ", icon: GraduationCap },
+      { id: "hop-dong", label: "Hợp đồng", icon: FileText },
+    ],
+  },
+  {
+    id: "cham-cong",
+    label: "Chấm công",
+    icon: Clock,
+    subs: [
+      { id: "tong-hop", label: "Tổng hợp", icon: CalendarCheck },
+      { id: "nghi-phep", label: "Nghỉ phép", icon: CalendarOff },
+      { id: "di-muon", label: "Đi muộn", icon: Timer },
+    ],
+  },
+  {
+    id: "luong",
+    label: "Lương",
+    icon: Wallet,
+    subs: [
+      { id: "chi-phi", label: "Chi phí", icon: Receipt },
+      { id: "thue-bhxh", label: "Thuế & BHXH", icon: ShieldCheck },
+      { id: "so-sanh", label: "So sánh", icon: GitCompareArrows },
+    ],
+  },
   { id: "khen-thuong", label: "Khen thưởng", icon: Trophy },
   { id: "xu-huong", label: "Xu hướng", icon: TrendingUp },
 ]
 
-const NHAN_SU_TABS = [
-  { id: "tong-hop", component: NhanSuTongHopTab },
-  { id: "bien-dong", component: NhanSuBienDongTab },
-  { id: "demo", component: NhanSuDemoGraphicsTab },
-  { id: "trinh-do", component: NhanSuTrinhDoTab },
-  { id: "hop-dong", component: HopDongTab },
-]
-
-const CHAM_CONG_TABS = [
-  { id: "tong-hop", component: ChamCongTongHopTab },
-  { id: "nghi-phep", component: ChamCongNghiPhepTab },
-  { id: "di-muon", component: DiMuonTab },
-]
-
-const LUONG_TABS = [
-  { id: "chi-phi", component: LuongChiPhiTab },
-  { id: "thue-bhxh", component: LuongThueBHXHTab },
-  { id: "so-sanh", component: LuongSoSanhTab },
-]
+const SUB_COMPONENTS: Record<string, { id: string; component: React.ComponentType<{ filters: BaoCaoFilters }> }[]> = {
+  "nhan-su": [
+    { id: "tong-hop", component: NhanSuTongHopTab },
+    { id: "bien-dong", component: NhanSuBienDongTab },
+    { id: "demo", component: NhanSuDemoGraphicsTab },
+    { id: "trinh-do", component: NhanSuTrinhDoTab },
+    { id: "hop-dong", component: HopDongTab },
+  ],
+  "cham-cong": [
+    { id: "tong-hop", component: ChamCongTongHopTab },
+    { id: "nghi-phep", component: ChamCongNghiPhepTab },
+    { id: "di-muon", component: DiMuonTab },
+  ],
+  "luong": [
+    { id: "chi-phi", component: LuongChiPhiTab },
+    { id: "thue-bhxh", component: LuongThueBHXHTab },
+    { id: "so-sanh", component: LuongSoSanhTab },
+  ],
+}
 
 type QuickRange = "today" | "week" | "month" | "year" | "range"
 
@@ -66,29 +99,19 @@ const QUICK_RANGES: { id: QuickRange; label: string }[] = [
 
 function ContentArea({ type, subType, filters }: { type: string; subType: string; filters: BaoCaoFilters }) {
   const renderContent = () => {
+    const tabs = SUB_COMPONENTS[type]
+    if (tabs) {
+      const tab = tabs.find(t => t.id === subType) || tabs[0]
+      const Component = tab.component
+      return <Component filters={filters} />
+    }
     switch (type) {
-      case "nhan-su": {
-        const tab = NHAN_SU_TABS.find(t => t.id === subType) || NHAN_SU_TABS[0]
-        const Component = tab.component
-        return <Component filters={filters} />
-      }
-      case "cham-cong": {
-        const tab = CHAM_CONG_TABS.find(t => t.id === subType) || CHAM_CONG_TABS[0]
-        const Component = tab.component
-        return <Component filters={filters} />
-      }
-      case "luong": {
-        const tab = LUONG_TABS.find(t => t.id === subType) || LUONG_TABS[0]
-        const Component = tab.component
-        return <Component filters={filters} />
-      }
       case "khen-thuong":
         return <KhenThuongTab filters={filters} />
       case "xu-huong":
         return <XuHuongTab filters={filters} />
       default: {
-        const tab = NHAN_SU_TABS[0]
-        const Component = tab.component
+        const Component = NhanSuTongHopTab
         return <Component filters={filters} />
       }
     }
@@ -118,13 +141,17 @@ function BaoCaoContent() {
   const [dateFrom, setDateFrom] = useState<Date>(subMonths(now, 1))
   const [dateTo, setDateTo] = useState<Date>(now)
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [expandedTab, setExpandedTab] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
   const router = useRouter()
 
   const type = searchParams.get("type") || "nhan-su"
   const subType = searchParams.get("sub") || ""
+
+  const activeTab = TAB_ITEMS.find(t => t.id === type) || TAB_ITEMS[0]
+  const activeSubs = activeTab.subs
+  const defaultSub = activeSubs?.[0]?.id || ""
+  const currentSub = subType || defaultSub
 
   const handleQuickRange = (range: QuickRange) => {
     setQuickRange(range)
@@ -169,114 +196,116 @@ function BaoCaoContent() {
     router.push(`/bao-cao?${params.toString()}`)
   }
 
+  const handleSubChange = (subId: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("type", type)
+    params.set("sub", subId)
+    router.push(`/bao-cao?${params.toString()}`)
+  }
+
   return (
     <AuthenticatedLayout>
       <div className="flex-1 space-y-4 p-6">
         {/* Date Filter Bar */}
-        <div className="flex items-center gap-3 bg-white rounded-xl border shadow-sm p-3">
-          {QUICK_RANGES.map((qr) => (
-            <Button
-              key={qr.id}
-              variant={quickRange === qr.id ? "default" : "outline"}
-              size="sm"
-              className={cn(
-                "h-8 text-xs",
-                quickRange === qr.id && "bg-blue-600 hover:bg-blue-700 text-white"
-              )}
-              onClick={() => handleQuickRange(qr.id)}
-            >
-              {qr.label}
-            </Button>
-          ))}
+        <div className="flex items-center justify-between bg-white rounded-xl border shadow-sm px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            {QUICK_RANGES.map((qr) => (
+              <Button
+                key={qr.id}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "h-7 px-3 text-xs rounded-md transition-all",
+                  quickRange === qr.id
+                    ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+                onClick={() => handleQuickRange(qr.id)}
+              >
+                {qr.label}
+              </Button>
+            ))}
+          </div>
 
-          {quickRange !== "range" && (
-            <span className="text-xs text-muted-foreground ml-2">
-              {format(dateFrom, "dd/MM/yyyy")} — {format(dateTo, "dd/MM/yyyy")}
-            </span>
-          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {quickRange !== "range" && (
+              <span className="bg-muted/50 px-3 py-1 rounded-md font-medium">
+                {format(dateFrom, "dd/MM/yyyy")} — {format(dateTo, "dd/MM/yyyy")}
+              </span>
+            )}
 
-          {quickRange === "range" && (
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 ml-2">
-                  <CalendarIcon className="w-3.5 h-3.5" />
-                  {dateFrom && dateTo
-                    ? `${format(dateFrom, "dd/MM/yyyy")} — ${format(dateTo, "dd/MM/yyyy")}`
-                    : "Chọn khoảng thời gian"}
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={{ from: dateFrom, to: dateTo }}
-                  onSelect={handleRangeSelect}
-                  numberOfMonths={2}
-                  locale={vi}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
+            {quickRange === "range" && (
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    {dateFrom && dateTo
+                      ? `${format(dateFrom, "dd/MM/yyyy")} — ${format(dateTo, "dd/MM/yyyy")}`
+                      : "Chọn khoảng thời gian"}
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateFrom, to: dateTo }}
+                    onSelect={handleRangeSelect}
+                    numberOfMonths={2}
+                    locale={vi}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         </div>
 
-        {/* Tabs Navigation */}
+        {/* Main Tabs */}
         <div className="border-b">
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             {TAB_ITEMS.map((tab) => (
-              <div key={tab.id} className="relative">
-                <button
-                  onClick={() => {
-                    handleTabChange(tab.id)
-                    if (tab.subs) {
-                      setExpandedTab(expandedTab === tab.id ? null : tab.id)
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200",
-                    type === tab.id
-                      ? "border-blue-600 text-blue-600 bg-blue-50/50"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  {tab.label}
-                  {tab.subs && (
-                    <ChevronDown className={cn(
-                      "w-3 h-3 transition-transform",
-                      expandedTab === tab.id && "rotate-180"
-                    )} />
-                  )}
-                </button>
-                {expandedTab === tab.id && tab.subs && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-50 py-1 min-w-[150px]"
-                  >
-                    {tab.subs.map((sub) => (
-                      <button
-                        key={sub}
-                        onClick={() => {
-                          const params = new URLSearchParams(searchParams)
-                          params.set("type", tab.id)
-                          params.set("sub", sub)
-                          router.push(`/bao-cao?${params.toString()}`)
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 text-muted-foreground hover:text-blue-600 transition-colors"
-                      >
-                        {sub}
-                      </button>
-                    ))}
-                  </motion.div>
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  "relative flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-all duration-200",
+                  type === tab.id
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
-              </div>
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </button>
             ))}
           </div>
         </div>
 
+        {/* Sub Tabs (only show when active tab has subs) */}
+        {activeSubs && activeSubs.length > 0 && (
+          <div className="flex items-center gap-1 -mt-2">
+            {activeSubs.map((sub) => {
+              const SubIcon = sub.icon
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => handleSubChange(sub.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200",
+                    currentSub === sub.id
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
+                  )}
+                >
+                  <SubIcon className="w-3.5 h-3.5" />
+                  {sub.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* Content */}
-        <ContentArea type={type} subType={subType} filters={filters} />
+        <ContentArea type={type} subType={currentSub} filters={filters} />
       </div>
     </AuthenticatedLayout>
   )
