@@ -6,17 +6,9 @@ import { cn } from "@/lib/utils"
 import { corporateCleanTheme } from "@/lib/echarts-theme"
 
 let echartsModule: any = null
-let echartsModulePromise: Promise<any> | null = null
 
-function getEcharts() {
-  if (echartsModule) return echartsModule
-  if (!echartsModulePromise) {
-    echartsModulePromise = import('echarts').then((mod) => {
-      echartsModule = mod
-      return mod
-    })
-  }
-  return null
+function getEchartsInstance() {
+  return echartsModule
 }
 
 interface EChartsWrapperProps {
@@ -30,69 +22,130 @@ interface EChartsWrapperProps {
   onEvents?: Record<string, (params: any) => void>
 }
 
-export function EChartsWrapper({
+const EChartsInner = React.memo(function EChartsInner({
   option,
-  className,
+  height,
   style,
-  height = 350,
-  loading = false,
+  className,
   notMerge = true,
   lazyUpdate = true,
+  loading,
   onEvents,
 }: EChartsWrapperProps) {
   const { theme } = useTheme()
-  const [EChartsReact, setEChartsReact] = React.useState<React.ComponentType<any> | null>(null)
-  const [echarts, setEcharts] = React.useState<any>(getEcharts())
+  const chartRef = React.useRef<any>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
-    if (!echarts) {
-      echartsModulePromise?.then(() => {
-        setEcharts(echartsModule)
-      })
+    let disposed = false
+    let chart: any = null
+
+    async function init() {
+      const echarts = getEchartsInstance()
+      if (!echarts || !containerRef.current || disposed) return
+
+      chart = echarts.init(containerRef.current, theme === 'dark' ? 'dark' : undefined)
+      chartRef.current = chart
+
+      const mergedOption = {
+        ...corporateCleanTheme,
+        ...option,
+        backgroundColor: 'transparent',
+      }
+      chart.setOption(mergedOption, { notMerge, lazyUpdate })
+
+      const handleResize = () => chart?.resize()
+      window.addEventListener('resize', handleResize)
+
+      return () => {
+        window.removeEventListener('resize', handleResize)
+        chart?.dispose()
+      }
+    }
+
+    init()
+
+    return () => {
+      disposed = true
+      chart?.dispose()
+      chartRef.current = null
     }
   }, [])
 
   React.useEffect(() => {
-    import('echarts-for-react').then((mod) => {
-      setEChartsReact(() => mod.default)
+    const chart = chartRef.current
+    if (!chart) return
+    const mergedOption = {
+      ...corporateCleanTheme,
+      ...option,
+      backgroundColor: 'transparent',
+    }
+    chart.setOption(mergedOption, { notMerge, lazyUpdate })
+  }, [option, notMerge, lazyUpdate])
+
+  React.useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return
+    if (loading) {
+      chart.showLoading()
+    } else {
+      chart.hideLoading()
+    }
+  }, [loading])
+
+  React.useEffect(() => {
+    if (!onEvents || !chartRef.current) return
+    const chart = chartRef.current
+    const entries = Object.entries(onEvents)
+    entries.forEach(([event, handler]) => {
+      chart.on(event, handler)
+    })
+    return () => {
+      entries.forEach(([event, handler]) => {
+        chart.off(event, handler)
+      })
+    }
+  }, [onEvents])
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("w-full", className)}
+      style={{ height, ...style }}
+    />
+  )
+}, (prev, next) => {
+  return prev.option === next.option
+    && prev.height === next.height
+    && prev.loading === next.loading
+    && prev.className === next.className
+})
+
+export function EChartsWrapper(props: EChartsWrapperProps) {
+  const [ready, setReady] = React.useState(false)
+
+  React.useEffect(() => {
+    if (echartsModule) {
+      setReady(true)
+      return
+    }
+    import('echarts').then((mod) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      echartsModule = (mod as any).default || mod
+      setReady(true)
     })
   }, [])
 
-  if (!EChartsReact || !echarts) {
+  if (!ready) {
     return (
       <div
-        className={cn("flex items-center justify-center", className)}
-        style={{ height, ...style }}
+        className={cn("flex items-center justify-center", props.className)}
+        style={{ height: props.height, ...props.style }}
       >
         <div className="text-sm text-muted-foreground">Loading chart...</div>
       </div>
     )
   }
 
-  const mergedOption = {
-    ...corporateCleanTheme,
-    ...option,
-    backgroundColor: 'transparent',
-  }
-
-  const echartsProps: Record<string, unknown> = {
-    echarts,
-    option: mergedOption,
-    notMerge,
-    lazyUpdate,
-    style: { height: '100%', width: '100%' },
-    theme: theme === 'dark' ? 'dark' : undefined,
-  }
-  if (loading) {
-    echartsProps.loading = loading
-  }
-  if (onEvents) {
-    echartsProps.onEvents = onEvents
-  }
-
-  return (
-    <div className={cn("w-full", className)} style={{ height, ...style }}>
-      <EChartsReact {...echartsProps} />
-    </div>
-  )
+  return <EChartsInner {...props} />
 }
