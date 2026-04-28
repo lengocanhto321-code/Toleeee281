@@ -2,8 +2,6 @@
 
 import { useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { NhanSuTongHopTab } from "./_components/nhan-su/tong-hop-tab"
 import { NhanSuBienDongTab } from "./_components/nhan-su/bien-dong-tab"
@@ -19,7 +17,7 @@ import { LuongSoSanhTab } from "./_components/luong/so-sanh-tab"
 import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
 import type { BaoCaoFilters } from "@/types/bao-cao.types"
-import { BarChart3, Filter, CalendarDays, Users, Clock, Wallet, Trophy, TrendingUp } from "lucide-react"
+import { BarChart3, Users, Clock, Wallet, Trophy, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 
@@ -100,21 +98,11 @@ function BaoCaoContent() {
     return { thang: now.getMonth() + 1, nam: now.getFullYear() }
   })
 
-  const [thang, setThang] = useState(String(new Date().getMonth() + 1))
-  const [nam, setNam] = useState(String(new Date().getFullYear()))
-
   const searchParams = useSearchParams()
   const router = useRouter()
 
   const type = searchParams.get("type") || "nhan-su"
   const subType = searchParams.get("sub") || ""
-
-  const applyFilters = () => {
-    setFilters({
-      thang: parseInt(thang),
-      nam: parseInt(nam),
-    })
-  }
 
   const handleTabChange = (newType: string) => {
     const params = new URLSearchParams(searchParams)
@@ -137,46 +125,6 @@ function BaoCaoContent() {
               <BarChart3 className="w-6 h-6 text-blue-300" />
               <h1 className="text-2xl font-bold text-white">Báo cáo & Thống kê</h1>
             </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl border shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Bộ lọc</span>
-          </div>
-          <div className="flex flex-wrap gap-3 items-end">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Tháng</label>
-              <Select value={thang} onValueChange={setThang}>
-                <SelectTrigger className="w-[110px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <SelectItem key={i} value={String(i + 1)}>Tháng {i + 1}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Năm</label>
-              <Select value={nam} onValueChange={setNam}>
-                <SelectTrigger className="w-[110px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2024, 2025, 2026].map((y) => (
-                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={applyFilters} size="sm" className="h-9 bg-blue-600 hover:bg-blue-700">
-              <CalendarDays className="w-4 h-4 mr-1.5" />
-              Áp dụng
-            </Button>
           </div>
         </div>
 
