@@ -9,7 +9,22 @@ import React, { useState } from 'react'
 export const ChamCongNghiPhepTab = React.memo(function ChamCongNghiPhepTab({ filters }: { filters: BaoCaoFilters }) {
   const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ngày ({d}%)' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      textStyle: { fontSize: 12, color: '#475569' },
+      icon: 'roundRect',
+      itemWidth: 12,
+      itemHeight: 12,
+    },
+    grid: {
+      left: '3%',
+      right: '20%',
+      top: '5%',
+      bottom: '3%',
+      containLabel: true,
+    },
     series: [{
       type: 'pie', radius: ['40%', '70%'],
       data: [

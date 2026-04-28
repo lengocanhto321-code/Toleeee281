@@ -21,7 +21,22 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
 
   const pieOption = React.useMemo(() => ({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      textStyle: { fontSize: 12, color: '#475569' },
+      icon: 'roundRect',
+      itemWidth: 12,
+      itemHeight: 12,
+    },
+    grid: {
+      left: '3%',
+      right: '20%',
+      top: '5%',
+      bottom: '3%',
+      containLabel: true,
+    },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],

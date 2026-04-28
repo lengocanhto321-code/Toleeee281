@@ -31,20 +31,32 @@ export const corporateCleanTheme = {
     type: 'plain',
     textGap: 8,
     orient: 'horizontal',
-    bottom: 0,
+    top: 0,
     left: 'center',
   },
   tooltip: {
+    trigger: 'item',
     backgroundColor: '#ffffff',
     borderColor: '#e2e8f0',
     borderWidth: 1,
     borderRadius: 8,
     padding: [8, 12],
-    textStyle: {
-      fontSize: 12,
-      color: '#0f172a',
-    },
-    extraCssText: 'box-shadow: 0 1px 3px rgba(0,0,0,0.1)',
+    textStyle: { fontSize: 12, color: '#0f172a' },
+    extraCssText: 'box-shadow: 0 4px 6px rgba(0,0,0,0.07)',
+    formatter: function(params: any) {
+      if (params.seriesType === 'pie' || params.seriesType === 'radar') {
+        return `<div style="font-weight:600;margin-bottom:4px">${params.name}</div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${params.color}"></span>
+                  <span>${params.value} (${params.percent || Math.round(params.percent || 0)}%)</span>
+                </div>`
+      }
+      return `<div style="font-weight:600;margin-bottom:4px">${params.name || params.seriesName}</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${params.color}"></span>
+                <span>${params.value}</span>
+              </div>`
+    }
   },
   xAxis: {
     axisLine: {
@@ -86,9 +98,9 @@ export const corporateCleanTheme = {
   },
   grid: {
     left: '3%',
-    right: '4%',
-    bottom: '3%',
-    top: '15%',
+    right: '3%',
+    bottom: '12%',
+    top: '20%',
     containLabel: true,
   },
 }
