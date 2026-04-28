@@ -2,9 +2,13 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
-import { BarChart3, FileSpreadsheet, Download, TrendingUp, Users, Clock, Wallet, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useRouter, useSearchParams } from "next/navigation"
+import {
+  BarChart3, Users, Clock, Wallet, ChevronRight,
+  PieChart, Activity, BarChart3Icon, GraduationCap, FileText,
+  CalendarCheck, CalendarOff, Timer, Receipt, ShieldCheck, GitCompareArrows,
+  Trophy, TrendingUp,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -14,47 +18,74 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 
-interface BaoCaoSidebarPanelProps {}
+const REPORT_CATEGORIES = [
+  {
+    id: "nhan-su",
+    label: "Nhân sự",
+    icon: Users,
+    subs: [
+      { id: "tong-hop", label: "Tổng hợp", icon: PieChart },
+      { id: "bien-dong", label: "Biến động", icon: Activity },
+      { id: "demo", label: "Demographics", icon: BarChart3Icon },
+      { id: "trinh-do", label: "Trình độ", icon: GraduationCap },
+      { id: "hop-dong", label: "Hợp đồng", icon: FileText },
+    ],
+  },
+  {
+    id: "cham-cong",
+    label: "Chấm công",
+    icon: Clock,
+    subs: [
+      { id: "tong-hop", label: "Tổng hợp", icon: CalendarCheck },
+      { id: "nghi-phep", label: "Nghỉ phép", icon: CalendarOff },
+      { id: "di-muon", label: "Đi muộn", icon: Timer },
+    ],
+  },
+  {
+    id: "luong",
+    label: "Lương",
+    icon: Wallet,
+    subs: [
+      { id: "chi-phi", label: "Chi phí", icon: Receipt },
+      { id: "thue-bhxh", label: "Thuế & BHXH", icon: ShieldCheck },
+      { id: "so-sanh", label: "So sánh", icon: GitCompareArrows },
+    ],
+  },
+  { id: "khen-thuong", label: "Khen thưởng", icon: Trophy, subs: [] },
+  { id: "xu-huong", label: "Xu hướng", icon: TrendingUp, subs: [] },
+]
 
-export function BaoCaoSidebarPanel({}: BaoCaoSidebarPanelProps) {
+export function BaoCaoSidebarPanel() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState("nhan-su")
-  const [expandedCat, setExpandedCat] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
-  const quickStats = [
-    { label: "Nhân sự", icon: Users, count: 45, color: "text-blue-600 bg-blue-50" },
-    { label: "Chấm công", icon: Clock, count: "98%", color: "text-emerald-600 bg-emerald-50" },
-    { label: "Lương", icon: Wallet, count: "12.5M", color: "text-amber-600 bg-amber-50" },
-  ]
+  const currentType = searchParams.get("type") || "nhan-su"
+  const currentSub = searchParams.get("sub") || ""
+  const [expandedCat, setExpandedCat] = useState<string | null>(currentType)
 
-  const reportLinks = [
-    {
-      id: "nhan-su",
-      label: "Nhân sự",
-      icon: Users,
-      sub: ["Tổng hợp", "Biến động", "Demographics", "Trình độ", "Hợp đồng"],
-      href: "/bao-cao?type=nhan-su",
-    },
-    {
-      id: "cham-cong",
-      label: "Chấm công",
-      icon: Clock,
-      sub: ["Tổng hợp", "Nghỉ phép", "Đi muộn"],
-      href: "/bao-cao?type=cham-cong",
-    },
-    {
-      id: "luong",
-      label: "Lương",
-      icon: Wallet,
-      sub: ["Chi phí", "Thuế & BHXH", "So sánh"],
-      href: "/bao-cao?type=luong",
-    },
-  ]
+  const handleCategoryClick = (catId: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("type", catId)
+    params.delete("sub")
+    router.push(`/bao-cao?${params.toString()}`)
+    setExpandedCat(expandedCat === catId ? null : catId)
+  }
 
-  const recentReports = [
-    { name: "Báo cáo tháng 4/2026", date: "20/04/2026", type: "Nhân sự" },
-    { name: "Báo cáo Q1/2026", date: "15/04/2026", type: "Lương" },
-  ]
+  const handleSubClick = (catId: string, subId: string) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("type", catId)
+    params.set("sub", subId)
+    router.push(`/bao-cao?${params.toString()}`)
+  }
+
+  const isSubActive = (catId: string, subId: string) => {
+    if (catId !== currentType) return false
+    if (!currentSub) {
+      const cat = REPORT_CATEGORIES.find(c => c.id === catId)
+      return cat?.subs?.[0]?.id === subId
+    }
+    return currentSub === subId
+  }
 
   return (
     <>
@@ -69,103 +100,68 @@ export function BaoCaoSidebarPanel({}: BaoCaoSidebarPanelProps) {
       <SidebarContent>
         <SidebarGroup className="px-0">
           <SidebarGroupContent>
-            <div className="p-4 space-y-4">
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-2">
-                {quickStats.map((stat) => (
-                  <div key={stat.label} className="text-center p-2 rounded-xl border bg-white/60 backdrop-blur-xl">
-                    <stat.icon className={cn("w-4 h-4 mx-auto mb-1", stat.color.split(" ")[0])} />
-                    <div className="text-sm font-semibold text-foreground">{stat.count}</div>
-                    <div className="text-xs text-muted-foreground">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
+            <div className="p-3 space-y-0.5">
+              {REPORT_CATEGORIES.map((cat) => {
+                const isActive = currentType === cat.id
+                const isExpanded = expandedCat === cat.id
+                const hasSubs = cat.subs && cat.subs.length > 0
 
-              {/* Quick Actions */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Thao tác nhanh</p>
-                <Button variant="outline" className="w-full justify-start gap-2 h-9 border-border/50">
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Tạo báo cáo mới
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 h-9 border-border/50">
-                  <Download className="w-4 h-4" />
-                  Xuất Excel
-                </Button>
-              </div>
-
-              {/* Report Categories */}
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Danh mục báo cáo</p>
-                {reportLinks.map((cat) => (
+                return (
                   <div key={cat.id}>
                     <button
-                      onClick={() => {
-                        setActiveTab(cat.id)
-                        if (cat.sub && cat.sub.length > 0) {
-                          setExpandedCat(expandedCat === cat.id ? null : cat.id)
-                        }
-                        router.push(cat.href)
-                      }}
+                      onClick={() => handleCategoryClick(cat.id)}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200",
-                        activeTab === cat.id
-                          ? "bg-blue-50 text-blue-700 font-medium border border-blue-200"
-                          : "hover:bg-muted text-muted-foreground border border-transparent hover:border-border/50"
+                        isActive
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "hover:bg-muted/70 text-muted-foreground"
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <cat.icon className="w-4 h-4" />
+                      <div className="flex items-center gap-2.5">
+                        <cat.icon className={cn("w-4 h-4", isActive && "text-blue-600")} />
                         <span className="flex-1">{cat.label}</span>
-                        {cat.sub && cat.sub.length > 0 && (
+                        {hasSubs && (
                           <ChevronRight className={cn(
-                            "w-3 h-3 transition-transform",
-                            expandedCat === cat.id && "rotate-90"
+                            "w-3.5 h-3.5 transition-transform duration-200",
+                            isExpanded && "rotate-90"
                           )} />
                         )}
                       </div>
                     </button>
-                    {/* Expandable subcategories */}
-                    {expandedCat === cat.id && cat.sub && (
+
+                    {isExpanded && hasSubs && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.15 }}
                         className="overflow-hidden"
                       >
-                        <div className="ml-6 mt-1 space-y-1">
-                          {cat.sub.map((sub) => (
-                            <button
-                              key={sub}
-                              onClick={() => router.push(`${cat.href}?sub=${sub.toLowerCase().replace(/ /g, '-')}`)}
-                              className="w-full text-left px-3 py-1.5 text-xs rounded-md hover:bg-blue-50 text-muted-foreground hover:text-blue-600 transition-colors"
-                            >
-                              {sub}
-                            </button>
-                          ))}
+                        <div className="ml-5 mt-0.5 space-y-0.5 border-l border-border/50 pl-2.5 py-0.5">
+                          {cat.subs.map((sub) => {
+                            const subActive = isSubActive(cat.id, sub.id)
+                            const SubIcon = sub.icon
+                            return (
+                              <button
+                                key={sub.id}
+                                onClick={() => handleSubClick(cat.id, sub.id)}
+                                className={cn(
+                                  "w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-all duration-150 flex items-center gap-2",
+                                  subActive
+                                    ? "bg-blue-100/70 text-blue-700 font-medium"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                )}
+                              >
+                                <SubIcon className="w-3.5 h-3.5" />
+                                {sub.label}
+                              </button>
+                            )
+                          })}
                         </div>
                       </motion.div>
                     )}
                   </div>
-                ))}
-              </div>
-
-              {/* Recent Reports */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Gần đây</p>
-                <div className="space-y-2">
-                  {recentReports.map((report, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-transparent hover:border-border/50">
-                      <div>
-                        <div className="text-sm font-medium">{report.name}</div>
-                        <div className="text-xs text-muted-foreground">{report.type} • {report.date}</div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+                )
+              })}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
