@@ -3,16 +3,8 @@
 import { useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
-import { NhanSuTongHopTab } from "./_components/nhan-su/tong-hop-tab"
-import { NhanSuBienDongTab } from "./_components/nhan-su/bien-dong-tab"
-import { NhanSuDemoGraphicsTab } from "./_components/nhan-su/demo-graphics-tab"
-import { NhanSuTrinhDoTab } from "./_components/nhan-su/trinh-do-tab"
 import { HopDongTab } from "./_components/nhan-su/hop-dong-tab"
-import { ChamCongTongHopTab } from "./_components/cham-cong/tong-hop-tab"
-import { ChamCongNghiPhepTab } from "./_components/cham-cong/nghi-phep-tab"
 import { DiMuonTab } from "./_components/cham-cong/di-muon-tab"
-import { LuongChiPhiTab } from "./_components/luong/chi-phi-tab"
-import { LuongThueBHXHTab } from "./_components/luong/thue-bhxh-tab"
 import { LuongSoSanhTab } from "./_components/luong/so-sanh-tab"
 import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
@@ -28,20 +20,12 @@ import { vi } from "date-fns/locale"
 
 const SUB_COMPONENTS: Record<string, { id: string; component: React.ComponentType<{ filters: BaoCaoFilters }> }[]> = {
   "nhan-su": [
-    { id: "tong-hop", component: NhanSuTongHopTab },
-    { id: "bien-dong", component: NhanSuBienDongTab },
-    { id: "demo", component: NhanSuDemoGraphicsTab },
-    { id: "trinh-do", component: NhanSuTrinhDoTab },
     { id: "hop-dong", component: HopDongTab },
   ],
   "cham-cong": [
-    { id: "tong-hop", component: ChamCongTongHopTab },
-    { id: "nghi-phep", component: ChamCongNghiPhepTab },
     { id: "di-muon", component: DiMuonTab },
   ],
   "luong": [
-    { id: "chi-phi", component: LuongChiPhiTab },
-    { id: "thue-bhxh", component: LuongThueBHXHTab },
     { id: "so-sanh", component: LuongSoSanhTab },
   ],
 }
@@ -73,7 +57,7 @@ function ContentArea({ type, subType, filters }: { type: string; subType: string
     case "xu-huong":
       return <XuHuongTab filters={filters} />
     default:
-      return <NhanSuTongHopTab filters={filters} />
+      return <HopDongTab filters={filters} />
   }
 }
 
