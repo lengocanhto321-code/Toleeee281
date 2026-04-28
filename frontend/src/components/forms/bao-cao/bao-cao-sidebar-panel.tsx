@@ -31,21 +31,21 @@ export function BaoCaoSidebarPanel({}: BaoCaoSidebarPanelProps) {
       label: "Nhân sự",
       icon: Users,
       sub: ["Tổng hợp", "Biến động", "Demographics", "Trình độ", "Hợp đồng"],
-      href: "/bao-cao/nhan-su/tong-hop",
+      href: "/bao-cao?type=nhan-su",
     },
     {
       id: "cham-cong",
       label: "Chấm công",
       icon: Clock,
       sub: ["Tổng hợp", "Nghỉ phép", "Đi muộn"],
-      href: "/bao-cao/cham-cong/tong-hop",
+      href: "/bao-cao?type=cham-cong",
     },
     {
       id: "luong",
       label: "Lương",
       icon: Wallet,
       sub: ["Chi phí", "Thuế & BHXH", "So sánh"],
-      href: "/bao-cao/luong/chi-phi",
+      href: "/bao-cao?type=luong",
     },
   ]
 
