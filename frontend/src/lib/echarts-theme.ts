@@ -28,6 +28,11 @@ export const corporateCleanTheme = {
     itemWidth: 12,
     itemHeight: 12,
     itemGap: 16,
+    type: 'plain',
+    textGap: 8,
+    orient: 'horizontal',
+    bottom: 0,
+    left: 'center',
   },
   tooltip: {
     backgroundColor: '#ffffff',
