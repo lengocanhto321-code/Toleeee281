@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
-import { Users, UserCheck, UserX, TrendingUp } from "lucide-react"
+import { Users, UserCheck, UserX, TrendingUp, TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
@@ -61,14 +61,40 @@ export function NhanSuTongHopTab({ filters }: NhanSuTongHopTabProps) {
           </motion.div>
         ))}
       </div>
+
+      {/* Table Section */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <TableProperties className="w-4 h-4" />
+            Danh sách nhân sự
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground text-center py-8">
+            Bảng dữ liệu nhân sự sẽ hiển thị tại đây
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Charts Section */}
       <div className="grid grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Cơ cấu giới tính</CardTitle></CardHeader>
-          <CardContent><EChartsWrapper option={pieOption} height={300} /></CardContent>
+          <CardHeader>
+            <CardTitle className="text-base">Cơ cấu giới tính</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EChartsWrapper option={pieOption} height={300} />
+          </CardContent>
         </Card>
+
         <Card className="border-border/50 shadow-sm">
-          <CardHeader><CardTitle className="text-base">Nhân sự theo phòng ban</CardTitle></CardHeader>
-          <CardContent><EChartsWrapper option={barOption} height={300} /></CardContent>
+          <CardHeader>
+            <CardTitle className="text-base">Nhân sự theo phòng ban</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EChartsWrapper option={barOption} height={300} />
+          </CardContent>
         </Card>
       </div>
     </div>

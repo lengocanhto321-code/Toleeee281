@@ -1,6 +1,7 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
+import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 
 export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
@@ -18,6 +19,22 @@ export function NhanSuBienDongTab({ filters }: { filters: BaoCaoFilters }) {
 
   return (
     <div className="space-y-6">
+      {/* Table Section */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <TableProperties className="w-4 h-4" />
+            Danh sách biến động nhân sự
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground text-center py-8">
+            Bảng dữ liệu biến động nhân sự sẽ hiển thị tại đây
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Charts Section */}
       <Card className="border-border/50 shadow-sm">
         <CardHeader><CardTitle className="text-base">Biến động nhân sự theo tháng</CardTitle></CardHeader>
         <CardContent><EChartsWrapper option={lineOption} height={400} /></CardContent>
