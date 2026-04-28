@@ -133,14 +133,10 @@ function BaoCaoContent() {
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-700 rounded-full blur-3xl" />
           </div>
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="w-5 h-5 text-blue-300" />
-              <span className="text-xs font-medium text-blue-200 uppercase tracking-wider">Thống kê & Phân tích</span>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-blue-300" />
+              <h1 className="text-2xl font-bold text-white">Báo cáo & Thống kê</h1>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Báo cáo & Thống kê</h1>
-            <p className="text-blue-200/80 text-sm">
-              Phân tích toàn diện dữ liệu nhân sự, chấm công và lương
-            </p>
           </div>
         </div>
 
