@@ -1,3 +1,5 @@
+export type ChucVuLoai = "quan_ly" | "giao_vien" | "nhan_vien";
+
 export interface ChucVu {
   id: string;
   ma_chuc_vu: string;
@@ -7,6 +9,7 @@ export interface ChucVu {
   mo_ta?: string;
   tieu_chuan?: string;
   trang_thai: boolean;
+  loai: ChucVuLoai;
 }
 
 export interface ChucVuFormData {
@@ -17,4 +20,5 @@ export interface ChucVuFormData {
   mo_ta: string;
   tieu_chuan: string;
   trang_thai: boolean;
+  loai: ChucVuLoai;
 }

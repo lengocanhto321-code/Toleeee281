@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import { Building2, Landmark, Hash, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PhongBan, PhongBanFormData } from "@/types/phong-ban.types"
-import { usePhongBanList } from "@/hooks/phong-ban/use-phong-ban-query"
+import { usePhongBanAll } from "@/hooks/phong-ban/use-phong-ban-query"
 import { Combobox } from "@/components/ui/combobox"
 
 const INITIAL_FORM: PhongBanFormData = {
@@ -43,7 +43,7 @@ export function PhongBanFormDialog({
   onSubmit,
 }: PhongBanFormDialogProps) {
   const [formData, setFormData] = useState<PhongBanFormData>(INITIAL_FORM)
-  const { data: allPhongBans } = usePhongBanList()
+  const { data: allPhongBans } = usePhongBanAll()
 
   useEffect(() => {
     if (editingPhongBan) {

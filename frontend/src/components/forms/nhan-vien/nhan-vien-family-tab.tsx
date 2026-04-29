@@ -1,18 +1,23 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import { 
   Users, 
   Heart, 
-  UserPlus, 
   Phone, 
   MapPin, 
   Briefcase,
   Baby,
-  Crown
+  Crown,
+  Plus,
+  Pencil,
+  Trash2
 } from "lucide-react"
+import { useDeleteNguoiThan } from "@/hooks/nhan-vien/use-sub-modules"
+import { NguoiThanDialog } from "./sub-module"
 import type { NhanVien, NguoiThan } from "@/types/nhan-vien.types"
 
 interface NhanVienFamilyTabProps {
@@ -38,11 +43,11 @@ function RelationshipIcon({ relationship }: { relationship: string }) {
   return Users
 }
 
-function FamilyCard({ nguoiThan }: { nguoiThan: NguoiThan }) {
+function FamilyCard({ nguoiThan, onEdit, onDelete }: { nguoiThan: NguoiThan; onEdit: () => void; onDelete: () => void }) {
   const Icon = RelationshipIcon({ relationship: nguoiThan.quan_he })
 
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+    <div className="flex items-start gap-4 p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100">
         <Icon className="h-6 w-6 text-violet-600" />
       </div>
@@ -84,6 +89,14 @@ function FamilyCard({ nguoiThan }: { nguoiThan: NguoiThan }) {
           </p>
         )}
       </div>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" onClick={onEdit}>
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 cursor-pointer" onClick={onDelete}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -113,6 +126,10 @@ function StatCard({
 }
 
 export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan }: NhanVienFamilyTabProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<NguoiThan | null>(null)
+  const deleteMutation = useDeleteNguoiThan(nhanVien.id)
+
   const nguoiPhuThuoc = nguoiThans.filter(n => n.nguoi_phu_thuoc)
   const voChong = nguoiThans.filter(n => 
     n.quan_he.toLowerCase().includes("vợ") || 
@@ -122,37 +139,31 @@ export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan 
     n.quan_he.toLowerCase().includes("con")
   )
 
+  const handleAdd = () => {
+    setEditingItem(null)
+    setDialogOpen(true)
+  }
+
+  const handleEdit = (item: NguoiThan) => {
+    setEditingItem(item)
+    setDialogOpen(true)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm("Bạn có chắc muốn xóa người thân này?")) {
+      deleteMutation.mutate(id)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={Heart}
-          label="Tình trạng hôn nhân"
-          value={tinhTrangHonNhan || "—"}
-          accent="bg-pink-100 text-pink-600"
-        />
-        <StatCard
-          icon={Users}
-          label="Người thân"
-          value={nguoiThans.length}
-          accent="bg-violet-100 text-violet-600"
-        />
-        <StatCard
-          icon={Crown}
-          label="Vợ/Chồng"
-          value={voChong.length}
-          accent="bg-amber-100 text-amber-600"
-        />
-        <StatCard
-          icon={Baby}
-          label="Con cái"
-          value={conCai.length}
-          accent="bg-blue-100 text-blue-600"
-        />
+        <StatCard icon={Heart} label="Tình trạng hôn nhân" value={tinhTrangHonNhan || "—"} accent="bg-pink-100 text-pink-600" />
+        <StatCard icon={Users} label="Người thân" value={nguoiThans.length} accent="bg-violet-100 text-violet-600" />
+        <StatCard icon={Crown} label="Vợ/Chồng" value={voChong.length} accent="bg-amber-100 text-amber-600" />
+        <StatCard icon={Baby} label="Con cái" value={conCai.length} accent="bg-blue-100 text-blue-600" />
       </div>
 
-      {/* Người phụ thuộc giảm trừ thuế */}
       {nguoiPhuThuoc.length > 0 && (
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -166,22 +177,18 @@ export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan 
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {nguoiPhuThuoc.map((nt, index) => (
               <div key={nt.id || index} className="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
                 <p className="font-medium text-slate-900">{nt.ho_ten}</p>
                 <p className="text-xs text-slate-500">{nt.quan_he}</p>
-                {nt.nam_sinh && (
-                  <p className="text-xs text-slate-400 mt-1">Năm sinh: {nt.nam_sinh}</p>
-                )}
+                {nt.nam_sinh && <p className="text-xs text-slate-400 mt-1">Năm sinh: {nt.nam_sinh}</p>}
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      {/* Danh sách người thân */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -193,15 +200,26 @@ export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan 
               <p className="text-xs text-slate-500">Người thân được đăng ký</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-slate-100">
-            {nguoiThans.length} người
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-slate-100">
+              {nguoiThans.length} người
+            </Badge>
+            <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
+              <Plus className="h-3.5 w-3.5" />
+              Thêm
+            </Button>
+          </div>
         </div>
 
         {nguoiThans.length > 0 ? (
           <div className="space-y-4">
             {nguoiThans.map((nt, index) => (
-              <FamilyCard key={nt.id || index} nguoiThan={nt} />
+              <FamilyCard 
+                key={nt.id || index} 
+                nguoiThan={nt} 
+                onEdit={() => handleEdit(nt)}
+                onDelete={() => handleDelete(nt.id)}
+              />
             ))}
           </div>
         ) : (
@@ -210,12 +228,15 @@ export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan 
               <Users className="h-8 w-8 text-slate-300" />
             </div>
             <h4 className="font-medium text-slate-700 mb-1">Chưa có thông tin</h4>
-            <p className="text-sm text-slate-500">Thông tin người thân sẽ hiển thị tại đây</p>
+            <p className="text-sm text-slate-500 mb-4">Thông tin người thân sẽ hiển thị tại đây</p>
+            <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
+              <Plus className="h-3.5 w-3.5" />
+              Thêm người thân
+            </Button>
           </div>
         )}
       </Card>
 
-      {/* Lưu ý về giảm trừ thuế */}
       <Card className="p-4 bg-amber-50 border-amber-200">
         <div className="flex items-start gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
@@ -230,6 +251,13 @@ export function NhanVienFamilyTab({ nhanVien, nguoiThans = [], tinhTrangHonNhan 
           </div>
         </div>
       </Card>
+
+      <NguoiThanDialog
+        nhanVienId={nhanVien.id}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editingItem={editingItem}
+      />
     </div>
   )
 }

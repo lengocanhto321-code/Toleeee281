@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
 import { 
   GraduationCap, 
   Award, 
@@ -11,10 +12,11 @@ import {
   Languages, 
   BookOpen,
   Plus,
-  Calendar,
-  CheckCircle2,
-  ExternalLink
+  Pencil,
+  Trash2
 } from "lucide-react"
+import { useDeleteBangCap } from "@/hooks/nhan-vien/use-sub-modules"
+import { BangCapDialog } from "./sub-module"
 import type { NhanVien, BangCap, ChungChi } from "@/types/nhan-vien.types"
 import { LOAI_BANG_CAP_LABELS, LOAI_CHUNG_CHI_LABELS } from "@/types/nhan-vien.types"
 
@@ -22,12 +24,6 @@ interface NhanVienTrainingTabProps {
   nhanVien: NhanVien
   bangCaps?: BangCap[]
   chungChis?: ChungChi[]
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—"
-  const d = new Date(dateStr)
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
 function formatYear(year?: number) {
@@ -80,16 +76,34 @@ function CertificateBadge({ type }: { type: string }) {
 }
 
 export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }: NhanVienTrainingTabProps) {
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<BangCap | null>(null)
+  const deleteMutation = useDeleteBangCap(nhanVien.id)
+
   const trinhDoDaoTao = bangCaps.find(b => b.loai === "dai_hoc")
-  const otherDegrees = bangCaps.filter(b => b.loai !== "dai_hoc")
   const ngoaiNgus = chungChis.filter(c => c.loai === "ngoai_ngu")
   const tinHocs = chungChis.filter(c => c.loai === "tin_hoc")
   const nghiepVus = chungChis.filter(c => c.loai === "nghiep_vu")
   const khacs = chungChis.filter(c => c.loai === "khac")
 
+  const handleAdd = () => {
+    setEditingItem(null)
+    setDialogOpen(true)
+  }
+
+  const handleEdit = (item: BangCap) => {
+    setEditingItem(item)
+    setDialogOpen(true)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm("Bạn có chắc muốn xóa bằng cấp này?")) {
+      deleteMutation.mutate(id)
+    }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Trình độ đào tạo */}
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
@@ -107,9 +121,7 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
             <Field label="Chuyên ngành" value={trinhDoDaoTao.chuyen_nganh || "—"} />
             <Field label="Trường" value={trinhDoDaoTao.truong || "—"} />
             <Field label="Năm tốt nghiệp" value={formatYear(trinhDoDaoTao.nam_tot_nghiep)} />
-            {trinhDoDaoTao.xep_loai && (
-              <Field label="Xếp loại" value={trinhDoDaoTao.xep_loai} />
-            )}
+            {trinhDoDaoTao.xep_loai && <Field label="Xếp loại" value={trinhDoDaoTao.xep_loai} />}
           </div>
         ) : (
           <div className="flex items-center justify-center py-8 text-slate-400">
@@ -121,7 +133,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
         )}
       </Card>
 
-      {/* Bằng cấp, chứng chỉ */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -133,15 +144,21 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
               <p className="text-xs text-slate-500">Các văn bằng đã có</p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-slate-100">
-            {bangCaps.length} văn bằng
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="bg-slate-100">
+              {bangCaps.length} văn bằng
+            </Badge>
+            <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
+              <Plus className="h-3.5 w-3.5" />
+              Thêm
+            </Button>
+          </div>
         </div>
 
         {bangCaps.length > 0 ? (
           <div className="space-y-3">
             {bangCaps.map((bangCap, index) => (
-              <div key={bangCap.id || index} className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+              <div key={bangCap.id || index} className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
                     <BookOpen className="h-4 w-4 text-emerald-600" />
@@ -158,27 +175,39 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
                     </p>
                   </div>
                 </div>
-                {bangCap.xep_loai && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    {bangCap.xep_loai}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {bangCap.xep_loai && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      {bangCap.xep_loai}
+                    </Badge>
+                  )}
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" onClick={() => handleEdit(bangCap)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 cursor-pointer" onClick={() => handleDelete(bangCap.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-8 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-8 text-slate-400">
             <div className="text-center">
               <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Chưa có bằng cấp nào được cập nhật</p>
+              <p className="mb-3">Chưa có bằng cấp nào được cập nhật</p>
+              <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
+                <Plus className="h-3.5 w-3.5" />
+                Thêm bằng cấp
+              </Button>
             </div>
           </div>
         )}
       </Card>
 
-      {/* Ngoại ngữ - Tin học */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Ngoại ngữ */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
@@ -189,7 +218,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
               <p className="text-xs text-slate-500">Chứng chỉ ngoại ngữ</p>
             </div>
           </div>
-
           {ngoaiNgus.length > 0 ? (
             <div className="space-y-3">
               {ngoaiNgus.map((nn, index) => (
@@ -209,7 +237,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
           )}
         </Card>
 
-        {/* Tin học */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
@@ -220,7 +247,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
               <p className="text-xs text-slate-500">Chứng chỉ tin học</p>
             </div>
           </div>
-
           {tinHocs.length > 0 ? (
             <div className="space-y-3">
               {tinHocs.map((th, index) => (
@@ -241,7 +267,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
         </Card>
       </div>
 
-      {/* Chứng chỉ nghiệp vụ & Khác */}
       {(nghiepVus.length > 0 || khacs.length > 0) && (
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -253,7 +278,6 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
               <p className="text-xs text-slate-500">Chứng chỉ nghiệp vụ và các chứng chỉ khác</p>
             </div>
           </div>
-
           <div className="space-y-3">
             {[...nghiepVus, ...khacs].map((cc, index) => (
               <div key={cc.id || index} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
@@ -264,16 +288,18 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
                     {cc.nam_cap && <p className="text-xs text-slate-500">Năm cấp: {cc.nam_cap}</p>}
                   </div>
                 </div>
-                {cc.ngay_het_han && (
-                  <p className="text-xs text-slate-500">
-                    Hết hạn: {formatDate(cc.ngay_het_han)}
-                  </p>
-                )}
               </div>
             ))}
           </div>
         </Card>
       )}
+
+      <BangCapDialog
+        nhanVienId={nhanVien.id}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editingItem={editingItem}
+      />
     </div>
   )
 }

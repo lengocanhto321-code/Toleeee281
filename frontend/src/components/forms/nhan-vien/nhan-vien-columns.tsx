@@ -148,15 +148,14 @@ export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<Nhan
               <div className="truncate font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">
                 {nv.ho_ten}
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="font-mono">{nv.ma_nhan_vien}</span>
-                {nv.email && (
-                  <>
-                    <span>•</span>
-                    <span className="truncate max-w-[120px]">{nv.email}</span>
-                  </>
-                )}
+              <div className="text-xs text-slate-400 font-mono">
+                {nv.ma_nhan_vien}
               </div>
+              {nv.email && (
+                <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
+                  {nv.email}
+                </div>
+              )}
             </div>
           </Link>
         )

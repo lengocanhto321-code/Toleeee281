@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks";
+import { useAdminDashboard } from "@/hooks/dashboard/use-admin-dashboard";
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,84 +21,124 @@ import {
   Sparkles,
   ArrowUp,
   ArrowDown,
-  MoreHorizontal
+  MoreHorizontal,
+  UserCheck,
+  UserX,
+  Briefcase,
+  ShieldAlert,
+  UserPlus
 } from "lucide-react";
+
+const HANH_DONG_LABELS: Record<string, string> = {
+  CREATE: "Thêm mới",
+  UPDATE: "Cập nhật",
+  DELETE: "Xóa",
+  RESTORE: "Khôi phục",
+};
+
+const BANG_LABELS: Record<string, string> = {
+  nhan_vien: "nhân viên",
+  phong_ban: "phòng ban",
+  chuc_vu: "chức vụ",
+  nguoi_than: "người thân",
+  bang_cap: "bằng cấp",
+  khen_thuong_ky_luat: "khen thưởng/kỷ luật",
+  cong_tac: "phân công",
+};
+
+const HANH_DONG_COLORS: Record<string, string> = {
+  CREATE: "text-emerald-600",
+  UPDATE: "text-blue-600",
+  DELETE: "text-red-600",
+  RESTORE: "text-amber-600",
+};
+
+function timeAgo(isoStr: string | null): string {
+  if (!isoStr) return "";
+  const now = new Date();
+  const t = new Date(isoStr);
+  const diffMs = now.getTime() - t.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "vừa xong";
+  if (diffMin < 60) return `${diffMin}ph`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}g`;
+  const diffD = Math.floor(diffH / 24);
+  return `${diffD} ngày`;
+}
 
 export default function DashboardPage() {
   const router = useRouter();
   const userResult = useUser();
   const user = "data" in userResult ? userResult.data : null;
+  const { data: dashboard } = useAdminDashboard();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Stats data
-  const stats = [
+  const totalNV = dashboard?.tong_nhan_vien || 0;
+
+  const stats: { label: string; value: string; change: string; trend: "up" | "down" | "neutral"; icon: typeof Users; color: string; bgLight: string; href: string }[] = [
     {
       label: "Nhân viên",
-      value: "156",
-      change: "+3",
+      value: dashboard?.tong_nhan_vien?.toString() || "—",
+      change: `+${dashboard?.nhan_vien_moi_thang_nay || 0} tháng này`,
       trend: "up",
       icon: Users,
-      color: "from-amber-400 to-orange-500",
+      color: "from-amber-500 to-amber-600",
       bgLight: "bg-amber-50",
       href: "/nhan-vien"
     },
     {
       label: "Phòng ban",
-      value: "12",
-      change: "+1",
-      trend: "up",
+      value: dashboard?.so_phong_ban?.toString() || "—",
+      change: "",
+      trend: "neutral",
       icon: Building2,
-      color: "from-blue-400 to-indigo-500",
-      bgLight: "bg-blue-50",
+      color: "from-amber-600 to-amber-700",
+      bgLight: "bg-amber-50/50",
       href: "/phong-ban"
     },
     {
       label: "Chức vụ",
-      value: "8",
-      change: "0",
+      value: dashboard?.so_chuc_vu?.toString() || "—",
+      change: "",
       trend: "neutral",
       icon: Award,
-      color: "from-emerald-400 to-teal-500",
-      bgLight: "bg-emerald-50",
+      color: "from-amber-600 to-amber-700",
+      bgLight: "bg-amber-50/50",
       href: "/chuc-vu"
     },
     {
-      label: "Báo cáo",
-      value: "24",
-      change: "+5",
-      trend: "up",
+      label: "Đơn nghỉ chờ duyệt",
+      value: dashboard?.don_nghi_phep_cho_duyet?.toString() || "—",
+      change: "",
+      trend: (dashboard?.don_nghi_phep_cho_duyet ? "up" : "neutral"),
       icon: FileText,
-      color: "from-purple-400 to-pink-500",
-      bgLight: "bg-purple-50",
-      href: "/bao-cao"
+      color: "from-amber-600 to-amber-700",
+      bgLight: "bg-amber-50/50",
+      href: "/nghi-phep"
     },
   ];
 
-  // Quick actions
   const quickActions = [
     { label: "Thêm nhân viên", icon: Users, href: "/nhan-vien", color: "bg-gradient-to-br from-amber-500 to-orange-600" },
     { label: "Tạo báo cáo", icon: FileText, href: "/bao-cao", color: "bg-gradient-to-br from-blue-500 to-indigo-600" },
     { label: "Chấm công", icon: Clock, href: "/cham-cong", color: "bg-gradient-to-br from-emerald-500 to-teal-600" },
   ];
 
-  // Recent activities
-  const activities = [
-    { id: 1, title: "Thêm nhân viên mới", desc: "Nguyễn Văn A - Toán học", time: "5ph", icon: Users, color: "text-amber-600" },
-    { id: 2, title: "Duyệt đơn nghỉ phép", desc: "Trần Thị B - Nghỉ 2 ngày", time: "15ph", icon: Calendar, color: "text-blue-600" },
-    { id: 3, title: "Chốt công tháng 3", desc: "154/156 nhân viên", time: "1g", icon: Clock, color: "text-emerald-600" },
-    { id: 4, title: "Cập nhật phòng ban", desc: "Tổ Toán +3 nhân viên", time: "2g", icon: Building2, color: "text-purple-600" },
+  const empBreakdown = [
+    { label: "Giáo viên", count: dashboard?.giao_vien || 0, color: "bg-amber-500" },
+    { label: "Cán bộ", count: dashboard?.can_bo || 0, color: "bg-blue-500" },
+    { label: "Nhân viên", count: dashboard?.nhan_vien_loai || 0, color: "bg-emerald-500" },
   ];
 
   return (
     <AuthenticatedLayout>
       <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 md:p-10 border border-slate-700/50">
-          {/* Decorative pattern */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-900 via-amber-800 to-amber-900 p-8 md:p-10 border border-amber-700/50">
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))]"></div>
           </div>
@@ -127,7 +168,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
@@ -154,18 +194,14 @@ export default function DashboardPage() {
                     </span>
                   </div>
                 </div>
-                {/* Hover effect overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
             );
           })}
         </div>
 
-        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Quick Actions */}
             <Card className="border border-slate-200 shadow-sm">
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -195,7 +231,6 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            {/* Employee Breakdown */}
             <Card className="border border-slate-200 shadow-sm">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -209,62 +244,69 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {[
-                    { label: "Giáo viên", count: 138, percent: 88.5, color: "bg-amber-500" },
-                    { label: "Nhân viên", count: 14, percent: 9.0, color: "bg-blue-500" },
-                    { label: "Cán bộ quản lý", count: 4, percent: 2.5, color: "bg-emerald-500" },
-                  ].map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-700">{item.label}</span>
-                        <span className="text-slate-500">{item.count} ({item.percent}%)</span>
-                      </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={cn("h-full rounded-full transition-all duration-1000 ease-out", item.color)}
-                          style={{ width: mounted ? `${item.percent}%` : "0%" }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-
-            {/* Recent Activities */}
-            <Card className="border border-slate-200 shadow-sm">
-              <div className="p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Hoạt động gần đây</h2>
-                <div className="space-y-3">
-                  {activities.map((activity, index) => {
-                    const Icon = activity.icon;
+                  {empBreakdown.map((item, index) => {
+                    const percent = totalNV > 0 ? ((item.count / totalNV) * 100).toFixed(1) : "0.0";
                     return (
-                      <div
-                        key={activity.id}
-                        className={cn(
-                          "flex items-start gap-4 p-4 rounded-xl border transition-all duration-200",
-                          "border-slate-100 hover:border-slate-200 hover:bg-slate-50"
-                        )}
-                      >
-                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", activity.color, "bg-opacity-10")}>
-                          <Icon className="w-5 h-5" />
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-slate-700">{item.label}</span>
+                          <span className="text-slate-500">{item.count} ({percent}%)</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900">{activity.title}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{activity.desc}</p>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full transition-all duration-1000 ease-out", item.color)}
+                            style={{ width: mounted ? `${percent}%` : "0%" }}
+                          />
                         </div>
-                        <span className="text-xs text-slate-400 whitespace-nowrap">{activity.time}</span>
                       </div>
                     );
                   })}
                 </div>
               </div>
             </Card>
+
+            <Card className="border border-slate-200 shadow-sm">
+              <div className="p-6">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">Hoạt động gần đây</h2>
+                {(!dashboard?.hoat_dong_gan_day || dashboard.hoat_dong_gan_day.length === 0) ? (
+                  <p className="text-sm text-slate-500 py-4 text-center">Chưa có hoạt động nào</p>
+                ) : (
+                  <div className="space-y-3">
+                    {dashboard.hoat_dong_gan_day.map((activity) => {
+                      const actionLabel = HANH_DONG_LABELS[activity.hanh_dong] || activity.hanh_dong;
+                      const tableLabel = BANG_LABELS[activity.bang_du_lieu] || activity.bang_du_lieu;
+                      const colorClass = HANH_DONG_COLORS[activity.hanh_dong] || "text-slate-600";
+                      return (
+                        <div
+                          key={activity.id}
+                          className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-all duration-200"
+                        >
+                          <div className={cn("w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0", colorClass, "bg-opacity-10")}>
+                            {activity.hanh_dong === "CREATE" && <UserPlus className="w-5 h-5" />}
+                            {activity.hanh_dong === "UPDATE" && <Briefcase className="w-5 h-5" />}
+                            {activity.hanh_dong === "DELETE" && <ShieldAlert className="w-5 h-5" />}
+                            {activity.hanh_dong === "RESTORE" && <UserCheck className="w-5 h-5" />}
+                            {!["CREATE", "UPDATE", "DELETE", "RESTORE"].includes(activity.hanh_dong) && <Clock className="w-5 h-5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900">
+                              {actionLabel} {tableLabel}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {activity.ghi_chu || `Bởi ${activity.ten_dang_nhap || "hệ thống"}`}
+                            </p>
+                          </div>
+                          <span className="text-xs text-slate-400 whitespace-nowrap">{timeAgo(activity.thoi_gian)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-6">
-            {/* Department Summary */}
             <Card className="border border-slate-200 shadow-sm">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -277,33 +319,32 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {[
-                    { name: "Tổ Toán", count: 18 },
-                    { name: "Tổ Văn", count: 15 },
-                    { name: "Tổ Tiếng Anh", count: 12 },
-                    { name: "Tổ KHTN", count: 10 },
-                    { name: "Văn phòng", count: 8 },
-                  ].map((dept, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-                      onClick={() => router.push("/phong-ban")}
-                    >
-                      <span className="text-sm font-medium text-slate-700">{dept.name}</span>
-                      <span className="text-sm font-semibold text-slate-900">{dept.count}</span>
-                    </div>
-                  ))}
+                  {(!dashboard?.phong_ban_summary || dashboard.phong_ban_summary.length === 0) ? (
+                    <p className="text-sm text-slate-500 py-2 text-center">Chưa có phòng ban</p>
+                  ) : (
+                    dashboard.phong_ban_summary.map((dept, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                        onClick={() => router.push("/phong-ban")}
+                      >
+                        <span className="text-sm font-medium text-slate-700">{dept.ten_phong_ban}</span>
+                        <span className="text-sm font-semibold text-slate-900">{dept.so_nhan_vien}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
-                <button
-                  onClick={() => router.push("/phong-ban")}
-                  className="w-full mt-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                >
-                  Xem tất cả 12 phòng ban
-                </button>
+                {dashboard?.so_phong_ban ? (
+                  <button
+                    onClick={() => router.push("/phong-ban")}
+                    className="w-full mt-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Xem tất cả {dashboard.so_phong_ban} phòng ban
+                  </button>
+                ) : null}
               </div>
             </Card>
 
-            {/* Quick Links */}
             <Card className="border border-slate-200 shadow-sm bg-gradient-to-br from-slate-50 to-slate-100/50">
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Liên kết nhanh</h2>
@@ -335,7 +376,6 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            {/* System Status */}
             <Card className="border border-slate-200 shadow-sm">
               <div className="p-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Trạng thái hệ thống</h2>

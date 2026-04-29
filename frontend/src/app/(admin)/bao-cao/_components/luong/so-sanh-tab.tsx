@@ -4,10 +4,28 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useBaoCaoLuongSoSanh } from "@/hooks/bao-cao/use-bao-cao"
+import { ExportButton } from "../export-button"
+import type { ReportExportData } from "@/lib/report-export"
 import React from 'react'
 
 export const LuongSoSanhTab = React.memo(function LuongSoSanhTab({ filters }: { filters: BaoCaoFilters }) {
   const { data, isLoading, error } = useBaoCaoLuongSoSanh(filters)
+
+  const exportData = React.useMemo((): ReportExportData => {
+    if (!data) return { title: "Lương - So sánh", headers: [], rows: [] }
+    return {
+      title: "Báo cáo Lương - So sánh",
+      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      headers: ["Phòng ban", "Lương TB", "Số lượng NV"],
+      rows: data.theo_phong_ban.map(pb => [pb.phong_ban, pb.luong_tb, pb.so_luong]),
+      stats: [
+        { label: "Lương trung bình", value: data.luong_tb.toLocaleString() },
+        { label: "Lương cao nhất", value: data.luong_cao_nhat.toLocaleString() },
+        { label: "Lương thấp nhất", value: data.luong_thap_nhat.toLocaleString() },
+        { label: "Chênh lệch", value: data.chenh_lech.toLocaleString() },
+      ],
+    }
+  }, [data, filters])
 
   const groupedBarOption = React.useMemo(() => {
     if (!data) return {}
@@ -42,6 +60,10 @@ export const LuongSoSanhTab = React.memo(function LuongSoSanhTab({ filters }: { 
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Lương - So sánh</h2>
+        <ExportButton reportType="luong-so-sanh" reportLabel="Lương - So sánh" data={exportData} />
+      </div>
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">

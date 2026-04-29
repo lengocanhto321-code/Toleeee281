@@ -38,6 +38,9 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean
   emptyMessage?: string
   pageSize?: number
+  footer?: React.ReactNode
+  disablePagination?: boolean
+  scrollHeight?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -46,6 +49,9 @@ export function DataTable<TData, TValue>({
   loading = false,
   emptyMessage = "Không có dữ liệu",
   pageSize = 10,
+  footer,
+  disablePagination = false,
+  scrollHeight = "calc(100vh - 220px)",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -56,7 +62,7 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(disablePagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
@@ -69,63 +75,72 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
-    initialState: {
-      pagination: {
-        pageSize,
+    ...(disablePagination ? {} : {
+      initialState: {
+        pagination: {
+          pageSize,
+        },
       },
-    },
+    }),
   })
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-slate-100/60 border-b border-t-0 hover:bg-slate-100/60 transition-none">
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400">
-                  Đang tải...
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-slate-50/50">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+      <div className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col" style={{ maxHeight: scrollHeight }}>
+        <div className="overflow-y-auto overflow-x-auto flex-1">
+          <table data-slot="table" className="w-full caption-bottom text-sm">
+            <TableHeader className="sticky top-0 z-10 bg-slate-100">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="bg-slate-100 border-b border-t-0 hover:bg-slate-100 transition-none">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400">
+                    Đang tải...
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="hover:bg-slate-50/50">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400">
+                    {emptyMessage}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </table>
+        </div>
+
+        {footer && (
+          <div className="border-t border-slate-200 px-4 py-3 bg-slate-50/40 shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
 
-      {/* Pagination */}
-      {data.length > pageSize && (
+      {!footer && data.length > pageSize && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-slate-500">
             Hiển thị {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}

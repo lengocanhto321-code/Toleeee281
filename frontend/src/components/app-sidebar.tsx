@@ -10,11 +10,17 @@ import {
   GraduationCap,
   Info,
   Wallet,
+  Calendar,
+  Clock,
+  BarChart3,
 } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
-import { NhanVienSidebarPanel } from "@/components/forms/nhan-vien"
+import { NhanVienSidebarPanel, NhanVienDetailSidebarPanel } from "@/components/forms/nhan-vien"
 import { LuongSidebarPanel } from "@/components/forms/luong"
+import { PhongBanSidebarPanel } from "@/components/forms/phong-ban"
+import { ChucVuSidebarPanel } from "@/components/forms/chuc-vu"
+import { BaoCaoSidebarPanel } from "@/components/forms/bao-cao"
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +58,21 @@ const navItems = [
     title: "Lương",
     url: "/luong",
     icon: Wallet,
+  },
+  {
+    title: "Nghỉ phép",
+    url: "/nghi-phep",
+    icon: Calendar,
+  },
+  {
+    title: "Chấm công",
+    url: "/cham-cong",
+    icon: Clock,
+  },
+  {
+    title: "Báo cáo",
+    url: "/bao-cao",
+    icon: BarChart3,
   },
   {
     title: "Giới thiệu",
@@ -103,12 +124,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     window.dispatchEvent(new CustomEvent("sidebar:luong:add"))
   }
 
+  const handleAddPhongBan = () => {
+    window.dispatchEvent(new CustomEvent("sidebar:phong-ban:add"))
+  }
+
+  const handleAddChucVu = () => {
+    window.dispatchEvent(new CustomEvent("sidebar:chuc-vu:add"))
+  }
+
+  const nhanVienDetailMatch = pathname.match(/^\/nhan-vien\/([^/]+)$/)
+
   const renderPanel = () => {
+    if (nhanVienDetailMatch) {
+      return <NhanVienDetailSidebarPanel nhanVienId={nhanVienDetailMatch[1]} />
+    }
     switch (activeItem?.url) {
       case "/nhan-vien":
         return <NhanVienSidebarPanel onAdd={handleAddNhanVien} />
       case "/luong":
         return <LuongSidebarPanel onAdd={handleAddLuong} />
+      case "/phong-ban":
+        return <PhongBanSidebarPanel onAdd={handleAddPhongBan} />
+      case "/chuc-vu":
+        return <ChucVuSidebarPanel onAdd={handleAddChucVu} />
+      case "/bao-cao":
+        return <BaoCaoSidebarPanel />
       default:
         return <DefaultPanel title={activeItem?.title || ""} icon={activeItem?.icon || LayoutDashboard} />
     }

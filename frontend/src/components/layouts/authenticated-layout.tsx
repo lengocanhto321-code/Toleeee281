@@ -113,7 +113,7 @@ export function AuthenticatedLayout({
       }
     >
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col min-h-0">
         <header className="sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b bg-white p-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
@@ -140,14 +140,17 @@ export function AuthenticatedLayout({
           )}
         </header>
         <div
-          className="relative flex-1 p-6"
+          className="flex-1 overflow-y-auto min-h-0"
           style={{
             backgroundImage: "linear-gradient(oklch(0.75 0 0 / 0.15) 1px, transparent 1px), linear-gradient(90deg, oklch(0.75 0 0 / 0.15) 1px, transparent 1px)",
             backgroundSize: "24px 24px",
             backgroundAttachment: "fixed",
+            scrollbarGutter: "stable both-edges",
           }}
         >
-          {children}
+          <div className="p-6">
+            {children}
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

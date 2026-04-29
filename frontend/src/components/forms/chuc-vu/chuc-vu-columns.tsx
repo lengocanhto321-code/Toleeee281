@@ -66,6 +66,24 @@ export function createChucVuColumns({ onEdit, onDelete }: ColumnActions): Column
                   ),
             },
             {
+                  accessorKey: "loai",
+                  header: ({ column }) => <DataTableColumnHeader column={column} title="Loại" />,
+                  cell: ({ row }) => {
+                        const loai = row.getValue("loai") as string
+                        const variants: Record<string, { bg: string; text: string; label: string }> = {
+                              quan_ly: { bg: "bg-purple-50", text: "text-purple-700", label: "Quản lý" },
+                              giao_vien: { bg: "bg-blue-50", text: "text-blue-700", label: "Giáo viên" },
+                              nhan_vien: { bg: "bg-slate-100", text: "text-slate-700", label: "Nhân viên" },
+                        }
+                        const style = variants[loai] || variants.nhan_vien
+                        return (
+                              <Badge className={`${style.bg} ${style.text} border-0`}>
+                                    {style.label}
+                              </Badge>
+                        )
+                  },
+            },
+            {
                   accessorKey: "cap_bac",
                   header: ({ column }) => <DataTableColumnHeader column={column} title="Cấp bậc" />,
                   cell: ({ row }) => {

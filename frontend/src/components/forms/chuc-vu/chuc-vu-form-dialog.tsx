@@ -31,6 +31,7 @@ const INITIAL_FORM: ChucVuFormData = {
       mo_ta: "",
       tieu_chuan: "",
       trang_thai: true,
+      loai: "nhan_vien",
 }
 
 interface ChucVuFormDialogProps {
@@ -60,6 +61,7 @@ export function ChucVuFormDialog({
                         mo_ta: editingChucVu.mo_ta || "",
                         tieu_chuan: editingChucVu.tieu_chuan || "",
                         trang_thai: editingChucVu.trang_thai,
+                        loai: editingChucVu.loai,
                   })
             } else {
                   setFormData(INITIAL_FORM)
@@ -102,6 +104,17 @@ export function ChucVuFormDialog({
                                                 onChange={(e) => setFormData({ ...formData, ten_chuc_vu: e.target.value })}
                                                 placeholder="Hiệu trưởng"
                                           />
+                                    </div>
+                                    <div className="space-y-2">
+                                          <Label htmlFor="loai">Loại chức vụ <span className="text-red-500">*</span></Label>
+                                          <Select value={formData.loai} onValueChange={(value) => setFormData({ ...formData, loai: value as "quan_ly" | "giao_vien" | "nhan_vien" })}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                      <SelectItem value="quan_ly">Quản lý</SelectItem>
+                                                      <SelectItem value="giao_vien">Giáo viên</SelectItem>
+                                                      <SelectItem value="nhan_vien">Nhân viên</SelectItem>
+                                                </SelectContent>
+                                          </Select>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                           <div className="space-y-2">

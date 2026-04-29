@@ -2,7 +2,7 @@
  * Auth Types - Shared types for authentication
  */
 
-export type UserRole = "ADMIN" | "GIAO_VIEN" | "TO_TRUONG" | "HIEU_TRUONG" | "HIEU_PHO";
+export type UserRole = "ADMIN" | "GIAO_VIEN" | "TO_TRUONG" | "HIEU_TRUONG" | "HIEU_PHO" | "NHAN_VIEN";
 
 export interface User {
   id: string;

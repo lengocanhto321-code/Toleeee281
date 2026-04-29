@@ -5,7 +5,7 @@ import { Building2, Landmark, Users, ChevronRight, ChevronDown, X, Network, Layo
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { usePhongBanList } from "@/hooks/phong-ban"
+import { usePhongBanAll } from "@/hooks/phong-ban"
 import { useNhanVienList } from "@/hooks/nhan-vien"
 
 interface PhongBanNode {
@@ -229,7 +229,7 @@ export function PhongBanCoCauDialog({ open, onOpenChange }: PhongBanCoCauDialogP
   const [viewMode, setViewMode] = useState<ViewMode>("tree")
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  const { data: phongBansData = [] } = usePhongBanList()
+  const { data: phongBansData = [] } = usePhongBanAll()
   const { data: nhanViensResult } = useNhanVienList({ page: 1, page_size: 100 })
   const nhanViens = nhanViensResult?.data || []
 

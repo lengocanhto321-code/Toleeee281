@@ -34,13 +34,13 @@ import {
   Scale,
   UsersRound,
 } from "lucide-react"
+import type { ChangeEvent } from "react"
 import type { Luong, TraLuong } from "@/types/luong.types"
 import { NhanVienSalaryTab } from "./nhan-vien-salary-tab"
 import { NhanVienContractTab } from "./nhan-vien-contract-tab"
 import { NhanVienTrainingTab } from "./nhan-vien-training-tab"
 import { NhanVienRewardTab } from "./nhan-vien-reward-tab"
 import { NhanVienFamilyTab } from "./nhan-vien-family-tab"
-import { QuickActionsBar } from "./nhan-vien-quick-actions"
 
 interface NhanVienDetailInfoProps {
   nhanVien: NhanVien
@@ -54,6 +54,7 @@ interface NhanVienDetailInfoProps {
   nguoiThans?: any[]
   onEdit?: () => void
   onViewSalary?: () => void
+  onAvatarChange?: (e: ChangeEvent<HTMLInputElement>) => Promise<void>
 }
 
 function formatDate(dateStr?: string) {
@@ -217,13 +218,6 @@ export function NhanVienDetailInfo({
           />
         </div>
       </div>
-
-      {/* ===== QUICK ACTIONS ===== */}
-      <QuickActionsBar
-        nhanVien={nhanVien}
-        onEdit={onEdit}
-        onViewSalary={onViewSalary}
-      />
 
       {/* ===== TABBED CONTENT ===== */}
       <Tabs defaultValue="personal" className="w-full">

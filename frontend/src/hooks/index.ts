@@ -10,3 +10,6 @@ export * from "./use-crud-operation";
 export * from "./nhan-vien";
 export * from "./phong-ban";
 export * from "./chuc-vu";
+export * from "./luong";
+export * from "./nghi-phep";
+export * from "./employee";

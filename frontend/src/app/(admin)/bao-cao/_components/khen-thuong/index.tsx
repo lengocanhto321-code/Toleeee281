@@ -4,10 +4,28 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useBaoCaoKhenThuong } from "@/hooks/bao-cao/use-bao-cao"
+import { ExportButton } from "../export-button"
+import type { ReportExportData } from "@/lib/report-export"
 import React from 'react'
 
 export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { filters: BaoCaoFilters }) {
   const { data, isLoading, error } = useBaoCaoKhenThuong(filters)
+
+  const exportData = React.useMemo((): ReportExportData => {
+    if (!data) return { title: "Khen thưởng", headers: [], rows: [] }
+    return {
+      title: "Báo cáo Khen thưởng",
+      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      headers: ["Nhân viên", "Loại", "Hình thức", "Số tiền", "Ngày"],
+      rows: data.chi_tiet.map(item => [item.ho_ten, item.loai, item.hinh_thuc, item.so_tien, item.ngay]),
+      stats: [
+        { label: "Tổng khen thưởng", value: data.tong_khen },
+        { label: "Tổng kỷ luật", value: data.tong_ky },
+        { label: "Tỷ lệ khen/kỷ", value: `${data.ty_le}%` },
+        { label: "Tổng tiền", value: data.tong_tien.toLocaleString() },
+      ],
+    }
+  }, [data, filters])
 
   const barOption = React.useMemo(() => {
     if (!data) return {}
@@ -70,6 +88,10 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Khen thưởng</h2>
+        <ExportButton reportType="khen-thuong" reportLabel="Khen thưởng" data={exportData} />
+      </div>
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">

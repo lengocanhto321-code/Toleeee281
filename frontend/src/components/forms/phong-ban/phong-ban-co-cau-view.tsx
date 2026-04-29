@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { Building2, Landmark, Users, ChevronRight } from "lucide-react"
-import { usePhongBanList } from "@/hooks/phong-ban"
+import { usePhongBanAll } from "@/hooks/phong-ban"
 import { useNhanVienList } from "@/hooks/nhan-vien"
 import { Badge } from "@/components/ui/badge"
 
@@ -116,7 +116,7 @@ interface PhongBanCoCauViewProps {
 }
 
 export function PhongBanCoCauView({ onClose }: PhongBanCoCauViewProps) {
-  const { data: phongBans = [] } = usePhongBanList()
+  const { data: phongBans = [] } = usePhongBanAll()
   const { data: nhanViensResult } = useNhanVienList({ page: 1, page_size: 100 })
   const nhanViens = nhanViensResult?.data || []
 

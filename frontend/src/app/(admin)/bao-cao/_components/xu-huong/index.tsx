@@ -4,10 +4,31 @@ import { EChartsWrapper } from "@/components/ui/echarts-wrapper"
 import { TableProperties } from "lucide-react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useBaoCaoXuHuong } from "@/hooks/bao-cao/use-bao-cao"
+import { ExportButton } from "../export-button"
+import type { ReportExportData } from "@/lib/report-export"
 import React from 'react'
 
 export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters: BaoCaoFilters }) {
   const { data, isLoading, error } = useBaoCaoXuHuong(filters)
+
+  const exportData = React.useMemo((): ReportExportData => {
+    if (!data) return { title: "Xu hướng", headers: [], rows: [] }
+    return {
+      title: "Báo cáo Xu hướng",
+      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      headers: ["Tháng", "Nhân sự", "Lương (triệu)", "Nghỉ phép (ngày)"],
+      rows: data.xu_huong_nhan_su.map((item, i) => [
+        item.thang,
+        item.so_luong,
+        data.xu_huong_luong[i]?.tong_luong ?? 0,
+        data.xu_huong_nghi_phep[i]?.so_ngay ?? 0,
+      ]),
+      stats: [
+        { label: "So với tháng trước", value: `${data.change_thang_truoc.direction === "up" ? "+" : ""}${data.change_thang_truoc.percent}%` },
+        { label: "So với năm trước", value: `${data.change_nam_truoc.direction === "up" ? "+" : ""}${data.change_nam_truoc.percent}%` },
+      ],
+    }
+  }, [data, filters])
 
   const lineOption = React.useMemo(() => {
     if (!data) return {}
@@ -47,6 +68,10 @@ export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters:
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Xu hướng</h2>
+        <ExportButton reportType="xu-huong" reportLabel="Xu hướng" data={exportData} />
+      </div>
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">

@@ -5,9 +5,27 @@ import { TableProperties } from "lucide-react"
 import React from "react"
 import { BaoCaoFilters } from "@/types/bao-cao.types"
 import { useBaoCaoDiMuon } from "@/hooks/bao-cao/use-bao-cao"
+import { ExportButton } from "../export-button"
+import type { ReportExportData } from "@/lib/report-export"
 
 export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: BaoCaoFilters }) {
   const { data, isLoading, error } = useBaoCaoDiMuon(filters)
+
+  const exportData = React.useMemo((): ReportExportData => {
+    if (!data) return { title: "Chấm công - Đi muộn", headers: [], rows: [] }
+    return {
+      title: "Báo cáo Chấm công - Đi muộn",
+      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      headers: ["Nhân viên", "Phòng ban", "Số lần muộn", "Số lần về sớm"],
+      rows: data.chi_tiet.map(item => [item.ho_ten, item.phong_ban, item.so_lan_muon, item.so_lan_ve_som]),
+      stats: [
+        { label: "Tổng đi muộn", value: data.tong_muon },
+        { label: "Tổng về sớm", value: data.tong_ve_som },
+        { label: "Tỷ lệ đúng giờ", value: `${data.ty_le_dung_gio}%` },
+        { label: "Vi phạm", value: data.vi_pham },
+      ],
+    }
+  }, [data, filters])
 
   const heatmapOption = React.useMemo(() => {
     if (!data || !data.theo_ngay.length) return {}
@@ -46,6 +64,10 @@ export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: B
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Chấm công - Đi muộn</h2>
+        <ExportButton reportType="cham-cong-di-muon" reportLabel="Chấm công - Đi muộn" data={exportData} />
+      </div>
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">

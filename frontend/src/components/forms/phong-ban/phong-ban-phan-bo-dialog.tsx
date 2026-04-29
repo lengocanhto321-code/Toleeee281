@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { useNhanVienList } from "@/hooks/nhan-vien"
-import { usePhongBanList } from "@/hooks/phong-ban"
+import { usePhongBanAll } from "@/hooks/phong-ban"
 import { useUpdateNhanVien } from "@/hooks/nhan-vien"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LOAI_NHAN_VIEN_LABELS } from "@/types/nhan-vien.types"
@@ -31,7 +31,7 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
   const { data: nhanViensResult } = useNhanVienList({ page: 1, page_size: 100 })
   const nhanViensAll = nhanViensResult?.data || []
   const nhanViens = nhanViensAll.filter((nv: any) => nv.trang_thai === "dang_lam")
-  const { data: phongBansData = [] } = usePhongBanList()
+  const { data: phongBansData = [] } = usePhongBanAll()
   const updateMutation = useUpdateNhanVien()
 
   const activePhongBans = phongBansData.filter((pb) => pb.trang_thai !== false)

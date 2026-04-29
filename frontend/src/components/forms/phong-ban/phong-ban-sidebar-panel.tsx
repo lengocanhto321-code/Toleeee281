@@ -5,7 +5,7 @@ import { Plus, Building2, Landmark, Users, TrendingUp, Network } from "lucide-re
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { usePhongBanList } from "@/hooks/phong-ban"
+import { usePhongBanAll } from "@/hooks/phong-ban"
 import { useNhanVienList } from "@/hooks/nhan-vien"
 
 interface PhongBanSidebarPanelProps {
@@ -13,7 +13,7 @@ interface PhongBanSidebarPanelProps {
 }
 
 export function PhongBanSidebarPanel({ onAdd }: PhongBanSidebarPanelProps) {
-  const { data: phongBans = [] } = usePhongBanList()
+  const { data: phongBans = [] } = usePhongBanAll()
   const { data: nhanViensResult } = useNhanVienList({ page: 1, page_size: 100 })
   const nhanViens = nhanViensResult?.data || []
   const [viewMode, setViewMode] = useState<"stats" | "tree">("stats")

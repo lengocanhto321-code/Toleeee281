@@ -14,6 +14,12 @@ export interface NhanVien {
   ngay_cap_cccd?: string;
   noi_cap_cccd?: string;
   anh_dai_dien?: string;
+  cccd_front?: string;
+  cccd_back?: string;
+  noi_sinh?: string;
+  dan_toc?: string;
+  ton_giao?: string;
+  tinh_trang_hon_nhan?: string;
   loai_nhan_vien: string;
   cap_hoc?: string;
   mon_day?: string;
@@ -22,6 +28,8 @@ export interface NhanVien {
   bac_luong?: number;
   he_so_luong?: number;
   so_nam_tham_nien?: number;
+  phong_ban_id?: string;
+  chuc_vu_id?: string;
   
   loai_hop_dong: string;
   so_hop_dong?: string;
@@ -33,11 +41,18 @@ export interface NhanVien {
   phu_cap_chuc_vu?: number;
   ngay_bo_nhiem_chuc_vu?: string;
   
+  // BHXH
+  so_bao_hiem?: string;
+  ngay_tham_gia_bhxh?: string;
+  
+  // Ngân hàng
+  ten_ngan_hang?: string;
+  so_tai_khoan_ngan_hang?: string;
+  
   la_dang_vien: boolean;
   la_doan_vien: boolean;
-  dan_toc?: string;
-  ton_giao?: string;
-  noi_sinh?: string;
+  ngay_vao_dang?: string;
+  ngay_vao_doan?: string;
   
   ghi_chu?: string;
   trang_thai: string;
@@ -201,3 +216,43 @@ export const TINH_TRANG_HON_NHANH_LABELS: Record<string, string> = {
   ly_di: "Ly dị",
   goa_vo: "Góa vợ/chồng",
 };
+
+export interface TaiLieuNhanVien {
+  id: string;
+  nhan_vien_id: string;
+  loai_tai_lieu: string;
+  loai_tai_lieu_label: string;
+  ten_tai_lieu: string;
+  duong_dan: string;
+  ten_file_goc?: string;
+  kich_thuoc?: number;
+  dinh_dang?: string;
+  mo_ta?: string;
+  ngay_het_han?: string;
+  la_ban_chinh: boolean;
+  trang_thai: string;
+  created_at: string;
+}
+
+export interface UploadResponse {
+  url: string;
+  file_name: string;
+  file_size: number;
+  content_type: string;
+  path: string;
+}
+
+export const LOAI_TAI_LIEU_LABELS: Record<string, string> = {
+  cccd: "CCCD/CMND",
+  ho_so: "Hồ sơ ứng tuyển",
+  hop_dong: "Hợp đồng lao động",
+  bang_cap: "Bằng cấp/Chứng chỉ",
+  bien_ban: "Biên bản các loại",
+  quyet_dinh: "Quyết định",
+  khac: "Tài liệu khác",
+};
+
+export const LOAI_TAI_LIEU_OPTIONS = Object.entries(LOAI_TAI_LIEU_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
