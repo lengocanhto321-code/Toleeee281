@@ -112,6 +112,7 @@ export const ApiEndpoints = {
   THONG_KE_BAO_CAO_LUONG_SO_SANH: "/api/v1/thong-ke/bao-cao/luong/so-sanh",
   THONG_KE_BAO_CAO_KHEN_THUONG: "/api/v1/thong-ke/bao-cao/khen-thuong",
   THONG_KE_BAO_CAO_XU_HUONG: "/api/v1/thong-ke/bao-cao/xu-huong",
+  THONG_KE_BAO_CAO_EXPORT: "/api/v1/thong-ke/bao-cao/export",
 } as const;
 
 export const API_CONFIG = {
