@@ -42,20 +42,16 @@ class RBACService:
     async def is_admin(self, user_id: str) -> bool:
         """Check if user has admin role."""
         roles = await self.get_user_roles(user_id)
-        admin_roles = ["ADMIN", "HIEU_TRUONG"]
-        return any(r.name in admin_roles for r in roles)
+        return any(r.name == "ADMIN" for r in roles)
 
     async def is_manager(self, user_id: str) -> bool:
-        """Check if user has manager role."""
-        roles = await self.get_user_roles(user_id)
-        manager_roles = ["ADMIN", "HIEU_TRUONG", "HIEU_PHO", "TO_TRUONG"]
-        return any(r.name in manager_roles for r in roles)
+        """Check if user has manager role (= admin in 2-actor system)."""
+        return await self.is_admin(user_id)
 
     async def is_employee(self, user_id: str) -> bool:
         """Check if user has employee role."""
         roles = await self.get_user_roles(user_id)
-        employee_roles = ["GIAO_VIEN", "NHAN_VIEN"]
-        return any(r.name in employee_roles for r in roles)
+        return any(r.name == "NHAN_VIEN" for r in roles)
 
 
 PERMISSION_CODES = {
@@ -148,63 +144,6 @@ ROLE_PERMISSIONS = {
         "bao_cao:export",
         "thong_ke:read",
     ],
-    "HIEU_TRUONG": [
-        "nhan_vien:read",
-        "nhan_vien:create",
-        "nhan_vien:update",
-        "phong_ban:read",
-        "luong:read",
-        "luong:export",
-        "cham_cong:read",
-        "cham_cong:manage",
-        "cham_cong:export",
-        "nghi_phep:read",
-        "nghi_phep:approve",
-        "dashboard:view_admin",
-        "profile:read",
-        "profile:update",
-        "bao_cao:read",
-        "bao_cao:export",
-        "thong_ke:read",
-    ],
-    "HIEU_PHO": [
-        "nhan_vien:read",
-        "phong_ban:read",
-        "luong:read",
-        "cham_cong:read",
-        "nghi_phep:read",
-        "nghi_phep:approve",
-        "dashboard:view_admin",
-        "profile:read",
-        "profile:update",
-        "bao_cao:read",
-        "thong_ke:read",
-    ],
-    "TO_TRUONG": [
-        "nhan_vien:read",
-        "phong_ban:read",
-        "cham_cong:read",
-        "cham_cong:manage",
-        "nghi_phep:read",
-        "nghi_phep:approve",
-        "dashboard:view_admin",
-        "profile:read",
-        "profile:update",
-        "bao_cao:read",
-        "thong_ke:read",
-    ],
-    "GIAO_VIEN": [
-        "luong:view_own",
-        "cham_cong:view_own",
-        "cham_cong:check_in",
-        "nghi_phep:create",
-        "nghi_phep:view_own",
-        "dashboard:view_employee",
-        "profile:read",
-        "profile:update",
-        "tai_lieu:read",
-        "tai_lieu:create",
-    ],
     "NHAN_VIEN": [
         "luong:view_own",
         "cham_cong:view_own",
@@ -225,25 +164,6 @@ ROLES = [
         "name": "ADMIN",
         "description": "Quản trị hệ thống",
         "priority": 100,
-        "is_system": True,
-    },
-    {
-        "name": "HIEU_TRUONG",
-        "description": "Hiệu trưởng",
-        "priority": 90,
-        "is_system": True,
-    },
-    {"name": "HIEU_PHO", "description": "Hiệu phó", "priority": 80, "is_system": True},
-    {
-        "name": "TO_TRUONG",
-        "description": "Tổ trưởng",
-        "priority": 70,
-        "is_system": True,
-    },
-    {
-        "name": "GIAO_VIEN",
-        "description": "Giáo viên",
-        "priority": 50,
         "is_system": True,
     },
     {

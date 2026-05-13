@@ -1,10 +1,11 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from libs.result import Result, Error, Return
 from src.service.auth_service import AuthService
+from src.service.rbac_service import RBACService
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LoginCommand:
     """Command for login use case."""
+
     username: str
     password: str
 
@@ -19,6 +21,7 @@ class LoginCommand:
 @dataclass
 class LoginResult:
     """Result of successful login."""
+
     access_token: str
     refresh_token: str
     user: Dict[str, Any]
@@ -40,11 +43,12 @@ class LoginUseCase:
         async with self.unit_of_work as uow:
             user_repository = uow.user_repository
 
-            # Find user by username
             user = await user_repository.find_by_username(command.username)
 
             if not user:
-                logger.warning(f"Login failed: User not found with username='{command.username}'")
+                logger.warning(
+                    f"Login failed: User not found with username='{command.username}'"
+                )
                 return Return.err(
                     Error(
                         code="invalid_credentials",
@@ -55,9 +59,10 @@ class LoginUseCase:
 
             logger.debug(f"User found: id='{user.id}', username='{user.ten_dang_nhap}'")
 
-            # Check if user is active (trang_thai)
             if not user.trang_thai:
-                logger.warning(f"Login failed: User account is inactive, id='{user.id}'")
+                logger.warning(
+                    f"Login failed: User account is inactive, id='{user.id}'"
+                )
                 return Return.err(
                     Error(
                         code="inactive_account",
@@ -66,10 +71,13 @@ class LoginUseCase:
                     )
                 )
 
-            # Verify password
-            valid = await AuthService.verify_password(command.password, user.mat_khau_hash)
+            valid = await AuthService.verify_password(
+                command.password, user.mat_khau_hash
+            )
             if not valid:
-                logger.warning(f"Login failed: Invalid password for user id='{user.id}'")
+                logger.warning(
+                    f"Login failed: Invalid password for user id='{user.id}'"
+                )
                 return Return.err(
                     Error(
                         code="invalid_credentials",
@@ -78,23 +86,53 @@ class LoginUseCase:
                     )
                 )
 
-            # Generate access token
-            logger.info(f"Generating JWT token for user '{user.id}'")
+            # Get roles and permissions from RBAC
+            rbac_service = RBACService(uow)
+            roles = await rbac_service.get_user_roles(user.id)
+            permissions = await rbac_service.get_user_permissions(user.id)
+
+            role_names: List[str] = [r.name for r in roles]
+
+            # If user has no roles assigned, use the legacy vai_tro field
+            if not role_names:
+                raw_role = user.vai_tro.upper() if user.vai_tro else ""
+                admin_roles = {"ADMIN", "HIEU_TRUONG", "HIEU_PHO", "TO_TRUONG"}
+                if raw_role in admin_roles:
+                    role_names = ["ADMIN"]
+                else:
+                    role_names = ["NHAN_VIEN"]
+                # Map legacy role to permissions
+                from src.service.rbac_service import ROLE_PERMISSIONS
+
+                permissions = []
+                for role in role_names:
+                    perms = ROLE_PERMISSIONS.get(role, [])
+                    permissions.extend(perms)
+                permissions = list(set(permissions))
+
+            logger.info(
+                f"User roles: {role_names}, permissions count: {len(permissions)}"
+            )
+
+            # Generate access token with roles and permissions
             token, expire = await self.auth_service.create_access_token(
-                user.id,
+                user_id=user.id,
                 email=user.email,
                 username=user.ten_dang_nhap,
+                roles=role_names,
+                permissions=permissions,
+                nhan_vien_id=str(user.nhan_vien_id) if user.nhan_vien_id else None,
             )
 
             # Generate refresh token
             logger.info(f"Generating refresh token for user '{user.id}'")
-            refresh_token, refresh_expire = (
-                await self.auth_service.create_refresh_token(user.id)
-            )
+            (
+                refresh_token,
+                refresh_expire,
+            ) = await self.auth_service.create_refresh_token(user.id)
 
             await uow.commit()
 
-            # Return success result
             return Return.ok(
                 LoginResult(
                     access_token=token,
@@ -103,9 +141,13 @@ class LoginUseCase:
                         "id": str(user.id),
                         "username": user.ten_dang_nhap,
                         "email": user.email,
-                        "role": user.vai_tro,
+                        "role": role_names[0] if role_names else "NHAN_VIEN",
+                        "roles": role_names,
+                        "permissions": permissions,
                         "is_active": user.trang_thai,
-                        "nhan_vien_id": str(user.nhan_vien_id) if user.nhan_vien_id else None,
+                        "nhan_vien_id": str(user.nhan_vien_id)
+                        if user.nhan_vien_id
+                        else None,
                     },
                     access_expire=expire,
                     refresh_expire=refresh_expire,

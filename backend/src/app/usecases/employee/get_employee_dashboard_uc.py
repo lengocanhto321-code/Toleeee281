@@ -60,9 +60,9 @@ class GetEmployeeDashboardUseCase:
             now = datetime.now()
             all_dons = await uow.don_xin_nghi_repository.find_by_nhan_vien(nhan_vien_id)
             for don in all_dons:
-                if don.trang_thai in ("cho_duyet_cap_1", "cho_duyet_cap_2"):
+                if don.trang_thai == "cho_duyet":
                     don_cho_duyet += 1
-                if don.trang_thai in ("da_duyet", "da_duyet_cap_2") and don.tu_ngay:
+                if don.trang_thai == "da_duyet" and don.tu_ngay:
                     if don.tu_ngay.month == now.month and don.tu_ngay.year == now.year:
                         da_duyet_thang_nay += don.so_ngay or 0
                 if not don_gan_nhat:

@@ -6,7 +6,6 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     Numeric,
-    SmallInteger,
     JSON,
 )
 from datetime import datetime
@@ -31,21 +30,12 @@ class DonXinNghi(Base):
 
     files = Column(JSON)
 
-    trang_thai = Column(String(20), nullable=False, default="cho_duyet_cap_1")
+    trang_thai = Column(String(20), nullable=False, default="cho_duyet")
     lich_su_duyet = Column(JSON)
     ghi_chu_duyet = Column(Text)
 
-    # 2-level approval fields
-    cap_duyet_hien_tai = Column(SmallInteger, nullable=True, default=1)
-    nguoi_duyet_cap_1_id = Column(String(32), ForeignKey("tai_khoan.id"))
-    nguoi_duyet_cap_2_id = Column(String(32), ForeignKey("tai_khoan.id"))
-    ngay_duyet_cap_1 = Column(DateTime)
-    ngay_duyet_cap_2 = Column(DateTime)
-    ghi_chu_duyet_cap_1 = Column(Text)
-    ghi_chu_duyet_cap_2 = Column(Text)
-
     nguoi_tao_id = Column(String(32))
-    nguoi_duyet_id = Column(String(32))
+    nguoi_duyet_id = Column(String(32), ForeignKey("tai_khoan.id"))
     ngay_duyet = Column(DateTime)
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
