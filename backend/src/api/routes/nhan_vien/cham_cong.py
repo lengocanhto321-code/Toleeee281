@@ -27,7 +27,7 @@ from src.app.usecases.cham_cong import (
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["Employee - Chấm công QR"])
+router = APIRouter()
 
 
 class CheckInRequest(BaseModel):
@@ -49,10 +49,12 @@ async def check_in(
 ):
     """Check-in bằng QR code."""
     command = CheckInCommand(
-        user_id=current_user.user_id,
+        nhan_vien_id=current_user.user_id,
         qr_data=body.qr_data,
-        latitude=body.latitude,
-        longitude=body.longitude,
+        thoi_gian=datetime.now().isoformat(),
+        vi_tri={"lat": body.latitude, "lng": body.longitude}
+        if body.latitude and body.longitude
+        else None,
     )
 
     use_case = CheckInUseCase(uow)
@@ -80,9 +82,8 @@ async def check_out(
 ):
     """Check-out (sử dụng QR code từ lần check-in gần nhất)."""
     command = CheckOutCommand(
-        user_id=current_user.user_id,
-        latitude=body.latitude,
-        longitude=body.longitude,
+        nhan_vien_id=current_user.user_id,
+        thoi_gian=datetime.now().isoformat(),
     )
 
     use_case = CheckOutUseCase(uow)
