@@ -1223,16 +1223,19 @@ QR Cá nhân = HMAC-SHA256(user_id + ngay + timestamp, secret_key)
 │       │────────────────▶│                  │                                │
 │       │                 │                  │                                │
 │       │                 │ 2. Hiển thị QR   │                                │
+│       │                 │─────────────────▶│                                │
+│       │                 │                  │                                │
+│       │                 │                  │ 3. Check-in: Quét QR + GPS    │
 │       │                 │◀─────────────────│                                │
-│       │                 │                  │                                │
-│       │                 │                  │ 3. Quét QR + GPS               │
-│       │                 │                  │────────────────▶│              │
-│       │                 │                  │                                │
 │       │                 │ 4. Validate QR   │                                │
-│       │                 │    + GPS         │                                │
-│       │                 │◀─────────────────│                                │
+│       │                 │    + GPS + Giờ   │                                │
+│       │                 │─────────────────▶│                                │
 │       │                 │                  │                                │
-│       │                 │ 5. Lưu check-in  │                                │
+│       │                 │                  │ 5. Check-out (không cần QR)   │
+│       │                 │◀─────────────────│                                │
+│       │                 │ 6. Validate:     │                                │
+│       │                 │    đã check-in + │                                │
+│       │                 │    tối thiểu 1h  │                                │
 │       │                 │─────────────────▶│                                │
 │       │                 │                  │                                │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -1240,28 +1243,54 @@ QR Cá nhân = HMAC-SHA256(user_id + ngay + timestamp, secret_key)
 
 ### 9.1.3 QR Code Structure
 
+Có 2 phiên bản QR: QR chung (v=1) và QR cá nhân (v=2).
+
 ```python
-# QR Data Format (JSON → Base64)
+# QR chung (v=1) - dùng cho toàn trường hoặc phòng ban
+# Format: JSON → Base64
 {
-    "id": "qr_uuid",
-    "ngay": "2026-04-14",
-    "loai": "check_in",  # check_in | check_out
-    "nhan_vien_id": "nv_uuid",  # Optional (null = all employees)
-    "timestamp": 1713081600,
-    "mac": "hmac_sha256_signature"
+    "v": 1,
+    "ngay": "2026-05-13",
+    "pb_id": "phong_ban_uuid",  # Optional (null = tất cả NV)
+    "loai": "all",               # all | check_in | check_out
+    "loc": {                     # Optional (geo-fencing)
+        "lat": 21.0285,
+        "lng": 105.8542,
+        "name": "Trường THPT Thăng Long",
+        "radius": 100
+    },
+    "sig": "hmac_sha256_hex_signature"
 }
+
+# QR cá nhân (v=2) - dùng cho từng nhân viên
+{
+    "v": 2,
+    "uid": "nhan_vien_id",
+    "ngay": "2026-05-13",
+    "timestamp": 1713081600,
+    "sig": "hmac_sha256_hex_signature"
+}
+```
+
+**HMAC Signature:**
+```
+signature = HMAC-SHA256(json.dumps(payload_without_sig, sort_keys=True), SECRET_KEY)
 ```
 
 ### 9.1.4 Validation Rules
 
 | Rule | Mô tả | Error Code |
 |------|-------|------------|
-| QR Expired | QR hết hạn (mặc định: 5 phút) | `qr_expired` |
-| Invalid MAC | Chữ ký HMAC không hợp lệ | `invalid_qr` |
+| Invalid QR | Chữ ký HMAC không hợp lệ hoặc format sai | `invalid_qr` |
+| QR Not Found | Không có QR active cho ngày này | `qr_not_found` |
+| Invalid Time | Check-in ngoài khung giờ (`gio_bat_dau` - `gio_ket_thuc`) | `invalid_time` |
 | Already Checked-in | Đã check-in hôm nay | `already_checked_in` |
 | Not Checked-in | Chưa check-in để check-out | `not_checked_in` |
-| Outside Geo-fence | Vị trí ngoài bán kính cho phép | `outside_geo_fence` |
-| Late Check-in | Check-in sau giờ qui định | `late_check_in` |
+| Already Checked-out | Đã check-out hôm nay | `already_checked_out` |
+| Invalid Location | Vị trí ngoài bán kính geo-fence | `invalid_location` |
+| Too Early | Check-out trước 1 giờ làm việc tối thiểu | `too_early` |
+
+**Lưu ý:** Check-in muộn (sau 07:30) không bị chặn, chỉ được gán `check_in_status = "late"` và hiển thị cảnh báo.
 
 ### 9.1.5 Mô hình dữ liệu
 
@@ -1276,16 +1305,26 @@ class QRConfig:
     nhan_vien_id: str | None   # Null = tất cả nhân viên
     
     # QR Content
-    qr_data: str                # Nội dung QR (JSON)
+    qr_data: str                # Nội dung QR (JSON → Base64)
     qr_image_base64: str        # Ảnh QR (Base64)
     mac: str                    # HMAC signature
     
+    # Khung giờ check-in
+    gio_bat_dau: time            # Giờ bắt đầu (mặc định: 07:00)
+    gio_ket_thuc: time           # Giờ kết thúc (mặc định: 17:30)
+    
+    # Geo-fencing
+    vi_tri: str | None           # Tên địa điểm (VD: "Trường THPT Thăng Long")
+    kinh_do: float | None        # Kinh độ (longitude)
+    vi_do: float | None          # Vĩ độ (latitude)
+    ban_kinh_cho_phep: int       # Bán kính cho phép (mét, mặc định: 100m)
+    
     # Thời gian hiệu lực
-    thoi_gian_hieu_luc: datetime  # Thời điểm hết hạn
+    thoi_gian_hieu_luc: datetime | None  # Thời điểm hết hạn (chưa triển khai check)
     trang_thai: str              # active | expired | used
     
     # Metadata
-    created_by: str              # Người tạo
+    created_by: str              # Người tạo (FK → TaiKhoan)
     created_at: datetime
     updated_at: datetime
 
@@ -1299,10 +1338,10 @@ class CheckInOut:
     
     # Check-in
     check_in_time: datetime | None
-    check_in_qr_id: str | None  # FK → QRConfig
+    check_in_qr_id: str | None  # ID của QRConfig (không FK constraint)
     check_in_lat: float | None
     check_in_lng: float | None
-    check_in_status: str        # on_time | late | very_late
+    check_in_status: str        # on_time | late
     
     # Check-out
     check_out_time: datetime | None
@@ -1311,7 +1350,10 @@ class CheckInOut:
     check_out_lng: float | None
     
     # Trạng thái
-    trang_thai: str              # checked_in | checked_out | missing
+    trang_thai: str              # checked_in | checked_out
+    
+    # UniqueConstraint: 1 bản ghi/ngày/nhân viên
+    # UniqueConstraint("nhan_vien_id", "ngay", name="uq_check_in_out_daily")
     
     created_at: datetime
     updated_at: datetime
@@ -1323,30 +1365,34 @@ class CheckInOut:
 |----------|------|----------|
 | `GenerateQRUseCase` | `generate_qr_uc.py` | Tạo QR code cho ngày hôm nay hoặc ngày chỉ định |
 | `BulkGenerateQRUseCase` | `bulk_generate_qr_uc.py` | Tạo QR hàng loạt cho nhiều nhân viên |
-| `CheckInUseCase` | `check_in_uc.py` | Check-in bằng QR với validate (HMAC, GPS) |
-| `CheckOutUseCase` | `check_out_uc.py` | Check-out (sử dụng QR từ lần check-in gần nhất) |
+| `CheckInUseCase` | `check_in_uc.py` | Check-in bằng QR với validate (HMAC, GPS, khung giờ) |
+| `CheckOutUseCase` | `check_out_uc.py` | Check-out (không cần QR, tối thiểu 1 giờ làm) |
 | `GetMyHistoryUseCase` | `get_my_history_uc.py` | Lấy lịch sử check-in/out của nhân viên |
 | `GetMyMonthlyUseCase` | `get_my_monthly_uc.py` | Lấy tổng hợp chấm công tháng |
 | `AggregateMonthlyUseCase` | `aggregate_monthly_uc.py` | Tổng hợp dữ liệu tháng từ check-in/out |
 | `GetQRByDateUseCase` | `get_qr_by_date_uc.py` | Lấy QR code theo ngày |
+| `GetQRDetailUseCase` | `get_qr_detail_uc.py` | Lấy chi tiết một QR config |
+| `GetDailyAttendanceReportUseCase` | `get_daily_report_uc.py` | Báo cáo chấm công theo ngày |
+| `GetMonthlySummaryReportUseCase` | `get_monthly_summary_uc.py` | Báo cáo tổng hợp tháng |
 
 ### 9.1.7 API Endpoints
 
-**Employee Routes (`/nv/cham-cong/*`)**:
+**Employee Routes (`/api/v1/nhan-vien/cham-cong/*`)**:
 | Method | Endpoint | Permission | Mô tả |
 |--------|----------|------------|--------|
-| POST | `/check-in` | `cham_cong:check_in` | Check-in bằng QR |
-| POST | `/check-out` | `cham_cong:check_in` | Check-out |
-| GET | `/history` | `cham_cong:check_in` | Lịch sử check-in/out |
+| POST | `/check-in` | `cham_cong:check_in` | Check-in bằng QR (cần `qr_data`, optional GPS) |
+| POST | `/check-out` | `cham_cong:check_in` | Check-out (không cần QR, tối thiểu 1 giờ) |
+| GET | `/history` | `cham_cong:check_in` | Lịch sử check-in/out (phân trang) |
 | GET | `/monthly` | `cham_cong:check_in` | Tổng hợp tháng |
+| GET | `/my-qr` | `cham_cong:check_in` | Lấy QR cá nhân (v=2) |
 
-**Admin Routes (`/ql/cham-cong/*`)**:
+**Admin Routes (`/api/v1/admin/cham-cong/*`)**:
 | Method | Endpoint | Permission | Mô tả |
 |--------|----------|------------|--------|
-| POST | `/qr/generate` | `cham_cong:manage` | Tạo QR |
-| POST | `/qr/bulk-generate` | `cham_cong:manage` | Tạo QR hàng loạt |
-| GET | `/qr/by-date` | `cham_cong:manage` | Lấy QR theo ngày |
-| GET | `/qr/{qr_id}` | `cham_cong:manage` | Chi tiết QR |
+| POST | `/qr/generate` | `cham_cong:manage` | Tạo QR (v=1) cho ngày |
+| POST | `/qr/bulk-generate` | `cham_cong:manage` | Tạo QR hàng loạt cho nhiều NV |
+| GET | `/qr/by-date` | `cham_cong:manage` hoặc `cham_cong:view_own` | Lấy QR theo ngày |
+| GET | `/qr/{qr_id}` | `cham_cong:manage` | Chi tiết QR config |
 | POST | `/aggregate-monthly` | `cham_cong:manage` | Tổng hợp tháng |
 | GET | `/report/daily` | `cham_cong:manage` | Báo cáo ngày |
 | GET | `/report/monthly-summary` | `cham_cong:manage` | Báo cáo tháng |
@@ -1355,14 +1401,20 @@ class CheckInOut:
 
 ```python
 PERMISSION_CODES = {
-    # ... existing permissions ...
+    "cham_cong:read": "Xem chấm công",
+    "cham_cong:manage": "Quản lý chấm công",
+    "cham_cong:export": "Xuất bảng chấm công",
+    "cham_cong:view_own": "Xem chấm công cá nhân",
     "cham_cong:check_in": "Check-in/Check-out bằng QR",
 }
 
-# Nhân viên được phép check-in
 ROLE_PERMISSIONS = {
-    "GIAO_VIEN": ["cham_cong:check_in", "cham_cong:view_own", ...],
-    "NHAN_VIEN": ["cham_cong:check_in", "cham_cong:view_own", ...],
+    "ADMIN": ["cham_cong:read", "cham_cong:manage", "cham_cong:export", ...],
+    "HIEU_TRUONG": ["cham_cong:read", "cham_cong:manage", "cham_cong:export"],
+    "HIEU_PHO": ["cham_cong:read"],
+    "TO_TRUONG": ["cham_cong:read", "cham_cong:manage"],
+    "GIAO_VIEN": ["cham_cong:view_own", "cham_cong:check_in"],
+    "NHAN_VIEN": ["cham_cong:view_own", "cham_cong:check_in"],
 }
 ```
 
@@ -1754,7 +1806,7 @@ so_ngay_phep.phep_nam_con_lai: CHECK (>= 0)
 
 ---
 
-*Document version: 2.0*
+*Document version: 2.1*
 *Last updated: 2026-05-13*
 *Authors: Development Team*
 
@@ -1768,6 +1820,8 @@ backend/src/app/usecases/
 ├── nhan_vien/                    # Employee CRUD
 │   ├── create_nhan_vien_uc.py
 │   ├── get_nhan_vien_uc.py
+│   ├── get_detail_nhan_vien_uc.py
+│   ├── get_list_nhan_vien_uc.py
 │   ├── update_nhan_vien_uc.py
 │   ├── delete_nhan_vien_uc.py
 │   ├── restore_nhan_vien_uc.py
@@ -1791,21 +1845,77 @@ backend/src/app/usecases/
 │   ├── delete_chuc_vu_uc.py
 │   └── __init__.py
 ├── hop_dong/                     # Contract
-│   ├── hop_dong_uc.py
+│   ├── create_hop_dong_uc.py
+│   ├── get_list_hop_dong_uc.py
+│   ├── get_hop_dong_by_id_uc.py
+│   ├── update_hop_dong_uc.py
+│   ├── delete_hop_dong_uc.py
 │   └── __init__.py
 ├── cong_tac/                     # Work assignment
-│   ├── __init__.py
-│   └── (uses CongTacUseCase)
+│   ├── create_cong_tac_uc.py
+│   ├── get_list_cong_tac_uc.py
+│   ├── get_all_cong_tac_uc.py
+│   ├── get_cong_tac_by_id_uc.py
+│   ├── get_current_cong_tac_uc.py
+│   ├── update_cong_tac_uc.py
+│   ├── end_cong_tac_uc.py
+│   └── __init__.py
 ├── lich_su_chuc_vu/              # Position history
 │   ├── get_lich_su_chuc_vu_uc.py
 │   └── __init__.py
+├── cham_cong/                    # QR Attendance
+│   ├── generate_qr_uc.py
+│   ├── bulk_generate_qr_uc.py
+│   ├── check_in_uc.py
+│   ├── check_out_uc.py
+│   ├── get_my_history_uc.py
+│   ├── get_my_monthly_uc.py
+│   ├── aggregate_monthly_uc.py
+│   ├── get_qr_by_date_uc.py
+│   ├── get_qr_detail_uc.py
+│   ├── get_daily_report_uc.py
+│   ├── get_monthly_summary_uc.py
+│   └── __init__.py
 ├── nghi_phep/                    # Leave management
-│   ├── nghi_phep_uc.py
-│   ├── cham_cong_uc.py
+│   ├── create_don_nghi_uc.py
+│   ├── get_list_don_nghi_uc.py
+│   ├── get_don_nghi_detail_uc.py
+│   ├── duyet_don_nghi_uc.py
+│   ├── duyet_2_cap_uc.py
+│   ├── tu_choi_don_nghi_uc.py
+│   ├── delete_don_nghi_uc.py
+│   ├── get_so_ngay_phep_uc.py
+│   ├── init_so_ngay_phep_uc.py
+│   ├── get_list_cham_cong_uc.py
+│   ├── get_cham_cong_detail_uc.py
+│   ├── update_cham_cong_uc.py
+│   ├── duyet_cham_cong_uc.py
+│   ├── xac_nhan_cham_cong_uc.py
+│   ├── chot_cham_cong_uc.py
+│   ├── mock_generate_cham_cong_uc.py
+│   └── __init__.py
+├── cau_hinh_nghi_phep/           # Leave configuration
+│   ├── get_list_uc.py
+│   ├── create_uc.py
+│   ├── update_uc.py
+│   ├── delete_uc.py
+│   ├── init_annual_uc.py
 │   └── __init__.py
 ├── luong/                        # Salary
-│   ├── luong_uc.py
+│   ├── cau_hinh_luong_uc.py
+│   ├── luong_record_uc.py
+│   ├── ky_luong_uc.py
+│   ├── tra_luong_uc.py
 │   ├── tinh_luong_uc.py
+│   └── __init__.py
+├── bao_cao/                      # Reports & Statistics
+│   ├── tong_quan_uc.py
+│   ├── hop_dong_sap_het_han_uc.py
+│   ├── di_muon_uc.py
+│   ├── luong_so_sanh_uc.py
+│   ├── khen_thuong_uc.py
+│   ├── xu_huong_uc.py
+│   ├── log_export_uc.py
 │   └── __init__.py
 ├── tai_lieu/                     # Documents
 │   ├── tai_lieu_uc.py
@@ -1817,7 +1927,10 @@ backend/src/app/usecases/
 │   ├── khen_thuong_ky_luat_uc.py
 │   └── __init__.py
 ├── employee/                     # Employee self-service
-│   ├── employee_uc.py
+│   ├── get_employee_dashboard_uc.py
+│   ├── get_employee_profile_uc.py
+│   ├── update_employee_profile_uc.py
+│   ├── get_employee_permissions_uc.py
 │   ├── commands.py
 │   └── __init__.py
 ├── auth/                         # Authentication
@@ -1826,10 +1939,10 @@ backend/src/app/usecases/
 ├── dashboard/                    # Admin dashboard
 │   ├── admin_dashboard_uc.py
 │   └── __init__.py
-├── dieu_chuyen/                  # Employee transfer (NEW)
+├── dieu_chuyen/                  # Employee transfer
 │   ├── transfer_employee_uc.py
 │   └── __init__.py
-└── ho_so/                       # Employee profile (NEW)
+└── ho_so/                       # Employee profile
     ├── ho_so_nhan_su_uc.py
     └── __init__.py
 ```

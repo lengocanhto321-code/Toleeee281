@@ -3,6 +3,7 @@ Employee QR Attendance API Routes - Dành cho nhân viên check-in/check-out b�
 """
 
 import logging
+from dataclasses import asdict
 from datetime import date, datetime
 from typing import Optional
 
@@ -49,7 +50,7 @@ async def check_in(
 ):
     """Check-in bằng QR code."""
     command = CheckInCommand(
-        nhan_vien_id=current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
         qr_data=body.qr_data,
         thoi_gian=datetime.now().isoformat(),
         vi_tri={"lat": body.latitude, "lng": body.longitude}
@@ -64,13 +65,21 @@ async def check_in(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=404)
-        if error.code in ["invalid_qr", "already_checked_in", "outside_geo_fence"]:
+        if error.code in ["invalid_qr", "already_checked_in", "invalid_location"]:
+            raise ClientError(base_error=error, status_code=400)
+        if error.code in ["qr_not_found", "invalid_time"]:
             raise ClientError(base_error=error, status_code=400)
         raise ServerError(base_error=error)
 
     return APIResponse(
         message="Check-in thành công",
-        data=result.value.to_dict(),
+        data={
+            "id": result.value.id,
+            "thoi_gian": result.value.thoi_gian,
+            "trang_thai": result.value.trang_thai,
+            "is_late": result.value.is_late,
+            "message": result.value.message,
+        },
     )
 
 
@@ -82,7 +91,7 @@ async def check_out(
 ):
     """Check-out (sử dụng QR code từ lần check-in gần nhất)."""
     command = CheckOutCommand(
-        nhan_vien_id=current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
         thoi_gian=datetime.now().isoformat(),
     )
 
@@ -93,17 +102,22 @@ async def check_out(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=404)
-        if error.code in ["not_checked_in", "already_checked_out", "outside_geo_fence"]:
+        if error.code in ["not_checked_in", "already_checked_out", "too_early"]:
             raise ClientError(base_error=error, status_code=400)
         raise ServerError(base_error=error)
 
     return APIResponse(
         message="Check-out thành công",
-        data=result.value.to_dict(),
+        data={
+            "id": result.value.id,
+            "thoi_gian": result.value.thoi_gian,
+            "trang_thai": result.value.trang_thai,
+            "message": result.value.message,
+        },
     )
 
 
-@router.get("/history", response_model=APIResponse[dict])
+@router.get("/history", response_model=APIResponse[list])
 async def get_my_attendance_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -114,7 +128,7 @@ async def get_my_attendance_history(
 ):
     """Lấy lịch sử check-in/check-out của nhân viên hiện tại."""
     query = GetMyHistoryQuery(
-        user_id=current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
         page=page,
         page_size=page_size,
         tu_ngay=tu_ngay,
@@ -153,7 +167,7 @@ async def get_my_monthly_attendance(
     nam = nam or now.year
 
     query = GetMyMonthlyQuery(
-        user_id=current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
         thang=thang,
         nam=nam,
     )
@@ -166,7 +180,7 @@ async def get_my_monthly_attendance(
 
     return APIResponse(
         message="Lấy tổng hợp tháng thành công",
-        data=result.value.to_dict(),
+        data=asdict(result.value),
     )
 
 
@@ -179,7 +193,7 @@ async def get_my_qr(
 
     qr_service = QRAttendanceService()
     qr_data = qr_service.generate_user_qr(
-        user_id=current_user.user_id, ngay=date.today()
+        user_id=current_user.nhan_vien_id or current_user.user_id, ngay=date.today()
     )
 
     return APIResponse(
