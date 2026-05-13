@@ -1,127 +1,154 @@
 "use client"
 
 import React from "react"
-import { Card } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { BentoCard } from "@/components/employee/bento-card"
+import { useEmployeeDashboard } from "@/hooks/employee/use-employee-dashboard"
 import {
-  Calendar,
-  Clock,
-  Users,
-  TrendingUp,
-  ArrowUpRight,
+  GraduationCap,
 } from "lucide-react"
+import {
+  LOAI_NGHI_LABELS,
+  TRANG_THAI_DON_LABELS,
+  TRANG_THAI_DON_COLORS,
+} from "@/types/employee.types"
 
 export default function EmployeeDashboardPage() {
+  const router = useRouter()
+  const { data: dashboard, isLoading } = useEmployeeDashboard()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <p className="text-sm text-slate-400">Đang tải...</p>
+      </div>
+    )
+  }
+
+  const nv = dashboard?.nhan_vien
+  const np = dashboard?.nghi_phep
+  const cc = dashboard?.cham_cong?.thang_hien_tai
+
+  const initials = nv?.ho_ten
+    ?.split(" ")
+    .map((w) => w[0])
+    .slice(-2)
+    .join("")
+    .toUpperCase() || "NV"
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Welcome */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Xin chào, Giáo viên!</h1>
-          <p className="text-slate-500 mt-1">Cập nhật thông tin và hoạt động gần đây</p>
+    <div className="space-y-3 max-w-2xl mx-auto">
+      <div className="bg-gradient-to-r from-blue-900 via-blue-600 to-blue-500 rounded-2xl p-5 text-white">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <GraduationCap className="w-5 h-5 text-blue-200" />
+              <span className="text-xs text-blue-200">THPT Thăng Long</span>
+            </div>
+            <h1 className="text-xl font-bold">Xin chào, {nv?.ho_ten || "Nhân viên"} 👋</h1>
+            <p className="text-blue-200 text-sm mt-0.5">
+              {nv?.chuc_vu?.ten_chuc_vu || "Nhân viên"}
+              {nv?.phong_ban?.ten_phong_ban ? ` · ${nv.phong_ban.ten_phong_ban}` : ""}
+            </p>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-lg font-bold shrink-0">
+            {initials}
+          </div>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          Năm học 2024-2025
-        </Badge>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Ngày phép còn lại</p>
-              <p className="text-2xl font-bold text-slate-900">8/12</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <Clock className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Công tháng này</p>
-              <p className="text-2xl font-bold text-slate-900">22/22</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Lương tháng 3</p>
-              <p className="text-2xl font-bold text-slate-900">15.2M</p>
-            </div>
-          </div>
-        </Card>
+      <div className="grid grid-cols-2 gap-3">
+        <BentoCard
+          label="🏖️ Phép còn lại"
+          value={np ? `${np.so_ngay_phep_con_lai}` : "—"}
+          subtitle={np ? `/ ${np.tong_ngay_phep_nam} ngày` : undefined}
+          variant="blue"
+          onClick={() => router.push("/employee/nghi-phep")}
+        />
+        <BentoCard
+          label="📋 Công tháng này"
+          value={cc?.so_ngay_cong ?? "—"}
+          subtitle="ngày làm việc"
+          variant="green"
+          onClick={() => router.push("/employee/cham-cong")}
+        />
       </div>
 
-      {/* Quick Actions */}
-      <Card className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Thao tác nhanh</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Button variant="outline" className="h-auto py-4 justify-start">
-            <Calendar className="w-5 h-5 mr-3 text-indigo-600" />
-            <div className="text-left">
-              <p className="font-medium">Xin nghỉ phép</p>
-              <p className="text-xs text-slate-500">Gửi đơn nghỉ phép mới</p>
-            </div>
-          </Button>
-          <Button variant="outline" className="h-auto py-4 justify-start">
-            <Clock className="w-5 h-5 mr-3 text-emerald-600" />
-            <div className="text-left">
-              <p className="font-medium">Xem chấm công</p>
-              <p className="text-xs text-slate-500">Theo dõi ngày công</p>
-            </div>
-          </Button>
-          <Button variant="outline" className="h-auto py-4 justify-start">
-            <Users className="w-5 h-5 mr-3 text-amber-600" />
-            <div className="text-left">
-              <p className="font-medium">Hồ sơ cá nhân</p>
-              <p className="text-xs text-slate-500">Cập nhật thông tin</p>
-            </div>
-          </Button>
+      <div className="grid grid-cols-5 gap-3">
+        <div className="col-span-3">
+          <BentoCard
+            label="⏳ Đơn chờ duyệt"
+            value={np?.don_cho_duyet ?? 0}
+            subtitle="đơn nghỉ phép"
+            variant={np?.don_cho_duyet ? "amber" : "slate"}
+            onClick={() => router.push("/employee/nghi-phep")}
+          />
         </div>
-      </Card>
+        <div className="col-span-2">
+          <BentoCard
+            label="Hệ số CC"
+            value={cc?.he_so ?? "—"}
+            variant="outline"
+            onClick={() => router.push("/employee/cham-cong")}
+          />
+        </div>
+      </div>
 
-      {/* Recent Leave Requests */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Đơn nghỉ phép gần đây</h2>
-          <Button variant="ghost" size="sm" className="text-indigo-600">
-            Xem tất cả <ArrowUpRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-        <div className="space-y-3">
-          {[
-            { date: "15/03/2025", type: "Nghỉ phép năm", days: "2 ngày", status: "Đã duyệt" },
-            { date: "01/03/2025", type: "Nghỉ ốm", days: "1 ngày", status: "Đã duyệt" },
-            { date: "20/02/2025", type: "Nghỉ phép năm", days: "3 ngày", status: "Từ chối" },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-slate-100">
-              <div>
-                <p className="font-medium text-slate-900">{item.type}</p>
-                <p className="text-sm text-slate-500">{item.date} • {item.days}</p>
-              </div>
-              <Badge
-                variant={item.status === "Đã duyệt" ? "default" : "destructive"}
-                className={item.status === "Đã duyệt" ? "bg-emerald-500" : ""}
-              >
-                {item.status}
-              </Badge>
+      {np?.don_gan_nhat && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-900">Hoạt động gần đây</h2>
+            <button
+              onClick={() => router.push("/employee/nghi-phep")}
+              className="text-xs text-blue-600 font-medium hover:underline"
+            >
+              Xem tất cả →
+            </button>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+            <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-sm">📅</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {LOAI_NGHI_LABELS[np.don_gan_nhat.loai_nghi] || np.don_gan_nhat.loai_nghi}
+              </p>
+              <p className="text-xs text-slate-500">
+                {np.don_gan_nhat.tu_ngay} → {np.don_gan_nhat.den_ngay}
+              </p>
             </div>
-          ))}
+            <Badge
+              variant="outline"
+              className={TRANG_THAI_DON_COLORS[np.don_gan_nhat.trang_thai] || ""}
+            >
+              {TRANG_THAI_DON_LABELS[np.don_gan_nhat.trang_thai] || np.don_gan_nhat.trang_thai}
+            </Badge>
+          </div>
         </div>
-      </Card>
+      )}
+
+      <div className="grid grid-cols-3 gap-3">
+        <button
+          onClick={() => router.push("/employee/nghi-phep")}
+          className="bg-blue-600 rounded-2xl p-3 text-center hover:bg-blue-700 transition-colors"
+        >
+          <div className="text-lg mb-0.5">✏️</div>
+          <div className="text-[11px] text-white font-semibold">Xin nghỉ</div>
+        </button>
+        <button
+          onClick={() => router.push("/employee/my-qr")}
+          className="bg-blue-900 rounded-2xl p-3 text-center hover:bg-blue-950 transition-colors"
+        >
+          <div className="text-lg mb-0.5">📷</div>
+          <div className="text-[11px] text-white font-semibold">QR của tôi</div>
+        </button>
+        <button
+          onClick={() => router.push("/employee/luong")}
+          className="bg-white border-2 border-blue-600 rounded-2xl p-3 text-center hover:bg-blue-50 transition-colors"
+        >
+          <div className="text-lg mb-0.5">💰</div>
+          <div className="text-[11px] text-blue-600 font-semibold">Xem lương</div>
+        </button>
+      </div>
     </div>
   )
 }
