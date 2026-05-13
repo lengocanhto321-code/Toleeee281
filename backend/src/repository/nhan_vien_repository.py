@@ -1,15 +1,39 @@
+import secrets
+import string
 from typing import Optional, List, Tuple
-from sqlalchemy import select, func, or_, cast, Integer
+from dataclasses import dataclass, field
+from sqlalchemy import select, func, or_, and_, cast, Integer, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 from libs.result import Result, Return, Error
 from src.domain.models.nhan_vien import NhanVien
-from src.domain.models.cong_tac import CongTac
 
 LOAI_PREFIX = {
-    "giao_vien": "GV",
-    "can_bo": "CB",
+    "giao_vien": "NV",
+    "can_bo": "NV",
     "nhan_vien": "NV",
 }
+
+
+@dataclass
+class NhanVienFilterParams:
+    search: Optional[str] = None
+    trang_thai: Optional[str] = None
+    loai_nhan_vien: Optional[str] = None
+    gioi_tinh: Optional[str] = None
+    cap_hoc: Optional[str] = None
+    phong_ban_id: Optional[str] = None
+    loai_hop_dong: Optional[str] = None
+    hang_chuc_danh: Optional[str] = None
+    ngay_vao_lam_tu: Optional[str] = None
+    ngay_vao_lam_den: Optional[str] = None
+    ngay_sinh_tu: Optional[str] = None
+    ngay_sinh_den: Optional[str] = None
+    he_so_luong_tu: Optional[float] = None
+    he_so_luong_den: Optional[float] = None
+    la_dang_vien: Optional[bool] = None
+    la_doan_vien: Optional[bool] = None
+    co_bhxh: Optional[bool] = None
+    co_ngan_hang: Optional[bool] = None
 
 
 class NhanVienRepository:
@@ -19,104 +43,162 @@ class NhanVienRepository:
         self._session = session
 
     async def generate_ma_nhan_vien(self, loai_nhan_vien: str) -> str:
-        """Generate next ma_nhan_vien based on loai_nhan_vien prefix."""
-        prefix = LOAI_PREFIX.get(loai_nhan_vien, "NV")
-        # Find the max numeric suffix for this prefix
-        stmt = (
-            select(func.max(
-                cast(func.substr(NhanVien.ma_nhan_vien, len(prefix) + 1), Integer)
-            ))
-            .where(NhanVien.ma_nhan_vien.like(f"{prefix}%"))
-        )
-        result = await self._session.execute(stmt)
-        max_num = result.scalar() or 0
-        return f"{prefix}{max_num + 1:03d}"
+        chars = string.ascii_lowercase + string.digits
+        suffix = "".join(secrets.choice(chars) for _ in range(6))
+        return f"NV-{suffix}"
 
     async def create(self, nhan_vien: NhanVien) -> NhanVien:
-        """Create a new NhanVien."""
         self._session.add(nhan_vien)
         await self._session.flush()
         await self._session.refresh(nhan_vien)
         return nhan_vien
 
-    async def find_by_id(self, id: str, include_deleted: bool = False) -> Optional[NhanVien]:
-        """Find NhanVien by ID. By default excludes soft-deleted records."""
+    async def find_by_id(
+        self, id: str, include_deleted: bool = False
+    ) -> Optional[NhanVien]:
         query = select(NhanVien).where(NhanVien.id == id)
         if not include_deleted:
             query = query.where(NhanVien.deleted_at.is_(None))
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_by_ma(self, ma_nhan_vien: str, include_deleted: bool = False) -> Optional[NhanVien]:
-        """Find NhanVien by code (ma_nhan_vien). By default excludes soft-deleted records."""
+    async def find_by_ma(
+        self, ma_nhan_vien: str, include_deleted: bool = False
+    ) -> Optional[NhanVien]:
         query = select(NhanVien).where(NhanVien.ma_nhan_vien == ma_nhan_vien)
         if not include_deleted:
             query = query.where(NhanVien.deleted_at.is_(None))
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_by_email(self, email: str, include_deleted: bool = False) -> Optional[NhanVien]:
-        """Find NhanVien by email. By default excludes soft-deleted records."""
+    async def find_by_email(
+        self, email: str, include_deleted: bool = False
+    ) -> Optional[NhanVien]:
         query = select(NhanVien).where(NhanVien.email == email)
         if not include_deleted:
             query = query.where(NhanVien.deleted_at.is_(None))
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_by_cccd(self, so_cccd: str, include_deleted: bool = False) -> Optional[NhanVien]:
-        """Find NhanVien by CCCD. By default excludes soft-deleted records."""
+    async def find_by_cccd(
+        self, so_cccd: str, include_deleted: bool = False
+    ) -> Optional[NhanVien]:
         query = select(NhanVien).where(NhanVien.so_cccd == so_cccd)
         if not include_deleted:
             query = query.where(NhanVien.deleted_at.is_(None))
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
+    def _build_filter_query(self, base_stmt, filters: NhanVienFilterParams):
+        if filters.search:
+            pattern = f"%{filters.search}%"
+            base_stmt = base_stmt.where(
+                or_(
+                    NhanVien.ma_nhan_vien.ilike(pattern),
+                    NhanVien.ho_ten.ilike(pattern),
+                    NhanVien.email.ilike(pattern),
+                    NhanVien.so_dien_thoai.ilike(pattern),
+                    NhanVien.so_cccd.ilike(pattern),
+                    NhanVien.mon_day.ilike(pattern),
+                )
+            )
+
+        if filters.trang_thai:
+            base_stmt = base_stmt.where(NhanVien.trang_thai == filters.trang_thai)
+        if filters.loai_nhan_vien:
+            base_stmt = base_stmt.where(
+                NhanVien.loai_nhan_vien == filters.loai_nhan_vien
+            )
+        if filters.gioi_tinh:
+            base_stmt = base_stmt.where(NhanVien.gioi_tinh == filters.gioi_tinh)
+        if filters.cap_hoc:
+            base_stmt = base_stmt.where(NhanVien.cap_hoc == filters.cap_hoc)
+        if filters.phong_ban_id:
+            base_stmt = base_stmt.where(NhanVien.phong_ban_id == filters.phong_ban_id)
+        if filters.loai_hop_dong:
+            base_stmt = base_stmt.where(NhanVien.loai_hop_dong == filters.loai_hop_dong)
+        if filters.hang_chuc_danh:
+            base_stmt = base_stmt.where(
+                NhanVien.hang_chuc_danh == filters.hang_chuc_danh
+            )
+
+        if filters.ngay_vao_lam_tu:
+            base_stmt = base_stmt.where(
+                NhanVien.ngay_vao_lam >= filters.ngay_vao_lam_tu
+            )
+        if filters.ngay_vao_lam_den:
+            base_stmt = base_stmt.where(
+                NhanVien.ngay_vao_lam <= filters.ngay_vao_lam_den
+            )
+        if filters.ngay_sinh_tu:
+            base_stmt = base_stmt.where(NhanVien.ngay_sinh >= filters.ngay_sinh_tu)
+        if filters.ngay_sinh_den:
+            base_stmt = base_stmt.where(NhanVien.ngay_sinh <= filters.ngay_sinh_den)
+
+        if filters.he_so_luong_tu is not None:
+            base_stmt = base_stmt.where(
+                NhanVien.he_so_luong.cast(Float) >= filters.he_so_luong_tu
+            )
+        if filters.he_so_luong_den is not None:
+            base_stmt = base_stmt.where(
+                NhanVien.he_so_luong.cast(Float) <= filters.he_so_luong_den
+            )
+
+        if filters.la_dang_vien is True:
+            base_stmt = base_stmt.where(NhanVien.la_dang_vien == True)
+        if filters.la_doan_vien is True:
+            base_stmt = base_stmt.where(NhanVien.la_doan_vien == True)
+        if filters.co_bhxh is True:
+            base_stmt = base_stmt.where(
+                NhanVien.so_bao_hiem.isnot(None), NhanVien.so_bao_hiem != ""
+            )
+        if filters.co_ngan_hang is True:
+            base_stmt = base_stmt.where(
+                NhanVien.so_tai_khoan_ngan_hang.isnot(None),
+                NhanVien.so_tai_khoan_ngan_hang != "",
+            )
+
+        return base_stmt
+
+    def _serialize_nhan_vien(self, nv: NhanVien) -> dict:
+        d = {c.key: getattr(nv, c.key) for c in nv.__table__.columns}
+
+        pb = getattr(nv, "phong_ban", None)
+        if pb:
+            d["phong_ban"] = {"id": pb.id, "ten_phong_ban": pb.ten_phong_ban}
+        else:
+            d["phong_ban"] = None
+
+        cv = getattr(nv, "chuc_vu", None)
+        if cv:
+            d["chuc_vu"] = {
+                "id": cv.id,
+                "ten_chuc_vu": cv.ten_chuc_vu,
+                "cap_bac": cv.cap_bac,
+            }
+        else:
+            d["chuc_vu"] = None
+
+        return d
+
     async def get_paginated(
         self,
         page: int = 1,
         page_size: int = 10,
-        search: Optional[str] = None,
-        trang_thai: Optional[str] = None,
-        loai_nhan_vien: Optional[str] = None,
-        phong_ban_id: Optional[str] = None,
+        filters: NhanVienFilterParams = None,
         sort_by: str = "created_at",
-        sort_desc: bool = True
+        sort_desc: bool = True,
     ) -> Result[Tuple[int, List[dict]], Error]:
-        """
-        Get paginated list of NhanVien.
-        Returns Result with (total_count, items).
-        """
-        # Base query with soft-delete filter
+        if filters is None:
+            filters = NhanVienFilterParams()
+
         base_stmt = select(NhanVien).where(NhanVien.deleted_at.is_(None))
+        base_stmt = self._build_filter_query(base_stmt, filters)
 
-        # Apply filters
-        if search:
-            search_pattern = f"%{search}%"
-            filter_condition = or_(
-                NhanVien.ma_nhan_vien.ilike(search_pattern),
-                NhanVien.ho_ten.ilike(search_pattern),
-                NhanVien.email.ilike(search_pattern),
-                NhanVien.so_dien_thoai.ilike(search_pattern)
-            )
-            base_stmt = base_stmt.where(filter_condition)
-
-        if trang_thai:
-            base_stmt = base_stmt.where(NhanVien.trang_thai == trang_thai)
-
-        if loai_nhan_vien:
-            base_stmt = base_stmt.where(NhanVien.loai_nhan_vien == loai_nhan_vien)
-
-        if phong_ban_id:
-            base_stmt = base_stmt.join(CongTac, CongTac.nhan_vien_id == NhanVien.id).where(
-                CongTac.phong_ban_id == phong_ban_id
-            )
-
-        # Count total
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total_result = await self._session.execute(count_stmt)
         total = total_result.scalar() or 0
 
-        # Sorting
         allowed_sorts = {
             "created_at": NhanVien.created_at,
             "updated_at": NhanVien.updated_at,
@@ -124,57 +206,55 @@ class NhanVienRepository:
             "ma_nhan_vien": NhanVien.ma_nhan_vien,
             "trang_thai": NhanVien.trang_thai,
             "loai_nhan_vien": NhanVien.loai_nhan_vien,
+            "ngay_vao_lam": NhanVien.ngay_vao_lam,
         }
         sort_col = allowed_sorts.get(sort_by, NhanVien.created_at)
+        base_stmt = base_stmt.order_by(sort_col.desc() if sort_desc else sort_col.asc())
 
-        if sort_desc:
-            base_stmt = base_stmt.order_by(sort_col.desc())
-        else:
-            base_stmt = base_stmt.order_by(sort_col.asc())
-
-        # Pagination
         base_stmt = base_stmt.offset((page - 1) * page_size).limit(page_size)
 
-        # Execute query
         try:
             result = await self._session.execute(base_stmt)
             nhan_viens = result.scalars().all()
-
-            # Convert to list of dicts
-            items = []
-            for nv in nhan_viens:
-                d = {c.key: getattr(nv, c.key) for c in nv.__table__.columns}
-                
-                # Attaching phong_ban and chuc_vu
-                primary_ct = next(
-                    (ct for ct in getattr(nv, "cong_tac", []) if ct.is_primary and ct.trang_thai == "dang_cong_tac"),
-                    getattr(nv, "cong_tac", [])[0] if getattr(nv, "cong_tac", []) else None
-                )
-                
-                d["phong_ban"] = primary_ct.phong_ban.ten_phong_ban if primary_ct and primary_ct.phong_ban else None
-                d["chuc_vu"] = primary_ct.chuc_vu.ten_chuc_vu if primary_ct and primary_ct.chuc_vu else None
-
-                items.append(d)
-
+            items = [self._serialize_nhan_vien(nv) for nv in nhan_viens]
             return Return.ok((total, items))
         except Exception as e:
             return Return.err(
                 Error(
                     code="database_error",
                     message=f"Lỗi truy vấn: {str(e)}",
-                    reason="DatabaseError"
+                    reason="DatabaseError",
                 )
             )
 
+    async def find_all_by_status(self, trang_thai: str) -> List[NhanVien]:
+        query = select(NhanVien).where(
+            NhanVien.trang_thai == trang_thai,
+            NhanVien.deleted_at.is_(None),
+        )
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
+
+    async def find_dang_lam(
+        self, danh_sach_ids: Optional[List[str]] = None
+    ) -> List[NhanVien]:
+        query = select(NhanVien).where(
+            NhanVien.trang_thai == "dang_lam",
+            NhanVien.deleted_at.is_(None),
+        )
+        if danh_sach_ids:
+            query = query.where(NhanVien.id.in_(danh_sach_ids))
+        result = await self._session.execute(query)
+        return list(result.scalars().all())
+
     async def update(self, nhan_vien: NhanVien) -> NhanVien:
-        """Update NhanVien."""
         await self._session.flush()
         await self._session.refresh(nhan_vien)
         return nhan_vien
 
     async def delete(self, nhan_vien: NhanVien) -> NhanVien:
-        """Soft-delete NhanVien by setting deleted_at."""
         from datetime import datetime
+
         nhan_vien.deleted_at = datetime.utcnow()
         await self._session.flush()
         await self._session.refresh(nhan_vien)

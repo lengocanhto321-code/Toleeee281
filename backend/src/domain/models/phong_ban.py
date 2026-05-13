@@ -21,7 +21,9 @@ class PhongBan(Base):
     trang_thai = Column(Boolean, nullable=False, default=True)
 
     # Parent-child hierarchy
-    cha_id = Column(String(32), ForeignKey('phong_ban.id', ondelete='SET NULL'), nullable=True)
+    cha_id = Column(
+        String(32), ForeignKey("phong_ban.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Soft-delete
     deleted_at = Column(DateTime, nullable=True)
@@ -34,22 +36,19 @@ class PhongBan(Base):
     # Relationships
     # Self-referential parent-child hierarchy
     cha = relationship(
-        "PhongBan",
-        remote_side=[id],
-        back_populates="children",
-        lazy="selectin"
+        "PhongBan", remote_side=[id], back_populates="children", lazy="selectin"
     )
     children = relationship(
-        "PhongBan",
-        remote_side=[cha_id],
-        back_populates="cha",
-        lazy="selectin"
+        "PhongBan", remote_side=[cha_id], back_populates="cha", lazy="selectin"
     )
 
     # One-to-Many with CongTac (để lấy danh sách NV trong phòng)
-    nhan_viens = relationship(
+    cong_tacs = relationship(
         "CongTac",
         back_populates="phong_ban",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
+
+    # Direct relationship to NhanVien (through nhan_vien.phong_ban_id FK)
+    nhan_viens = relationship("NhanVien", back_populates="phong_ban", lazy="selectin")

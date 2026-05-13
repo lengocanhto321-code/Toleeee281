@@ -202,6 +202,8 @@ ROLE_PERMISSIONS = {
         "dashboard:view_employee",
         "profile:read",
         "profile:update",
+        "tai_lieu:read",
+        "tai_lieu:create",
     ],
     "NHAN_VIEN": [
         "luong:view_own",
@@ -212,6 +214,8 @@ ROLE_PERMISSIONS = {
         "dashboard:view_employee",
         "profile:read",
         "profile:update",
+        "tai_lieu:read",
+        "tai_lieu:create",
     ],
 }
 
