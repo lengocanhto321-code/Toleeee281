@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
+import { QueryClientProviderWrapper } from "@/providers/query-client-provider";
 import "./globals.css";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
 });
 
 const geistMono = Geist_Mono({
@@ -15,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HR Management System",
-  description: "Human Resources Management System",
+  title: "HR Management System - THPT Thăng Long",
+  description: "Hệ thống quản lý nhân sự trường THPT Thăng Long",
 };
 
 export default function RootLayout({
@@ -25,9 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} min-h-full flex flex-col antialiased`}>
-        {children}
+    <html lang="vi" suppressHydrationWarning>
+      <body className={`${beVietnamPro.variable} ${geistMono.variable} min-h-full antialiased`}>
+        <QueryClientProviderWrapper>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+          <Toaster richColors position="top-right" />
+        </QueryClientProviderWrapper>
       </body>
     </html>
   );

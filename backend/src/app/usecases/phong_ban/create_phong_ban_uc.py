@@ -51,6 +51,7 @@ class CreatePhongBanUseCase:
             try:
                 created_pb = await phong_ban_repo.create(new_pb)
             except IntegrityError as e:
+                await uow.rollback()
                 return Return.err(
                     Error(
                         code="code_already_exists",
@@ -66,7 +67,7 @@ class CreatePhongBanUseCase:
                 bang_du_lieu="phong_ban",
                 ban_ghi_id=created_pb.id,
                 du_lieu_cu=None,
-                du_lieu_moi=command.data.model_dump(),
+                du_lieu_moi=command.data.model_dump(mode="json"),
                 ghi_chu="Tạo mới phòng ban"
             )
             await audit_repo.create(audit_log)

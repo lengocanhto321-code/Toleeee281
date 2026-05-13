@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import Cookie
 from pydantic import BaseModel
 
-from depends import auth_service
+from src.api.depends import auth_service
 from libs.result import Error
 from src.api.error import ClientError
 
@@ -56,3 +56,4 @@ async def get_cookie_user_context(
 
 
 get_user_context = get_cookie_user_context
+get_current_admin = get_user_context  # Alias for compatibility

@@ -2,7 +2,16 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 from src.repository.user_repository import UserRepository
 from src.repository.phong_ban_repository import PhongBanRepository
+from src.repository.nhan_vien_repository import NhanVienRepository
+from src.repository.chuc_vu_repository import ChucVuRepository
 from src.repository.audit_log_repository import AuditLogRepository
+from src.repository.luong_repository import (
+    LuongRepository,
+    ChamCongRepository,
+    CauHinhLuongRepository,
+)
+from src.repository.tra_luong_repository import KyLuongRepository, TraLuongRepository
+
 
 class UnitOfWork:
     """
@@ -17,13 +26,27 @@ class UnitOfWork:
         self._session: AsyncSession | None = None
         self.user_repository: UserRepository
         self.phong_ban_repository: PhongBanRepository
+        self.nhan_vien_repository: NhanVienRepository
+        self.chuc_vu_repository: ChucVuRepository
         self.audit_log_repository: AuditLogRepository
+        self.luong_repository: LuongRepository
+        self.cham_cong_repository: ChamCongRepository
+        self.cau_hinh_luong_repository: CauHinhLuongRepository
+        self.ky_luong_repository: KyLuongRepository
+        self.tra_luong_repository: TraLuongRepository
 
     async def __aenter__(self):
         self._session = self._session_factory()
         self.user_repository = UserRepository(session=self._session)
         self.phong_ban_repository = PhongBanRepository(session=self._session)
+        self.nhan_vien_repository = NhanVienRepository(session=self._session)
+        self.chuc_vu_repository = ChucVuRepository(session=self._session)
         self.audit_log_repository = AuditLogRepository(session=self._session)
+        self.luong_repository = LuongRepository(session=self._session)
+        self.cham_cong_repository = ChamCongRepository(session=self._session)
+        self.cau_hinh_luong_repository = CauHinhLuongRepository(session=self._session)
+        self.ky_luong_repository = KyLuongRepository(session=self._session)
+        self.tra_luong_repository = TraLuongRepository(session=self._session)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -52,5 +75,7 @@ class UnitOfWork:
     def session(self) -> AsyncSession:
         """Get the current database session."""
         if self._session is None:
-            raise RuntimeError("UnitOfWork is not active. Use 'async with' context manager.")
+            raise RuntimeError(
+                "UnitOfWork is not active. Use 'async with' context manager."
+            )
         return self._session

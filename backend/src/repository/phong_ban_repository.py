@@ -4,10 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from libs.result import Result, Return, Error
 from src.domain.models.phong_ban import PhongBan
 from src.domain.models.nhan_vien import NhanVien
+from src.domain.models.cong_tac import CongTac
 
 
 class PhongBanRepository:
-    """Repository for PhongBan model."""
+    """Repository for PhongBan model with soft-delete support."""
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -19,18 +20,20 @@ class PhongBanRepository:
         await self._session.refresh(phong_ban)
         return phong_ban
 
-    async def find_by_id(self, id: str) -> Optional[PhongBan]:
-        """Find PhongBan by ID."""
-        result = await self._session.execute(
-            select(PhongBan).where(PhongBan.id == id)
-        )
+    async def find_by_id(self, id: str, include_deleted: bool = False) -> Optional[PhongBan]:
+        """Find PhongBan by ID. By default excludes soft-deleted records."""
+        query = select(PhongBan).where(PhongBan.id == id)
+        if not include_deleted:
+            query = query.where(PhongBan.deleted_at.is_(None))
+        result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_by_ma(self, ma_phong_ban: str) -> Optional[PhongBan]:
-        """Find PhongBan by code (ma_phong_ban)."""
-        result = await self._session.execute(
-            select(PhongBan).where(PhongBan.ma_phong_ban == ma_phong_ban)
-        )
+    async def find_by_ma(self, ma_phong_ban: str, include_deleted: bool = False) -> Optional[PhongBan]:
+        """Find PhongBan by code (ma_phong_ban). By default excludes soft-deleted records."""
+        query = select(PhongBan).where(PhongBan.ma_phong_ban == ma_phong_ban)
+        if not include_deleted:
+            query = query.where(PhongBan.deleted_at.is_(None))
+        result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
     async def get_paginated(
@@ -49,6 +52,7 @@ class PhongBanRepository:
         """
 
         # 1. Base query chứa join + aggregate (quan trọng)
+        # Add soft-delete filter for PhongBan
         base_stmt = (
             select(
                 PhongBan,
@@ -57,7 +61,9 @@ class PhongBanRepository:
                     .filter(NhanVien.trang_thai == "dang_lam")
                     .label("so_luong_dang_lam")
             )
-            .outerjoin(NhanVien, NhanVien.phong_ban_id == PhongBan.id)
+            .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
+            .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
+            .where(PhongBan.deleted_at.is_(None))
             .group_by(PhongBan.id)
         )
 
@@ -135,8 +141,9 @@ class PhongBanRepository:
                 func.count(NhanVien.id).label("so_luong_nhan_vien"),
                 func.count(NhanVien.id).filter(NhanVien.trang_thai == "dang_lam").label("so_luong_dang_lam")
             )
-            .outerjoin(NhanVien, NhanVien.phong_ban_id == PhongBan.id)
-            .where(PhongBan.id == id)
+            .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
+            .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
+            .where(PhongBan.id == id, PhongBan.deleted_at.is_(None))
             .group_by(PhongBan.id)
         )
         
@@ -166,10 +173,15 @@ class PhongBanRepository:
 
     async def count_employees(self, id: str, active_only: bool = False) -> int:
         """Count employees in a department."""
-        stmt = select(func.count(NhanVien.id)).where(NhanVien.phong_ban_id == id)
+        stmt = (
+            select(func.count(NhanVien.id))
+            .select_from(CongTac)
+            .join(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
+            .where(CongTac.phong_ban_id == id)
+        )
         if active_only:
             stmt = stmt.where(NhanVien.trang_thai == "dang_lam")
-            
+
         result = await self._session.execute(stmt)
         return result.scalar() or 0
 
@@ -179,7 +191,10 @@ class PhongBanRepository:
         await self._session.refresh(phong_ban)
         return phong_ban
 
-    async def delete(self, phong_ban: PhongBan) -> None:
-        """Delete PhongBan."""
-        await self._session.delete(phong_ban)
+    async def delete(self, phong_ban: PhongBan) -> PhongBan:
+        """Soft-delete PhongBan by setting deleted_at."""
+        from datetime import datetime
+        phong_ban.deleted_at = datetime.utcnow()
         await self._session.flush()
+        await self._session.refresh(phong_ban)
+        return phong_ban

@@ -1,12 +1,12 @@
+from typing import AsyncGenerator
 from config import config
 from src.service.auth_service import AuthService
 from src.service.storage.postgres import create_session_factory
 from src.service.unit_of_work import UnitOfWork
+from sqlalchemy.ext.asyncio import AsyncSession
 
-# Session factory for database interactions
 session_factory = create_session_factory(config.DB_URI)
 
-# Auth service
 auth_service = AuthService(
     jwt_secret=config.JWT_SECRET,
     jwt_algorithm=config.JWT_ALGORITHM,
@@ -17,6 +17,11 @@ auth_service = AuthService(
 
 def get_unit_of_work() -> UnitOfWork:
     return UnitOfWork(session_factory)
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with session_factory() as session:
+        yield session
 
 
 def get_auth_service() -> AuthService:
