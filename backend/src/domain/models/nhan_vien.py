@@ -9,7 +9,7 @@ from sqlalchemy import (
     Integer,
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -84,11 +84,14 @@ class NhanVien(Base):
     trang_thai = Column(String(20), nullable=False, default="dang_lam")
 
     # Soft-delete
-    deleted_at = Column(DateTime, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
     # Relationships
@@ -157,10 +160,13 @@ class TaiLieuNhanVien(Base):
     la_ban_chinh = Column(Boolean, default=False)
     trang_thai = Column(String(20), nullable=False, default="hieu_luc")
 
-    deleted_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
     nhan_vien = relationship("NhanVien", back_populates="tai_lieus")
