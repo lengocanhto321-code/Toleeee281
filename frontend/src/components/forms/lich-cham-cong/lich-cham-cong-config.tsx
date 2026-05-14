@@ -28,6 +28,7 @@ export function LichChamCongConfig() {
   const createMutation = useCreateLichChamCong()
   const toggleMutation = useToggleLichChamCong()
 
+  const hasConfig = !!data
   const isActive = data?.trang_thai === "active"
 
   const [gioCheckIn, setGioCheckIn] = useState("07:00")
@@ -131,7 +132,7 @@ export function LichChamCongConfig() {
             <Switch
               checked={isActive}
               onCheckedChange={handleToggleActive}
-              disabled={!data || toggleMutation.isPending}
+              disabled={!hasConfig || toggleMutation.isPending}
             />
           </div>
         </CardAction>
@@ -139,7 +140,7 @@ export function LichChamCongConfig() {
 
       <CardContent>
         <form onSubmit={handleSave} className="space-y-5">
-          <fieldset className="space-y-3" disabled={!isActive}>
+          <fieldset className="space-y-3" disabled={hasConfig && !isActive}>
             <legend className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Thời gian
             </legend>
@@ -166,7 +167,7 @@ export function LichChamCongConfig() {
             </div>
           </fieldset>
 
-          <fieldset className="space-y-3" disabled={!isActive}>
+          <fieldset className="space-y-3" disabled={hasConfig && !isActive}>
             <legend className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Ngày làm việc
             </legend>
@@ -187,7 +188,7 @@ export function LichChamCongConfig() {
             </div>
           </fieldset>
 
-          <fieldset className="space-y-3" disabled={!isActive}>
+          <fieldset className="space-y-3" disabled={hasConfig && !isActive}>
             <legend className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Xác thực GPS
             </legend>
@@ -252,7 +253,7 @@ export function LichChamCongConfig() {
           <CardFooter className="px-0 pt-2">
             <Button
               type="submit"
-              disabled={!isActive || createMutation.isPending}
+              disabled={(hasConfig && !isActive) || createMutation.isPending}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
               {createMutation.isPending ? "Đang lưu..." : "Lưu cấu hình"}
