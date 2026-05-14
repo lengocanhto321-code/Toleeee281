@@ -5,6 +5,7 @@ Provides data for executive dashboard, contracts, attendance, salary, rewards, a
 
 from typing import Optional
 from datetime import date, datetime, timedelta
+from libs.datetime import get_utc_now
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, extract
 from sqlalchemy.orm import selectinload
@@ -712,7 +713,7 @@ class BaoCaoService:
             "change_nam_truoc": {"percent": float, "direction": str}
         }
         """
-        now = datetime.utcnow()
+        now = get_utc_now()
         current_thang = now.month
         current_nam = now.year
 
