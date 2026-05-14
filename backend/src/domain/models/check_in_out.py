@@ -39,6 +39,7 @@ class CheckInOut(Base):
     check_out_lng = Column(Float, nullable=True)
 
     trang_thai = Column(String(20), nullable=False, default="checked_in")
+    ghi_chu_vang = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
@@ -63,5 +64,6 @@ class CheckInOut(Base):
             "check_out_lat": self.check_out_lat,
             "check_out_lng": self.check_out_lng,
             "trang_thai": self.trang_thai,
+            "ghi_chu_vang": self.ghi_chu_vang,
             "created_at": serialize_dt(self.created_at),
         }
