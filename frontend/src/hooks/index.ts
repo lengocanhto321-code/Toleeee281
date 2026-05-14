@@ -13,3 +13,4 @@ export * from "./chuc-vu";
 export * from "./luong";
 export * from "./nghi-phep";
 export * from "./employee";
+export * from "./lich-cham-cong";
