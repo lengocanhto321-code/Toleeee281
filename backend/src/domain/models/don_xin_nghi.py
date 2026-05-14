@@ -8,7 +8,7 @@ from sqlalchemy import (
     Numeric,
     JSON,
 )
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -36,9 +36,12 @@ class DonXinNghi(Base):
 
     nguoi_tao_id = Column(String(32))
     nguoi_duyet_id = Column(String(32), ForeignKey("tai_khoan.id"))
-    ngay_duyet = Column(DateTime)
+    ngay_duyet = Column(DateTime(timezone=True))
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
