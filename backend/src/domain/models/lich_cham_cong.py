@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from libs.datetime import get_utc_now
+
 from sqlalchemy import (
     Column,
     String,
@@ -35,7 +37,10 @@ class LichChamCong(Base):
     created_by = Column(
         String(32), ForeignKey("tai_khoan.id", ondelete="SET NULL"), nullable=True
     )
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
