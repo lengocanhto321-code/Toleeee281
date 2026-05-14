@@ -2,7 +2,8 @@ import logging
 from dataclasses import dataclass
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
-from datetime import datetime
+
+from libs.datetime import get_utc_now
 
 from libs.result import Result, Error, Return
 from src.domain.models.nhan_vien import NhanVien
@@ -159,7 +160,7 @@ class UpdateNhanVienUseCase:
                 if current_cong_tac:
                     await uow.cong_tac_repository.end_assignment(current_cong_tac)
                     old_ct_data = serialize_model_to_dict(current_cong_tac)
-                    old_ct_data["ngay_ket_thuc"] = datetime.utcnow()
+                    old_ct_data["ngay_ket_thuc"] = get_utc_now()
                     old_ct_data["trang_thai"] = "da_chuyen"
 
                     # Audit log for ending old assignment
@@ -179,7 +180,7 @@ class UpdateNhanVienUseCase:
                     nhan_vien_id=command.id,
                     phong_ban_id=new_phong_ban_id,
                     chuc_vu_id=new_chuc_vu_id,
-                    ngay_bat_dau=datetime.utcnow(),
+                    ngay_bat_dau=get_utc_now(),
                     is_primary=True,
                     he_so_luong=existing_nv.he_so_luong,
                     bac_luong=existing_nv.bac_luong,

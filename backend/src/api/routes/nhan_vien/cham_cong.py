@@ -4,7 +4,9 @@ Employee QR Attendance API Routes - Dành cho nhân viên check-in/check-out b�
 
 import logging
 from dataclasses import asdict
-from datetime import date, datetime
+from datetime import date
+
+from libs.datetime import get_utc_now
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Path, status
@@ -35,11 +37,29 @@ class CheckInRequest(BaseModel):
     qr_data: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    dms: Optional[str] = None
 
 
 class CheckOutRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    dms: Optional[str] = None
+
+
+def _resolve_location(body) -> Optional[dict]:
+    from src.service.qr_attendance_service import parse_coordinate_pair
+
+    lat = body.latitude
+    lng = body.longitude
+
+    if hasattr(body, "dms") and body.dms:
+        pair = parse_coordinate_pair(body.dms)
+        if pair:
+            lat, lng = pair
+
+    if lat is not None and lng is not None:
+        return {"lat": lat, "lng": lng}
+    return None
 
 
 @router.post("/check-in", response_model=APIResponse[dict])
@@ -52,10 +72,8 @@ async def check_in(
     command = CheckInCommand(
         nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
         qr_data=body.qr_data,
-        thoi_gian=datetime.now().isoformat(),
-        vi_tri={"lat": body.latitude, "lng": body.longitude}
-        if body.latitude and body.longitude
-        else None,
+        thoi_gian=get_utc_now().isoformat(),
+        vi_tri=_resolve_location(body),
     )
 
     use_case = CheckInUseCase(uow)
@@ -92,7 +110,7 @@ async def check_out(
     """Check-out (sử dụng QR code từ lần check-in gần nhất)."""
     command = CheckOutCommand(
         nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
-        thoi_gian=datetime.now().isoformat(),
+        thoi_gian=get_utc_now().isoformat(),
     )
 
     use_case = CheckOutUseCase(uow)
@@ -162,7 +180,7 @@ async def get_my_monthly_attendance(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Lấy tổng hợp chấm công tháng của nhân viên hiện tại."""
-    now = datetime.now()
+    now = get_utc_now()
     thang = thang or now.month
     nam = nam or now.year
 
@@ -200,6 +218,6 @@ async def get_my_qr(
         message="Lấy QR cá nhân thành công",
         data={
             "qr_data": qr_data,
-            "expires_at": datetime.utcnow().isoformat(),
+            "expires_at": get_utc_now().isoformat(),
         },
     )

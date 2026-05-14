@@ -1,3 +1,5 @@
+import secrets
+import string
 from typing import Optional, List, Tuple
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +15,11 @@ class PhongBanRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
+    async def generate_ma_phong_ban(self) -> str:
+        chars = string.ascii_lowercase + string.digits
+        suffix = "".join(secrets.choice(chars) for _ in range(6))
+        return f"PB-{suffix}"
+
     async def create(self, phong_ban: PhongBan) -> PhongBan:
         """Create a new PhongBan."""
         self._session.add(phong_ban)
@@ -20,7 +27,9 @@ class PhongBanRepository:
         await self._session.refresh(phong_ban)
         return phong_ban
 
-    async def find_by_id(self, id: str, include_deleted: bool = False) -> Optional[PhongBan]:
+    async def find_by_id(
+        self, id: str, include_deleted: bool = False
+    ) -> Optional[PhongBan]:
         """Find PhongBan by ID. By default excludes soft-deleted records."""
         query = select(PhongBan).where(PhongBan.id == id)
         if not include_deleted:
@@ -28,7 +37,9 @@ class PhongBanRepository:
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
 
-    async def find_by_ma(self, ma_phong_ban: str, include_deleted: bool = False) -> Optional[PhongBan]:
+    async def find_by_ma(
+        self, ma_phong_ban: str, include_deleted: bool = False
+    ) -> Optional[PhongBan]:
         """Find PhongBan by code (ma_phong_ban). By default excludes soft-deleted records."""
         query = select(PhongBan).where(PhongBan.ma_phong_ban == ma_phong_ban)
         if not include_deleted:
@@ -44,7 +55,7 @@ class PhongBanRepository:
         loai: Optional[str] = None,
         trang_thai: Optional[bool] = None,
         sort_by: str = "created_at",
-        sort_desc: bool = True
+        sort_desc: bool = True,
     ) -> Result[Tuple[int, List[dict]], Error]:
         """
         Get paginated list of PhongBan with employee counts.
@@ -58,8 +69,8 @@ class PhongBanRepository:
                 PhongBan,
                 func.count(NhanVien.id).label("so_luong_nhan_vien"),
                 func.count(NhanVien.id)
-                    .filter(NhanVien.trang_thai == "dang_lam")
-                    .label("so_luong_dang_lam")
+                .filter(NhanVien.trang_thai == "dang_lam")
+                .label("so_luong_dang_lam"),
             )
             .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
             .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
@@ -72,7 +83,7 @@ class PhongBanRepository:
             search_pattern = f"%{search}%"
             filter_condition = or_(
                 PhongBan.ma_phong_ban.ilike(search_pattern),
-                PhongBan.ten_phong_ban.ilike(search_pattern)
+                PhongBan.ten_phong_ban.ilike(search_pattern),
             )
             base_stmt = base_stmt.where(filter_condition)
 
@@ -129,7 +140,7 @@ class PhongBanRepository:
                 Error(
                     code="database_error",
                     message=f"Lỗi truy vấn: {str(e)}",
-                    reason="DatabaseError"
+                    reason="DatabaseError",
                 )
             )
 
@@ -139,35 +150,37 @@ class PhongBanRepository:
             select(
                 PhongBan,
                 func.count(NhanVien.id).label("so_luong_nhan_vien"),
-                func.count(NhanVien.id).filter(NhanVien.trang_thai == "dang_lam").label("so_luong_dang_lam")
+                func.count(NhanVien.id)
+                .filter(NhanVien.trang_thai == "dang_lam")
+                .label("so_luong_dang_lam"),
             )
             .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
             .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
             .where(PhongBan.id == id, PhongBan.deleted_at.is_(None))
             .group_by(PhongBan.id)
         )
-        
+
         try:
             result = await self._session.execute(stmt)
             row = result.first()
-            
+
             if not row:
                 return Return.ok(None)
-                
+
             phong_ban, count_nv, count_dl = row
             d = phong_ban.__dict__.copy()
             if "_sa_instance_state" in d:
                 del d["_sa_instance_state"]
             d["so_luong_nhan_vien"] = count_nv
             d["so_luong_dang_lam"] = count_dl
-            
+
             return Return.ok(d)
         except Exception as e:
             return Return.err(
                 Error(
                     code="database_error",
                     message=f"Lỗi truy vấn chi tiết: {str(e)}",
-                    reason="DatabaseError"
+                    reason="DatabaseError",
                 )
             )
 
@@ -193,8 +206,9 @@ class PhongBanRepository:
 
     async def delete(self, phong_ban: PhongBan) -> PhongBan:
         """Soft-delete PhongBan by setting deleted_at."""
-        from datetime import datetime
-        phong_ban.deleted_at = datetime.utcnow()
+        from libs.datetime import get_utc_now
+
+        phong_ban.deleted_at = get_utc_now()
         await self._session.flush()
         await self._session.refresh(phong_ban)
         return phong_ban

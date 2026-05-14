@@ -7,10 +7,89 @@ import hmac
 import hashlib
 import base64
 import os
+import re
 from datetime import date, datetime, time
+from libs.datetime import get_utc_now
 from typing import Optional, Dict, Tuple
 
 SECRET_KEY = os.environ.get("QR_SECRET_KEY", "hr-management-qr-secret-key-2026")
+
+
+def parse_dms(dms_str: str) -> Optional[float]:
+    """
+    Parse DMS string to decimal degrees.
+    Supports formats:
+      - 21°00'24.1"N
+      - 105°46'41.7"E
+      - 21 00 24.1 N
+      - -21.00669 (decimal)
+
+    Returns decimal degrees or None if invalid.
+    """
+    if not dms_str:
+        return None
+    dms_str = dms_str.strip()
+
+    try:
+        return float(dms_str)
+    except ValueError:
+        pass
+
+    pattern = r"""
+        (?P<deg>[\d.]+)\s*[°]\s*
+        (?P<min>[\d.]+)\s*['′]\s*
+        (?P<sec>[\d.]+)\s*["″]?\s*
+        (?P<dir>[NSEWnsew])
+    """
+    m = re.match(pattern, dms_str, re.VERBOSE)
+    if not m:
+        m = re.match(
+            r"(?P<deg>[\d.]+)\s+(?P<min>[\d.]+)\s+(?P<sec>[\d.]+)\s*(?P<dir>[NSEWnsew])",
+            dms_str,
+        )
+    if not m:
+        return None
+
+    deg = float(m.group("deg"))
+    minutes = float(m.group("min"))
+    sec = float(m.group("sec"))
+    direction = m.group("dir").upper()
+
+    decimal = deg + minutes / 60.0 + sec / 3600.0
+    if direction in ("S", "W"):
+        decimal = -decimal
+
+    return decimal
+
+
+def parse_coordinate_pair(coord_str: str) -> Optional[Tuple[float, float]]:
+    """
+    Parse a coordinate string containing both lat and lng in DMS or decimal.
+    Examples:
+      - '21°00'24.1"N 105°46'41.7"E'
+      - '21.0285, 105.8542'
+
+    Returns (lat, lng) or None.
+    """
+    if not coord_str:
+        return None
+
+    parts = re.split(r"[,\s]+", coord_str.strip(), maxsplit=1)
+    if len(parts) == 2:
+        lat = parse_dms(parts[0])
+        lng = parse_dms(parts[1])
+        if lat is not None and lng is not None:
+            return (lat, lng)
+
+    dms_pattern = r"([\d.]+[°]\s*[\d.]+['′]\s*[\d.]+[\"″]?\s*[NSEWnsew])"
+    matches = re.findall(dms_pattern, coord_str)
+    if len(matches) >= 2:
+        lat = parse_dms(matches[0])
+        lng = parse_dms(matches[1])
+        if lat is not None and lng is not None:
+            return (lat, lng)
+
+    return None
 
 
 class QRAttendanceService:
@@ -205,7 +284,7 @@ class QRAttendanceService:
             "v": 2,
             "uid": user_id,
             "ngay": ngay.isoformat(),
-            "timestamp": int(datetime.utcnow().timestamp()),
+            "timestamp": int(get_utc_now().timestamp()),
         }
 
         data_str = json.dumps(payload, sort_keys=True)

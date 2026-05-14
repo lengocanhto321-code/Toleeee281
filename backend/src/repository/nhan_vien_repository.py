@@ -253,9 +253,9 @@ class NhanVienRepository:
         return nhan_vien
 
     async def delete(self, nhan_vien: NhanVien) -> NhanVien:
-        from datetime import datetime
+        from libs.datetime import get_utc_now
 
-        nhan_vien.deleted_at = datetime.utcnow()
+        nhan_vien.deleted_at = get_utc_now()
         await self._session.flush()
         await self._session.refresh(nhan_vien)
         return nhan_vien

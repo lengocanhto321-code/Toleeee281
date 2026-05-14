@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
+from libs.datetime import get_utc_now
 from typing import Optional, List, Dict, Any
 
 from libs.result import Result, Error, Return
@@ -35,7 +36,6 @@ class PreviewLuongUseCase:
         async with self.unit_of_work as uow:
             nhan_vien_repo = uow.nhan_vien_repository
             luong_repo = uow.luong_repository
-            cham_cong_repo = uow.cham_cong_repository
             cau_hinh_repo = uow.cau_hinh_luong_repository
 
             nhan_vien = await nhan_vien_repo.find_by_id(command.nhan_vien_id)
@@ -70,8 +70,10 @@ class PreviewLuongUseCase:
                     )
                 )
 
-            cham_cong = await cham_cong_repo.find_by_nhan_vien_thang_nam(
-                command.nhan_vien_id, command.thang, command.nam
+            cham_cong_thang = (
+                await uow.cham_cong_thang_repository.find_by_nhan_vien_thang_nam(
+                    command.nhan_vien_id, command.thang, command.nam
+                )
             )
 
             tam_dinh_chi = await cau_hinh_repo.find_tam_dinh_chi(
@@ -104,15 +106,15 @@ class PreviewLuongUseCase:
             }
 
             thong_tin_cham_cong = None
-            if cham_cong:
+            if cham_cong_thang:
                 thong_tin_cham_cong = {
-                    "so_ngay_lam_chuan": cham_cong.so_ngay_lam_chuan,
-                    "so_ngay_lam_thuc_te": cham_cong.so_ngay_lam_thuc_te,
-                    "so_ngay_nghi_phep": cham_cong.so_ngay_nghi_phep,
-                    "so_ngay_nghi_om": cham_cong.so_ngay_nghi_om,
-                    "so_ngay_cong_tac": cham_cong.so_ngay_cong_tac,
-                    "so_ngay_le_tet": cham_cong.so_ngay_le_tet,
-                    "so_ngay_nghi_khong_phep": cham_cong.so_ngay_nghi_khong_phep,
+                    "so_ngay_lam_chuan": cham_cong_thang.so_ngay_lam_chuan,
+                    "so_ngay_lam_thuc_te": cham_cong_thang.so_ngay_co_mat,
+                    "so_ngay_nghi_phep": cham_cong_thang.so_ngay_vang_co_phep,
+                    "so_ngay_nghi_om": 0,
+                    "so_ngay_cong_tac": cham_cong_thang.so_ngay_cong_tac,
+                    "so_ngay_le_tet": cham_cong_thang.so_ngay_nghi_le_tet,
+                    "so_ngay_nghi_khong_phep": cham_cong_thang.so_ngay_vang_khong_phep,
                 }
 
             thong_tin_cau_hinh = {
@@ -193,7 +195,6 @@ class ChayLuongUseCase:
         async with self.unit_of_work as uow:
             nhan_vien_repo = uow.nhan_vien_repository
             luong_repo = uow.luong_repository
-            cham_cong_repo = uow.cham_cong_repository
             cau_hinh_repo = uow.cau_hinh_luong_repository
             ky_luong_repo = uow.ky_luong_repository
             tra_luong_repo = uow.tra_luong_repository
@@ -266,8 +267,10 @@ class ChayLuongUseCase:
                 if not luong:
                     continue
 
-                cham_cong = await cham_cong_repo.find_by_nhan_vien_thang_nam(
-                    nv.id, command.thang, command.nam
+                cham_cong_thang = (
+                    await uow.cham_cong_thang_repository.find_by_nhan_vien_thang_nam(
+                        nv.id, command.thang, command.nam
+                    )
                 )
                 tam_dinh_chi = await cau_hinh_repo.find_tam_dinh_chi(
                     nv.id, command.thang, command.nam
@@ -299,15 +302,15 @@ class ChayLuongUseCase:
                 }
 
                 thong_tin_cham_cong = None
-                if cham_cong:
+                if cham_cong_thang:
                     thong_tin_cham_cong = {
-                        "so_ngay_lam_chuan": cham_cong.so_ngay_lam_chuan,
-                        "so_ngay_lam_thuc_te": cham_cong.so_ngay_lam_thuc_te,
-                        "so_ngay_nghi_phep": cham_cong.so_ngay_nghi_phep,
-                        "so_ngay_nghi_om": cham_cong.so_ngay_nghi_om,
-                        "so_ngay_cong_tac": cham_cong.so_ngay_cong_tac,
-                        "so_ngay_le_tet": cham_cong.so_ngay_le_tet,
-                        "so_ngay_nghi_khong_phep": cham_cong.so_ngay_nghi_khong_phep,
+                        "so_ngay_lam_chuan": cham_cong_thang.so_ngay_lam_chuan,
+                        "so_ngay_lam_thuc_te": cham_cong_thang.so_ngay_co_mat,
+                        "so_ngay_nghi_phep": cham_cong_thang.so_ngay_vang_co_phep,
+                        "so_ngay_nghi_om": 0,
+                        "so_ngay_cong_tac": cham_cong_thang.so_ngay_cong_tac,
+                        "so_ngay_le_tet": cham_cong_thang.so_ngay_nghi_le_tet,
+                        "so_ngay_nghi_khong_phep": cham_cong_thang.so_ngay_vang_khong_phep,
                     }
 
                 thong_tin_tam_dinh_chi = None
@@ -345,7 +348,7 @@ class ChayLuongUseCase:
                     id=generate_id(),
                     nhan_vien_id=nv.id,
                     luong_id=luong.id,
-                    cham_cong_id=cham_cong.id if cham_cong else None,
+                    cham_cong_id=cham_cong_thang.id if cham_cong_thang else None,
                     ky_luong_id=ky_luong.id,
                     thang=command.thang,
                     nam=command.nam,
@@ -379,7 +382,7 @@ class ChayLuongUseCase:
                     tam_dinh_chi_id=ket_qua_nv.get("tam_dinh_chi_id"),
                     co_ky_luat=ket_qua_nv["co_ky_luat"],
                     ky_luat_id=ket_qua_nv.get("ky_luat_id"),
-                    ngay_chay=datetime.utcnow(),
+                    ngay_chay=get_utc_now(),
                     trang_thai="chua_tra",
                 )
                 tra_luongs.append(tra_luong)
