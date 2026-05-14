@@ -12,7 +12,7 @@ from sqlalchemy import (
 )
 from datetime import datetime
 
-from libs.datetime import get_utc_now
+from libs.datetime import get_utc_now, serialize_dt
 
 from .base import Base, generate_uuid
 
@@ -66,9 +66,7 @@ class QRConfig(Base):
             "loai": self.loai,
             "qr_data": self.qr_data,
             "qr_image_base64": self.qr_image_base64,
-            "thoi_gian_hieu_luc": self.thoi_gian_hieu_luc.isoformat()
-            if self.thoi_gian_hieu_luc
-            else None,
+            "thoi_gian_hieu_luc": serialize_dt(self.thoi_gian_hieu_luc),
             "gio_bat_dau": self.gio_bat_dau.strftime("%H:%M")
             if self.gio_bat_dau
             else None,
@@ -80,6 +78,6 @@ class QRConfig(Base):
             "vi_do": self.vi_do,
             "ban_kinh_cho_phep": self.ban_kinh_cho_phep,
             "trang_thai": self.trang_thai,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": serialize_dt(self.created_at),
             "created_by": self.created_by,
         }

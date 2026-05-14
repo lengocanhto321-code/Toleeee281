@@ -8,7 +8,7 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
 )
-from libs.datetime import get_utc_now
+from libs.datetime import get_utc_now, serialize_dt
 
 from .base import Base, generate_uuid
 
@@ -53,19 +53,15 @@ class CheckInOut(Base):
             "id": self.id,
             "nhan_vien_id": self.nhan_vien_id,
             "ngay": self.ngay.isoformat() if self.ngay else None,
-            "check_in_time": self.check_in_time.isoformat()
-            if self.check_in_time
-            else None,
+            "check_in_time": serialize_dt(self.check_in_time),
             "check_in_qr_id": self.check_in_qr_id,
             "check_in_lat": self.check_in_lat,
             "check_in_lng": self.check_in_lng,
             "check_in_status": self.check_in_status,
-            "check_out_time": self.check_out_time.isoformat()
-            if self.check_out_time
-            else None,
+            "check_out_time": serialize_dt(self.check_out_time),
             "check_out_qr_id": self.check_out_qr_id,
             "check_out_lat": self.check_out_lat,
             "check_out_lng": self.check_out_lng,
             "trang_thai": self.trang_thai,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": serialize_dt(self.created_at),
         }
