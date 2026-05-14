@@ -4,12 +4,14 @@ import { useMemo, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { DataTable } from "@/components/ui/data-table"
+import { StatCard } from "@/components/ui/stat-card"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RefreshCw, Plus, User, CheckCircle2, Clock, XCircle, CalendarDays, FileText } from "lucide-react"
 import { ChamCongEditDialog, GenerateChamCongDialog } from "@/components/forms/nghi-phep"
+import { LichChamCongConfig } from "@/components/forms/lich-cham-cong"
 import {
   useChamCongThangList,
   useMockGenerateChamCong,
@@ -221,61 +223,13 @@ export default function ChamCongPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="grid grid-cols-6 gap-4 mb-6">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <User className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-            <p className="text-xs text-slate-500">Tổng NV</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-emerald-700">{stats.coMat}</p>
-            <p className="text-xs text-emerald-600">Có mặt</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-            <Clock className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-700">{stats.vangCp}</p>
-            <p className="text-xs text-amber-600">Vắng CP</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-            <XCircle className="h-5 w-5 text-red-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-red-700">{stats.vangKp}</p>
-            <p className="text-xs text-red-600">Vắng KP</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-            <CalendarDays className="h-5 w-5 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-purple-700">{stats.leTet}</p>
-            <p className="text-xs text-purple-600">Lễ Tết</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-            <FileText className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-blue-700">{stats.congTac}</p>
-            <p className="text-xs text-blue-600">Công tác</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <StatCard icon={User} label="Tổng NV" value={stats.total} accent="primary" />
+        <StatCard icon={CheckCircle2} label="Có mặt" value={stats.coMat} accent="success" />
+        <StatCard icon={Clock} label="Vắng CP" value={stats.vangCp} accent="warning" />
+        <StatCard icon={XCircle} label="Vắng KP" value={stats.vangKp} accent="danger" />
+        <StatCard icon={CalendarDays} label="Lễ Tết" value={stats.leTet} accent="info" />
+        <StatCard icon={FileText} label="Công tác" value={stats.congTac} accent="info" />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -317,6 +271,10 @@ export default function ChamCongPage() {
             Tạo chấm công
           </Button>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <LichChamCongConfig />
       </div>
 
       <div className="mt-4">
