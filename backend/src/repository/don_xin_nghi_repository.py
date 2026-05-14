@@ -135,3 +135,14 @@ class DonXinNghiRepository:
         )
         result = await self._session.execute(query)
         return list(result.scalars().all())
+
+    async def find_all_approved_by_date(self, target_date: date) -> List[DonXinNghi]:
+        """Find all approved leave requests covering a specific date."""
+        result = await self._session.execute(
+            select(DonXinNghi).where(
+                DonXinNghi.trang_thai == TRANG_THAI_DON_KEYS[1],
+                DonXinNghi.tu_ngay <= target_date,
+                DonXinNghi.den_ngay >= target_date,
+            )
+        )
+        return list(result.scalars().all())

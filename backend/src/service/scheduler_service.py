@@ -9,11 +9,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.triggers.cron import CronTrigger
 
-from src.service.qr_attendance_service import QRAttendanceService
+from src.service.qr_attendance_service import QRAttendanceService, generate_pin
 from src.service.nghi_phep_service import NghiPhepService
 from src.domain.models.qr_config import QRConfig
 from src.domain.models.lich_cham_cong import LichChamCong
+from src.domain.models.check_in_out import CheckInOut
 from src.api.depends import session_factory
+from src.constants.nghi_phep_constants import LOAI_NGHI
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +111,18 @@ class SchedulerService:
             kwargs={"loai": "check_out", "config_id": config.id},
         )
 
+        self._scheduler.add_job(
+            _detect_absence_job,
+            CronTrigger(
+                day_of_week=working_days,
+                hour=23,
+                minute=59,
+            ),
+            id="auto_detect_absence",
+            name="Auto Detect Absence",
+            replace_existing=True,
+        )
+
     def _remove_all_jobs(self):
         if self._scheduler:
             self._scheduler.remove_all_jobs()
@@ -192,6 +206,7 @@ async def _generate_qr_job(loai: str, config_id: str):
                 ban_kinh_cho_phep=config.ban_kinh_cho_phep,
                 trang_thai="active",
                 created_by=None,
+                ma_nhap=generate_pin(),
             )
 
             await ctx.qr_config_repository.create(qr_config)
@@ -199,3 +214,78 @@ async def _generate_qr_job(loai: str, config_id: str):
 
     except Exception as e:
         logger.error(f"Auto QR job failed: {e}", exc_info=True)
+
+
+async def _detect_absence_job():
+    from src.service.unit_of_work import UnitOfWork
+
+    today = date.today()
+    logger.info(f"Absence detection job running for {today}")
+
+    try:
+        uow = UnitOfWork(session_factory)
+        async with uow as ctx:
+            config = await ctx.lich_cham_cong_repository.find_active()
+            if not config or config.trang_thai != "active":
+                logger.info("No active schedule config, skipping absence detection")
+                return
+
+            holidays_service = NghiPhepService()
+            holidays = holidays_service.get_holidays(today.year)
+            if today in set(holidays):
+                logger.info(f"Today {today} is a holiday, skipping")
+                return
+
+            nhan_vien_list = await ctx.nhan_vien_repository.find_dang_lam()
+
+            records = await ctx.check_in_out_repository.get_by_date(today)
+            present_ids = {r.nhan_vien_id for r in records}
+
+            approved_leaves = (
+                await ctx.don_xin_nghi_repository.find_all_approved_by_date(today)
+            )
+            leave_map: dict[str, str] = {}
+            for don in approved_leaves:
+                leave_map[don.nhan_vien_id] = don.loai_nghi
+
+            co_phep_count = 0
+            khong_phep_count = 0
+
+            for nv in nhan_vien_list:
+                nv_id = nv.id
+                if nv_id in present_ids:
+                    continue
+
+                existing = await ctx.check_in_out_repository.find_today(nv_id, today)
+                if existing and existing.trang_thai.startswith("vang_mat"):
+                    continue
+
+                if nv_id in leave_map:
+                    loai = leave_map[nv_id]
+                    ten_loai = LOAI_NGHI.get(loai, {}).get("ten", loai)
+                    record = CheckInOut(
+                        nhan_vien_id=nv_id,
+                        ngay=today,
+                        trang_thai="vang_mat_co_phep",
+                        ghi_chu_vang=f"{ten_loai} (có phép)",
+                    )
+                    co_phep_count += 1
+                else:
+                    record = CheckInOut(
+                        nhan_vien_id=nv_id,
+                        ngay=today,
+                        trang_thai="vang_mat_khong_phep",
+                        ghi_chu_vang="Nghỉ không phép",
+                    )
+                    khong_phep_count += 1
+
+                await ctx.check_in_out_repository.create(record)
+
+        logger.info(
+            f"Absence detection complete: {co_phep_count} co phep, "
+            f"{khong_phep_count} khong phep, "
+            f"total {co_phep_count + khong_phep_count}"
+        )
+
+    except Exception as e:
+        logger.error(f"Absence detection job failed: {e}", exc_info=True)
