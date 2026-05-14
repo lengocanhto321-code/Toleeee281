@@ -40,6 +40,7 @@ from .don_xin_nghi import DonXinNghi
 from .so_ngay_phep import SoNgayPhep
 from .cham_cong_thang import ChamCongThang
 from .cau_hinh_nghi_phep import CauHinhNghiPhep
+from .lich_cham_cong import LichChamCong
 
 # Khen thưởng & Kỷ luật
 from .khen_thuong_ky_luat import KhenThuongKyLuat
@@ -86,6 +87,7 @@ __all__ = [
     "DonXinNghi",
     "SoNgayPhep",
     "ChamCongThang",
+    "LichChamCong",
     # Khen thưởng & Kỷ luật
     "KhenThuongKyLuat",
     # Tài khoản & Audit
