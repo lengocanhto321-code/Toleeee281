@@ -17,4 +17,8 @@ dependencies = [
     "result>=0.17.0",
     "sqlalchemy>=2.0.48",
     "uvicorn>=0.43.0",
+    "lunardate>=0.2.2",
+    "holidays>=0.25",
+    "python-dateutil>=2.9.0",
+    "apscheduler~=3.10",
 ]
