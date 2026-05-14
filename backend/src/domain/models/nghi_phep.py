@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Text, Date, ForeignKey, DateTime, Numeric
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -20,9 +20,12 @@ class NghiPhep(Base):
     ly_do = Column(Text)
     trang_thai = Column(String(15), nullable=False, default="cho_duyet")
     ghi_chu_duyet = Column(Text)
-    ngay_duyet = Column(DateTime)
+    ngay_duyet = Column(DateTime(timezone=True))
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )

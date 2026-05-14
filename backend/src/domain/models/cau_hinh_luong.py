@@ -9,7 +9,7 @@ from sqlalchemy import (
     DateTime,
     Boolean,
 )
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -43,9 +43,12 @@ class CauHinhHeThongLuong(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -64,9 +67,12 @@ class HeSoLuongDanhMuc(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -83,9 +89,12 @@ class PhuCapTheoCapHoc(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -113,9 +122,12 @@ class TamDinhChiCongTac(Base):
     quyet_dinh_so = Column(String(50))
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
     ghi_chu = Column(Text)
 
@@ -154,9 +166,12 @@ class KyLuatVienChuc(Base):
     nguoi_ky = Column(String(100))
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
     ghi_chu = Column(Text)
 
@@ -176,9 +191,12 @@ class CauHinhThuongTet(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -202,9 +220,12 @@ class LuongThang13(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -218,7 +239,7 @@ class KyLuong(Base):
     nam = Column(SmallInteger, nullable=False)
     ngay_bat_dau = Column(Date, nullable=False)
     ngay_ket_thuc = Column(Date, nullable=False)
-    ngay_chay = Column(DateTime, nullable=False, default=datetime.utcnow)
+    ngay_chay = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
     # Tổng kết
     tong_nhan_vien = Column(SmallInteger, nullable=False, default=0)
@@ -230,13 +251,16 @@ class KyLuong(Base):
         String(20), nullable=False, default="chua_duyet"
     )  # chua_duyet, da_duyet, da_huy
     nguoi_duyet = Column(String(32))
-    ngay_duyet = Column(DateTime)
+    ngay_duyet = Column(DateTime(timezone=True))
 
     ghi_chu = Column(Text)
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
 
@@ -255,7 +279,7 @@ class ChiTietPhuCap(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
 
 class ChiTietKhauTru(Base):
@@ -273,4 +297,4 @@ class ChiTietKhauTru(Base):
     ghi_chu = Column(Text)
 
     nguoi_tao = Column(String(32))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)

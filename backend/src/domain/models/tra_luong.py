@@ -11,7 +11,7 @@ from sqlalchemy import (
     Boolean,
     Numeric,
 )
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -29,7 +29,9 @@ class TraLuong(Base):
         String(32), ForeignKey("nhan_vien.id", ondelete="CASCADE"), nullable=False
     )
     luong_id = Column(String(32), ForeignKey("luong.id", ondelete="SET NULL"))
-    cham_cong_id = Column(String(32), ForeignKey("cham_cong.id", ondelete="SET NULL"))
+    cham_cong_id = Column(
+        String(32), ForeignKey("cham_cong_thang.id", ondelete="SET NULL")
+    )
     ky_luong_id = Column(String(32), ForeignKey("ky_luong.id", ondelete="SET NULL"))
     thang = Column(SmallInteger, nullable=False)
     nam = Column(SmallInteger, nullable=False)
@@ -79,7 +81,7 @@ class TraLuong(Base):
     ky_luat_id = Column(String(32))
 
     # Thông tin chạy lương
-    ngay_chay = Column(DateTime)
+    ngay_chay = Column(DateTime(timezone=True))
 
     # Thanh toán
     ngay_tra_luong = Column(Date)
@@ -89,7 +91,10 @@ class TraLuong(Base):
     trang_thai = Column(String(15), nullable=False, default="chua_tra")
     ghi_chu = Column(Text)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
