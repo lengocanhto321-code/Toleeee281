@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, SmallInteger, ForeignKey, DateTime
-from datetime import datetime
+from sqlalchemy.orm import relationship
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -20,7 +21,12 @@ class BangCapChungChi(Base):
     nam_cap = Column(SmallInteger)
     xep_loai = Column(String(20))
     ghi_chu = Column(Text)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
+
+    nhan_vien = relationship("NhanVien", back_populates="bang_caps")
