@@ -70,7 +70,9 @@ router.include_router(
 router.include_router(
     cong_tac_router, prefix="/admin/cong-tac", tags=["Admin - Cong Tac"]
 )
-router.include_router(hop_dong_router, prefix="/admin", tags=["Admin - Hop Dong"])
+router.include_router(
+    hop_dong_router, prefix="/admin/nhan-vien", tags=["Admin - Hop Dong"]
+)
 router.include_router(
     admin_cham_cong_router, prefix="/admin/cham-cong", tags=["Admin - Cham Cong QR"]
 )

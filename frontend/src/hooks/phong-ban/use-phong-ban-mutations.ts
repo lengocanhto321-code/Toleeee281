@@ -12,7 +12,7 @@ export function useCreatePhongBan() {
     mutationFn: (data: PhongBanFormData) =>
       apiGateway.post<PhongBan>(ApiEndpoints.PHONG_BAN_CREATE, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: phongBanQueryKeys.list() });
+      queryClient.invalidateQueries({ queryKey: phongBanQueryKeys.all });
       toastSuccess("Thêm phòng ban thành công");
     },
     onError: (error: unknown) => {
@@ -46,7 +46,7 @@ export function useDeletePhongBan() {
     mutationFn: (id: string) =>
       apiGateway.delete<void>(ApiEndpoints.PHONG_BAN_DELETE(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: phongBanQueryKeys.list() });
+      queryClient.invalidateQueries({ queryKey: phongBanQueryKeys.all });
       toastSuccess("Xóa phòng ban thành công");
     },
     onError: (error: unknown) => {

@@ -1,7 +1,6 @@
 import { z } from "zod"
 
 export const cauHinhLuongSchema = z.object({
-  ten_cau_hinh: z.string().min(1, "Tên cấu hình không được để trống"),
   ngay_ap_dung: z.string().min(1, "Ngày áp dụng không được để trống"),
   luong_co_so: z.number().min(0, "Lương cơ sở phải >= 0"),
   he_so_dac_thu: z.number().min(0, "Hệ số đặc thù phải >= 0"),
@@ -10,6 +9,7 @@ export const cauHinhLuongSchema = z.object({
   ty_le_bhtn: z.number().min(0).max(100, "Tỷ lệ BHTN phải từ 0-100%"),
   muc_giam_tru_ban_than: z.number().min(0, "Mức giảm trừ phải >= 0"),
   muc_giam_tru_nguoi_phu_thuoc: z.number().min(0, "Mức giảm trừ phải >= 0"),
+  ghi_chu: z.string().optional(),
 })
 
 export const luongFormSchema = z.object({

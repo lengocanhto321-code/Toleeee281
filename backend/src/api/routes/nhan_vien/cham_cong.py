@@ -12,7 +12,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path, status
 from pydantic import BaseModel
 
-from libs.result import is_err
+from libs.result import is_err, Error
+from libs.datetime import get_utc_now
 from src.api.auth import UserContext, require_permission
 from src.api.depends import get_unit_of_work
 from src.service.unit_of_work import UnitOfWork
@@ -21,6 +22,8 @@ from src.api.schemas.common import APIResponse
 from src.app.usecases.cham_cong import (
     CheckInCommand,
     CheckInUseCase,
+    CheckInByCodeCommand,
+    CheckInByCodeUseCase,
     CheckOutCommand,
     CheckOutUseCase,
     GetMyHistoryQuery,
@@ -41,6 +44,13 @@ class CheckInRequest(BaseModel):
 
 
 class CheckOutRequest(BaseModel):
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    dms: Optional[str] = None
+
+
+class CheckInByCodeRequest(BaseModel):
+    ma_nhap: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     dms: Optional[str] = None
@@ -69,8 +79,17 @@ async def check_in(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Check-in bằng QR code."""
+    if not current_user.nhan_vien_id:
+        raise ClientError(
+            base_error=Error(
+                code="employee_not_linked",
+                message="Tài khoản của bạn không được liên kết với hồ sơ nhân viên nào.",
+                reason="EmployeeNotLinked",
+            ),
+            status_code=400,
+        )
     command = CheckInCommand(
-        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id,
         qr_data=body.qr_data,
         thoi_gian=get_utc_now().isoformat(),
         vi_tri=_resolve_location(body),
@@ -83,9 +102,59 @@ async def check_in(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=404)
-        if error.code in ["invalid_qr", "already_checked_in", "invalid_location"]:
+        if error.code in ["invalid_qr", "already_checked_in", "invalid_location", "location_required"]:
             raise ClientError(base_error=error, status_code=400)
         if error.code in ["qr_not_found", "invalid_time"]:
+            raise ClientError(base_error=error, status_code=400)
+        raise ServerError(base_error=error)
+
+    return APIResponse(
+        message="Check-in thành công",
+        data={
+            "id": result.value.id,
+            "thoi_gian": result.value.thoi_gian,
+            "trang_thai": result.value.trang_thai,
+            "is_late": result.value.is_late,
+            "message": result.value.message,
+        },
+    )
+
+
+@router.post("/check-in-by-code", response_model=APIResponse[dict])
+async def check_in_by_code(
+    body: CheckInByCodeRequest,
+    current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    """Check-in bằng mã 6 chữ số."""
+    if not current_user.nhan_vien_id:
+        raise ClientError(
+            base_error=Error(
+                code="employee_not_linked",
+                message="Tài khoản của bạn không được liên kết với hồ sơ nhân viên nào.",
+                reason="EmployeeNotLinked",
+            ),
+            status_code=400,
+        )
+    command = CheckInByCodeCommand(
+        nhan_vien_id=current_user.nhan_vien_id,
+        ma_nhap=body.ma_nhap.strip(),
+        thoi_gian=get_utc_now().isoformat(),
+        vi_tri=_resolve_location(body),
+    )
+
+    use_case = CheckInByCodeUseCase(uow)
+    result = await use_case.execute(command)
+
+    if is_err(result):
+        error = result.value
+        if error.code in [
+            "invalid_code",
+            "already_checked_in",
+            "invalid_location",
+            "location_required",
+            "invalid_time",
+        ]:
             raise ClientError(base_error=error, status_code=400)
         raise ServerError(base_error=error)
 
@@ -108,9 +177,19 @@ async def check_out(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Check-out (sử dụng QR code từ lần check-in gần nhất)."""
+    if not current_user.nhan_vien_id:
+        raise ClientError(
+            base_error=Error(
+                code="employee_not_linked",
+                message="Tài khoản của bạn không được liên kết với hồ sơ nhân viên nào.",
+                reason="EmployeeNotLinked",
+            ),
+            status_code=400,
+        )
     command = CheckOutCommand(
-        nhan_vien_id=current_user.nhan_vien_id or current_user.user_id,
+        nhan_vien_id=current_user.nhan_vien_id,
         thoi_gian=get_utc_now().isoformat(),
+        vi_tri=_resolve_location(body),
     )
 
     use_case = CheckOutUseCase(uow)
@@ -120,7 +199,7 @@ async def check_out(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=404)
-        if error.code in ["not_checked_in", "already_checked_out", "too_early"]:
+        if error.code in ["not_checked_in", "already_checked_out", "too_early", "invalid_location", "location_required"]:
             raise ClientError(base_error=error, status_code=400)
         raise ServerError(base_error=error)
 

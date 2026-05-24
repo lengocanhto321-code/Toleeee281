@@ -28,6 +28,9 @@ export const ApiEndpoints = {
   NHAN_VIEN_BATCH_PHAN_BO: "/api/v1/admin/nhan-vien/batch-phan-bo",
   NHAN_VIEN_BATCH_PHAN_BO_CHUC_VU: "/api/v1/admin/nhan-vien/batch-phan-bo-chuc-vu",
   NHAN_VIEN_BATCH_BO_NHIEM: "/api/v1/admin/nhan-vien/batch-bo-nhiem",
+  NHAN_VIEN_DIEU_CHUYEN: "/api/v1/admin/nhan-vien/dieu-chuyen",
+  NHAN_VIEN_DIEU_CHUYEN_LICH_SU: (id: string) => `/api/v1/admin/nhan-vien/${id}/dieu-chuyen/lich-su`,
+  NHAN_VIEN_DIEU_CHUYEN_TUY_CHON: (id: string) => `/api/v1/admin/nhan-vien/${id}/dieu-chuyen/tuy-chon`,
 
   // Phong Ban
   PHONG_BAN_LIST: "/api/v1/admin/phong-ban",
@@ -46,8 +49,10 @@ export const ApiEndpoints = {
   // Luong
   LUONG_CAU_HINH_LIST: "/api/v1/admin/luong/cau-hinh",
   LUONG_CAU_HINH_CREATE: "/api/v1/admin/luong/cau-hinh",
+  LUONG_CAU_HINH_ACTIVATE: (id: string) => `/api/v1/admin/luong/cau-hinh/${id}/activate`,
   LUONG_LIST: "/api/v1/admin/luong",
   LUONG_CREATE: "/api/v1/admin/luong",
+  LUONG_UPDATE: (id: string) => `/api/v1/admin/luong/${id}`,
   LUONG_HIEN_TAI: (nhanVienId: string) => `/api/v1/admin/luong/${nhanVienId}/hien-tai`,
   LUONG_PREVIEW: "/api/v1/admin/luong/preview",
   LUONG_CHAY: "/api/v1/admin/luong/chay-luong",
@@ -127,11 +132,17 @@ export const ApiEndpoints = {
   // Cham Cong - Lich
   ADMIN_CHAM_CONG_LICH: "/api/v1/admin/cham-cong/lich",
   ADMIN_CHAM_CONG_LICH_TOGGLE: (id: string) => `/api/v1/admin/cham-cong/lich/${id}/trang-thai`,
+  ADMIN_CHAM_CONG_QR_BY_DATE: "/api/v1/admin/cham-cong/qr/by-date",
 
   // Employee QR Attendance
   EMPLOYEE_CHECK_IN: "/api/v1/nhan-vien/cham-cong/check-in",
+  EMPLOYEE_CHECK_IN_BY_CODE: "/api/v1/nhan-vien/cham-cong/check-in-by-code",
   EMPLOYEE_CHECK_OUT: "/api/v1/nhan-vien/cham-cong/check-out",
   EMPLOYEE_ATTENDANCE_HISTORY: "/api/v1/nhan-vien/cham-cong/history",
+
+  // Auth
+  AUTH_CHANGE_PASSWORD: "/api/v1/change-password",
+  ADMIN_RESET_PASSWORD: (id: string) => `/api/v1/admin/nhan-vien/${id}/reset-mat-khau`,
 } as const;
 
 export const API_CONFIG = {

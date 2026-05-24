@@ -11,10 +11,13 @@ from src.api.schemas.cong_tac import (
 from src.api.schemas.common import APIResponse
 from src.api.error import ClientError, ServerError
 from src.app.usecases.cong_tac import (
-    CongTacUseCase,
+    GetListCongTacUseCase,
     GetListCongTacQuery,
+    GetCurrentCongTacUseCase,
     GetCurrentCongTacQuery,
+    CreateCongTacUseCase,
     CreateCongTacCommand,
+    EndCongTacUseCase,
     EndCongTacCommand,
 )
 
@@ -31,8 +34,8 @@ async def get_cong_tac_list(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     query = GetListCongTacQuery(nhan_vien_id=nhan_vien_id)
-    use_case = CongTacUseCase(uow)
-    result = await use_case.get_all(query)
+    use_case = GetListCongTacUseCase(uow)
+    result = await use_case.execute(query)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -53,8 +56,8 @@ async def get_current_cong_tac(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     query = GetCurrentCongTacQuery(nhan_vien_id=nhan_vien_id)
-    use_case = CongTacUseCase(uow)
-    result = await use_case.get_current(query)
+    use_case = GetCurrentCongTacUseCase(uow)
+    result = await use_case.execute(query)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -81,8 +84,8 @@ async def create_cong_tac(
         data=body.model_dump(),
         actor_id=user_context.user_id,
     )
-    use_case = CongTacUseCase(uow)
-    result = await use_case.create(command)
+    use_case = CreateCongTacUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -108,8 +111,8 @@ async def end_cong_tac(
         nhan_vien_id=nhan_vien_id,
         actor_id=user_context.user_id,
     )
-    use_case = CongTacUseCase(uow)
-    result = await use_case.end(command)
+    use_case = EndCongTacUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value

@@ -3,7 +3,7 @@ from typing import List
 from datetime import date, timedelta
 
 from libs.result import Result, Error, Return
-from src.service.qr_attendance_service import QRAttendanceService
+from src.service.qr_attendance_service import QRAttendanceService, generate_pin
 from src.service.nghi_phep_service import NghiPhepService
 from src.domain.models.qr_config import QRConfig
 
@@ -91,6 +91,7 @@ class BulkGenerateQRUseCase:
                         if command.vi_tri
                         else 100,
                         trang_thai="active",
+                        ma_nhap=generate_pin(),
                     )
 
                     await uow.qr_config_repository.create(qr_config)

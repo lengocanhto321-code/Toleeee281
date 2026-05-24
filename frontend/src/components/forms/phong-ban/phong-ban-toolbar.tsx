@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 const LOAI_OPTIONS = [
   { value: "all", label: "Tất cả loại" },
   { value: "chuyen_mon", label: "Tổ chuyên môn", dot: "bg-amber-500" },
-  { value: "hanh_chinh", label: "Phòng hành chính", dot: "bg-indigo-500" },
+  { value: "hanh_chinh", label: "Phòng hành chính", dot: "bg-blue-500" },
 ]
 
 const TRANG_THAI_OPTIONS = [

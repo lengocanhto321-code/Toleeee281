@@ -30,6 +30,24 @@ export function useCreateCauHinhLuong() {
   });
 }
 
+// Activate Cau Hinh Luong
+export function useActivateCauHinhLuong() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => 
+      apiGateway.put<CauHinhLuong>(ApiEndpoints.LUONG_CAU_HINH_ACTIVATE(id), {}),
+    onSuccess: () => {
+      toastSuccess("Đã kích hoạt cấu hình lương");
+      queryClient.invalidateQueries({ queryKey: luongQueryKeys.cauHinh.all() });
+    },
+    onError: (error: unknown) => {
+      const message = (error as { message?: string })?.message || "Kích hoạt thất bại";
+      toastError("Lỗi", message);
+    },
+  });
+}
+
 // Create Luong
 export function useCreateLuong() {
   const queryClient = useQueryClient();
@@ -56,7 +74,7 @@ export function useChayLuong() {
     mutationFn: (data: ChayLuongFormData) => 
       apiGateway.post<ChayLuongResult>(ApiEndpoints.LUONG_CHAY, data),
     onSuccess: (data) => {
-      toastSuccess(`Đã chạy lương tháng ${data.thang}/${data.nam} cho ${data.tong_nhan_vien} nhân viên`);
+      toastSuccess(`Đã tính lương tháng ${data.thang}/${data.nam} cho ${data.tong_nhan_vien} nhân viên`);
       queryClient.invalidateQueries({ queryKey: luongQueryKeys.kyLuong.all() });
       queryClient.invalidateQueries({ queryKey: luongQueryKeys.traLuong.all() });
     },

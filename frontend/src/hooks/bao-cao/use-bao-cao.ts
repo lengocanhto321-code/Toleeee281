@@ -16,6 +16,13 @@ import type {
   BaoCaoLuongData,
   BaoCaoKhenThuongData,
   BaoCaoXuHuongData,
+  BaoCaoNhanSuBienDongData,
+  BaoCaoNhanSuDemoData,
+  BaoCaoNhanSuTrinhDoData,
+  BaoCaoChamCongTongHopData,
+  BaoCaoNghiPhepData,
+  BaoCaoChiPhiData,
+  BaoCaoThueBHXHData,
 } from "@/types/bao-cao.types"
 
 // ==================== Query Key Factories ====================
@@ -27,6 +34,13 @@ const baoCaoKeys = {
   luongSoSanh: (filters: BaoCaoFilters) => ["bao-cao-luong-so-sanh", filters] as const,
   khenThuong: (filters: BaoCaoFilters) => ["bao-cao-khen-thuong", filters] as const,
   xuHuong: (filters: BaoCaoFilters) => ["bao-cao-xu-huong", filters] as const,
+  nhanSuBienDong: (filters: BaoCaoFilters) => ["bao-cao-nhan-su-bien-dong", filters] as const,
+  nhanSuDemo: (filters: BaoCaoFilters) => ["bao-cao-nhan-su-demo", filters] as const,
+  nhanSuTrinhDo: (filters: BaoCaoFilters) => ["bao-cao-nhan-su-trinh-do", filters] as const,
+  chamCongTongHop: (filters: BaoCaoFilters) => ["bao-cao-cham-cong-tong-hop", filters] as const,
+  chamCongNghiPhep: (filters: BaoCaoFilters) => ["bao-cao-cham-cong-nghi-phep", filters] as const,
+  luongChiPhi: (filters: BaoCaoFilters) => ["bao-cao-luong-chi-phi", filters] as const,
+  luongThueBHXH: (filters: BaoCaoFilters) => ["bao-cao-luong-thue-bhxh", filters] as const,
 }
 
 // ==================== Tong Quan ====================
@@ -138,6 +152,83 @@ export function useBaoCaoXuHuong(filters: BaoCaoFilters = {}) {
     queryFn: () =>
       apiGateway.get<BaoCaoXuHuongData>(
         ApiEndpoints.THONG_KE_BAO_CAO_XU_HUONG,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoNhanSuBienDong(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.nhanSuBienDong(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoNhanSuBienDongData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_NHAN_SU_BIEN_DONG,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoNhanSuDemo(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.nhanSuDemo(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoNhanSuDemoData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_NHAN_SU_DEMO,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoNhanSuTrinhDo(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.nhanSuTrinhDo(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoNhanSuTrinhDoData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_NHAN_SU_TRINH_DO,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoChamCongTongHop(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.chamCongTongHop(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoChamCongTongHopData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_CHAM_CONG_TONG_HOP,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoChamCongNghiPhep(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.chamCongNghiPhep(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoNghiPhepData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_CHAM_CONG_NGHI_PHEP,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoLuongChiPhi(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.luongChiPhi(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoChiPhiData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_LUONG_CHI_PHI,
+        { params: filters }
+      ),
+  })
+}
+
+export function useBaoCaoLuongThueBHXH(filters: BaoCaoFilters = {}) {
+  return useQuery({
+    queryKey: baoCaoKeys.luongThueBHXH(filters),
+    queryFn: () =>
+      apiGateway.get<BaoCaoThueBHXHData>(
+        ApiEndpoints.THONG_KE_BAO_CAO_LUONG_THUE_BHXH,
         { params: filters }
       ),
   })

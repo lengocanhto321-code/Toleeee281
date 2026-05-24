@@ -83,29 +83,43 @@ class CheckInUseCase:
             khoang_cach = None
             current_lat = None
             current_lng = None
-            if command.vi_tri:
-                current_lat = command.vi_tri.get("lat")
-                current_lng = command.vi_tri.get("lng")
-                if qr_config.kinh_do and qr_config.vi_do:
-                    is_valid_loc, khoang_cach, error_loc = (
-                        QRAttendanceService.validate_location(
-                            current_lat=current_lat,
-                            current_lng=current_lng,
-                            qr_location={
-                                "lat": qr_config.kinh_do,
-                                "lng": qr_config.vi_do,
-                                "radius": qr_config.ban_kinh_cho_phep or 100,
-                            },
+
+            co_bat_gps = getattr(qr_config, "bat_gps", True)
+
+            if co_bat_gps and qr_config.kinh_do is not None and qr_config.vi_do is not None:
+                if not command.vi_tri:
+                    return Return.err(
+                        Error(
+                            code="location_required",
+                            message="Không tìm thấy thông tin vị trí của bạn. Vui lòng bật định vị GPS trên thiết bị.",
+                            reason="LocationRequired",
                         )
                     )
-                    if not is_valid_loc:
-                        return Return.err(
-                            Error(
-                                code="invalid_location",
-                                message=error_loc,
-                                reason="LocationValidationError",
-                            )
+
+                current_lat = command.vi_tri.get("lat")
+                current_lng = command.vi_tri.get("lng")
+                is_valid_loc, khoang_cach, error_loc = (
+                    QRAttendanceService.validate_location(
+                        current_lat=current_lat,
+                        current_lng=current_lng,
+                        qr_location={
+                            "lat": qr_config.kinh_do,
+                            "lng": qr_config.vi_do,
+                            "radius": qr_config.ban_kinh_cho_phep or 100,
+                        },
+                    )
+                )
+                if not is_valid_loc:
+                    return Return.err(
+                        Error(
+                            code="invalid_location",
+                            message=error_loc,
+                            reason="LocationValidationError",
                         )
+                    )
+            elif command.vi_tri:
+                current_lat = command.vi_tri.get("lat")
+                current_lng = command.vi_tri.get("lng")
 
             is_late = QRAttendanceService.is_late(thoi_gian_dt)
 

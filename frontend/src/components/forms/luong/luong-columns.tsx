@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, CheckCircle, Lock } from "lucide-react"
 import type { TraLuong } from "@/types/luong.types"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDateTimeVN } from "@/lib/date-utils"
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("vi-VN", {
@@ -75,7 +74,7 @@ export const createTraLuongColumns = (options: {
     accessorKey: "luong_thuc_nhan",
     header: "Thực nhận",
     cell: ({ row }) => (
-      <span className="font-mono text-sm font-bold text-indigo-600">
+      <span className="font-mono text-sm font-bold text-blue-600">
         {formatCurrency(row.original.luong_thuc_nhan)}
       </span>
     ),
@@ -165,7 +164,7 @@ export const createKyLuongColumns = (options: {
     accessorKey: "tong_thuc_nhan",
     header: "Tổng thực nhận",
     cell: ({ row }) => (
-      <span className="font-mono text-sm font-semibold text-indigo-600">
+      <span className="font-mono text-sm font-semibold text-blue-600">
         {formatCurrency(row.original.tong_thuc_nhan || 0)}
       </span>
     ),
@@ -194,7 +193,7 @@ export const createKyLuongColumns = (options: {
     header: "Ngày tạo",
     cell: ({ row }) => (
       <span className="text-sm text-slate-500">
-        {format(new Date(row.original.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
+        {formatDateTimeVN(row.original.created_at)}
       </span>
     ),
   },

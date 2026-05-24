@@ -16,7 +16,7 @@ class PhongBanRepository:
         self._session = session
 
     async def generate_ma_phong_ban(self) -> str:
-        chars = string.ascii_lowercase + string.digits
+        chars = string.ascii_uppercase + string.digits
         suffix = "".join(secrets.choice(chars) for _ in range(6))
         return f"PB-{suffix}"
 

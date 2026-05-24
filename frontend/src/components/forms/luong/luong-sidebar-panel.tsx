@@ -61,21 +61,18 @@ export function LuongSidebarPanel({ onAdd, onChayLuong, onCauHinh, onXemKyLuong 
   }
 
   const currentDate = new Date()
-  const { data: kyLuongData } = useKyLuongList({
-    thang: currentDate.getMonth() + 1,
-    nam: currentDate.getFullYear(),
-  })
+  const { data: kyLuongData } = useKyLuongList({ page_size: 100 })
   const { data: cauHinhData } = useCauHinhLuongList()
 
-  const kyLuongs = kyLuongData?.data || []
-  const cauHinhs = cauHinhData?.data || []
+  const kyLuongs: any[] = Array.isArray(kyLuongData) ? kyLuongData : (kyLuongData as any)?.data || []
+  const cauHinhs: any[] = cauHinhData || []
   const activeCauHinh = cauHinhs.find((c) => c.trang_thai === "dang_ap_dung")
 
   const recentKyLuongs = [...kyLuongs].slice(-3).reverse()
   const pendingKyLuongs = kyLuongs.filter((k) => k.trang_thai === "chua_duyet")
   const approvedKyLuongs = kyLuongs.filter((k) => k.trang_thai === "da_duyet" || k.trang_thai === "da_chot")
 
-  const totalThucNhan = kyLuongs.reduce((sum, k) => sum + (k.tong_thuc_nhan || 0), 0)
+  const totalThucNhan = kyLuongs.reduce((sum: number, k) => sum + (k.tong_thuc_nhan || 0), 0)
 
   return (
     <div className="flex flex-col h-full">
@@ -124,8 +121,8 @@ export function LuongSidebarPanel({ onAdd, onChayLuong, onCauHinh, onXemKyLuong 
         </div>
         {activeCauHinh && (
           <div className="rounded-lg bg-blue-50 p-2.5">
-            <div className="text-[10px] text-blue-600 font-medium mb-1">Lương cơ sở</div>
-            <div className="text-sm font-bold text-blue-700">
+            <div className="text-[10px] text-primary font-medium mb-1">Lương cơ sở</div>
+            <div className="text-sm font-bold text-primary">
               {formatCurrency(activeCauHinh.luong_co_so)}
             </div>
           </div>
@@ -164,7 +161,7 @@ export function LuongSidebarPanel({ onAdd, onChayLuong, onCauHinh, onXemKyLuong 
                   <div className="flex items-center gap-2">
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                       ky.trang_thai === "da_chot" ? "bg-emerald-100 text-emerald-600" :
-                      ky.trang_thai === "da_duyet" ? "bg-blue-100 text-blue-600" :
+                      ky.trang_thai === "da_duyet" ? "bg-accent text-primary" :
                       "bg-amber-100 text-amber-600"
                     }`}>
                       <Wallet className="h-4 w-4" />
@@ -178,7 +175,7 @@ export function LuongSidebarPanel({ onAdd, onChayLuong, onCauHinh, onXemKyLuong 
                     variant="outline" 
                     className={`text-[10px] px-1.5 py-0 h-5 ${
                       ky.trang_thai === "da_chot" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                      ky.trang_thai === "da_duyet" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                      ky.trang_thai === "da_duyet" ? "bg-accent/50 text-primary border-primary/20" :
                       "bg-amber-50 text-amber-700 border-amber-200"
                     }`}
                   >

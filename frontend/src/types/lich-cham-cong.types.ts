@@ -20,8 +20,9 @@ export interface CreateLichChamCongData {
   ngay_lam_viec: string
   bat_gps: boolean
   vi_tri?: {
-    lat: number
-    lng: number
+    lat?: number
+    lng?: number
+    dms?: string
     name?: string
     radius: number
   }

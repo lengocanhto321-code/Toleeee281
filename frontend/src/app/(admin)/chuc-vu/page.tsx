@@ -5,6 +5,7 @@ import { Plus, Award, Crown, BookOpen, UserCog } from "lucide-react"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/ui/data-table"
+import { StatCard } from "@/components/ui/stat-card"
 import { useChucVuList, useCreateChucVu, useUpdateChucVu, useDeleteChucVu } from "@/hooks/chuc-vu"
 import type { ChucVu, ChucVuFormData } from "@/types/chuc-vu.types"
 import {
@@ -14,38 +15,9 @@ import {
   ChucVuGridView,
   ChucVuToolbar,
   ChucVuPhanBoDialog,
+  ChucVuBoNhiemDialog,
 } from "@/components/forms/chuc-vu"
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  accent,
-  active,
-  onClick,
-}: {
-  icon: React.ElementType
-  label: string
-  value: number
-  accent: string
-  active?: boolean
-  onClick?: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl border p-5 text-left transition-all ${active ? "border-primary ring-2 ring-primary/20" : "border-slate-200 hover:border-slate-300"} bg-white shadow-sm ${onClick ? "cursor-pointer" : ""}`}
-    >
-      <div className={`flex items-center gap-2 text-sm mb-1 ${accent.split(" ")[1]}`}>
-        <Icon className="w-4 h-4" />
-        {label}
-      </div>
-      <div className={`text-3xl font-bold ${accent.split(" ")[1].replace("text-", "text-")}`}>
-        {value}
-      </div>
-    </button>
-  )
-}
 
 export default function ChucVuPage() {
   const [search, setSearch] = useState("")
@@ -57,6 +29,7 @@ export default function ChucVuPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedChucVu, setSelectedChucVu] = useState<ChucVu | null>(null)
   const [phanBoDialogOpen, setPhanBoDialogOpen] = useState(false)
+  const [boNhiemDialogOpen, setBoNhiemDialogOpen] = useState(false)
 
   // Hooks
   const { data: chucVus = [], isLoading } = useChucVuList()
@@ -68,11 +41,14 @@ export default function ChucVuPage() {
   useEffect(() => {
     const handleAdd = () => { setEditingChucVu(null); setDialogOpen(true) }
     const handlePhanBo = () => setPhanBoDialogOpen(true)
+    const handleBoNhiem = () => setBoNhiemDialogOpen(true)
     window.addEventListener("sidebar:chuc-vu:add", handleAdd)
     window.addEventListener("sidebar:chuc-vu:phan-bo", handlePhanBo)
+    window.addEventListener("sidebar:chuc-vu:bo-nhiem", handleBoNhiem)
     return () => {
       window.removeEventListener("sidebar:chuc-vu:add", handleAdd)
       window.removeEventListener("sidebar:chuc-vu:phan-bo", handlePhanBo)
+      window.removeEventListener("sidebar:chuc-vu:bo-nhiem", handleBoNhiem)
     }
   }, [])
 
@@ -172,13 +148,13 @@ export default function ChucVuPage() {
           icon={Award}
           label="Tổng số"
           value={totalCount}
-          accent="bg-amber-100 text-amber-700"
+          accent="primary"
         />
         <StatCard
           icon={Crown}
           label="Quản lý"
           value={quanLyCount}
-          accent="bg-amber-100 text-amber-700"
+          accent="primary"
           active={loaiFilter === "quan_ly"}
           onClick={() => setLoaiFilter(loaiFilter === "quan_ly" ? "all" : "quan_ly")}
         />
@@ -186,7 +162,7 @@ export default function ChucVuPage() {
           icon={BookOpen}
           label="Giáo viên"
           value={giaoVienCount}
-          accent="bg-amber-100 text-amber-700"
+          accent="info"
           active={loaiFilter === "giao_vien"}
           onClick={() => setLoaiFilter(loaiFilter === "giao_vien" ? "all" : "giao_vien")}
         />
@@ -194,7 +170,7 @@ export default function ChucVuPage() {
           icon={UserCog}
           label="Nhân viên"
           value={nhanVienCount}
-          accent="bg-amber-100 text-amber-700"
+          accent="success"
           active={loaiFilter === "nhan_vien"}
           onClick={() => setLoaiFilter(loaiFilter === "nhan_vien" ? "all" : "nhan_vien")}
         />
@@ -216,8 +192,8 @@ export default function ChucVuPage() {
 
       {/* Results count */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-slate-500">
-          Hiển thị <span className="font-medium text-slate-900">{filtered.length}</span> / {chucVus.length} chức vụ
+        <p className="text-sm text-muted-foreground">
+          Hiển thị <span className="font-medium text-foreground">{filtered.length}</span> / {chucVus.length} chức vụ
         </p>
       </div>
 
@@ -248,6 +224,11 @@ export default function ChucVuPage() {
       <ChucVuPhanBoDialog
         open={phanBoDialogOpen}
         onOpenChange={setPhanBoDialogOpen}
+      />
+
+      <ChucVuBoNhiemDialog
+        open={boNhiemDialogOpen}
+        onOpenChange={setBoNhiemDialogOpen}
       />
     </AuthenticatedLayout>
   )

@@ -39,10 +39,19 @@ class SchedulerService:
 
         from config import config
 
+        from sqlalchemy import pool as sa_pool
+
+        sync_uri = config.DB_URI.replace("postgresql+asyncpg://", "postgresql://")
         jobstores = {
             "default": SQLAlchemyJobStore(
-                url=config.DB_URI.replace("postgresql+asyncpg://", "postgresql://"),
+                url=sync_uri,
                 tablename="apscheduler_jobs",
+                engine_options={
+                    "pool_size": 3,
+                    "max_overflow": 2,
+                    "pool_pre_ping": True,
+                    "pool_recycle": 1800,
+                },
             )
         }
 
@@ -54,7 +63,7 @@ class SchedulerService:
 
     async def stop(self):
         if self._scheduler and self._scheduler.running:
-            self._scheduler.shutdown(wait=False)
+            self._scheduler.shutdown(wait=True)
             logger.info("APScheduler stopped")
 
     async def _load_config_and_register_jobs(self):
@@ -207,6 +216,7 @@ async def _generate_qr_job(loai: str, config_id: str):
                 trang_thai="active",
                 created_by=None,
                 ma_nhap=generate_pin(),
+                bat_gps=config.bat_gps,
             )
 
             await ctx.qr_config_repository.create(qr_config)
@@ -223,8 +233,12 @@ async def _detect_absence_job():
     logger.info(f"Absence detection job running for {today}")
 
     try:
-        uow = UnitOfWork(session_factory)
-        async with uow as ctx:
+        nhan_vien_list: list = []
+        present_ids: set[str] = set()
+        leave_map: dict[str, str] = {}
+
+        uow_read = UnitOfWork(session_factory)
+        async with uow_read as ctx:
             config = await ctx.lich_cham_cong_repository.find_active()
             if not config or config.trang_thai != "active":
                 logger.info("No active schedule config, skipping absence detection")
@@ -237,49 +251,57 @@ async def _detect_absence_job():
                 return
 
             nhan_vien_list = await ctx.nhan_vien_repository.find_dang_lam()
-
             records = await ctx.check_in_out_repository.get_by_date(today)
             present_ids = {r.nhan_vien_id for r in records}
 
             approved_leaves = (
                 await ctx.don_xin_nghi_repository.find_all_approved_by_date(today)
             )
-            leave_map: dict[str, str] = {}
             for don in approved_leaves:
                 leave_map[don.nhan_vien_id] = don.loai_nghi
 
-            co_phep_count = 0
-            khong_phep_count = 0
+        records_to_create: list[CheckInOut] = []
+        co_phep_count = 0
+        khong_phep_count = 0
 
-            for nv in nhan_vien_list:
-                nv_id = nv.id
-                if nv_id in present_ids:
-                    continue
+        for nv in nhan_vien_list:
+            nv_id = nv.id
+            if nv_id in present_ids:
+                continue
 
-                existing = await ctx.check_in_out_repository.find_today(nv_id, today)
-                if existing and existing.trang_thai.startswith("vang_mat"):
-                    continue
-
-                if nv_id in leave_map:
-                    loai = leave_map[nv_id]
-                    ten_loai = LOAI_NGHI.get(loai, {}).get("ten", loai)
-                    record = CheckInOut(
+            if nv_id in leave_map:
+                loai = leave_map[nv_id]
+                ten_loai = LOAI_NGHI.get(loai, {}).get("ten", loai)
+                records_to_create.append(
+                    CheckInOut(
                         nhan_vien_id=nv_id,
                         ngay=today,
                         trang_thai="vang_mat_co_phep",
                         ghi_chu_vang=f"{ten_loai} (có phép)",
                     )
-                    co_phep_count += 1
-                else:
-                    record = CheckInOut(
+                )
+                co_phep_count += 1
+            else:
+                records_to_create.append(
+                    CheckInOut(
                         nhan_vien_id=nv_id,
                         ngay=today,
                         trang_thai="vang_mat_khong_phep",
                         ghi_chu_vang="Nghỉ không phép",
                     )
-                    khong_phep_count += 1
+                )
+                khong_phep_count += 1
 
-                await ctx.check_in_out_repository.create(record)
+        if records_to_create:
+            uow_write = UnitOfWork(session_factory)
+            async with uow_write as ctx:
+                for record in records_to_create:
+                    existing = await ctx.check_in_out_repository.find_today(
+                        record.nhan_vien_id, today
+                    )
+                    if existing and existing.trang_thai.startswith("vang_mat"):
+                        continue
+                    await ctx.check_in_out_repository.create(record)
 
         logger.info(
             f"Absence detection complete: {co_phep_count} co phep, "

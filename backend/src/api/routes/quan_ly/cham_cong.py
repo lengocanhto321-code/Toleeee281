@@ -76,6 +76,7 @@ class GenerateQRRequest(BaseModel):
     vi_tri: Optional[dict] = None
     gio_bat_dau: str = "07:00"
     gio_ket_thuc: str = "17:30"
+    bat_gps: bool = True
 
 
 class BulkGenerateQRRequest(BaseModel):
@@ -106,6 +107,7 @@ async def generate_qr(
         vi_tri=body.vi_tri,
         gio_bat_dau=body.gio_bat_dau,
         gio_ket_thuc=body.gio_ket_thuc,
+        bat_gps=body.bat_gps,
     )
 
     use_case = GenerateQRUseCase(uow)

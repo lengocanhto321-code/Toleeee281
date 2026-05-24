@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { formatDateVN } from "@/lib/date-utils"
 import {
   Search, X, SlidersHorizontal, Filter,
   CalendarIcon, DollarSign, Flag, Users, FileText, ShieldCheck,
@@ -42,7 +42,7 @@ interface FilterOption {
 
 const LOAI_OPTIONS: FilterOption[] = [
   { value: "all", label: "Tất cả" },
-  { value: "giao_vien", label: "Giáo viên", dot: "bg-indigo-500" },
+  { value: "giao_vien", label: "Giáo viên", dot: "bg-blue-500" },
   { value: "nhan_vien", label: "Nhân viên", dot: "bg-slate-400" },
   { value: "can_bo", label: "Cán bộ", dot: "bg-amber-500" },
 ]
@@ -158,7 +158,7 @@ function DatePickerField({
             )}
           >
             <CalendarIcon className="mr-1.5 h-3 w-3" />
-            {date ? format(date, "dd/MM/yyyy") : "Chọn ngày..."}
+            {value ? formatDateVN(value) : "Chọn ngày..."}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -203,6 +203,8 @@ export function NhanVienToolbar({
   onSortChange,
   viewMode,
   onViewModeChange,
+  onExport,
+  onPrint,
   phongBanOptions = [],
   totalResults = 0,
   totalCount = 0,

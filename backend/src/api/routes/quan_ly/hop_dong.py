@@ -27,7 +27,17 @@ from fastapi import status
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/nhan-vien", tags=["hop-dong"])
+router = APIRouter()
+
+
+@router.get("/hop-dong/generate-so", response_model=APIResponse[dict])
+async def generate_so_hop_dong(
+    uow=Depends(get_unit_of_work),
+):
+    """Generate số hợp đồng tiếp theo."""
+    async with uow:
+        so_hd = await uow.hop_dong_repository.generate_so_hop_dong()
+    return APIResponse(message="OK", data={"so_hop_dong": so_hd})
 
 
 @router.get(
@@ -105,6 +115,8 @@ async def create_hop_dong(
         error = result.value
         if error.code in ("not_found", "nhan_vien_not_found"):
             raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        if error.code in ("invalid_dates", "overlap_error"):
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
         raise ServerError(base_error=error)
 
     return APIResponse(
@@ -171,6 +183,6 @@ async def delete_hop_dong(
         raise ServerError(base_error=error)
 
     return APIResponse(
-        message="Xóa hợp đồng thành công",
+        message="Hủy hợp đồng thành công",
         data={"success": True},
     )

@@ -89,7 +89,9 @@ class CreateCongTacUseCase:
                 ngay_bat_dau=ngay_bat_dau or get_utc_now(),
                 is_primary=command.data.get("is_primary", False),
                 he_so_luong=command.data.get("he_so_luong"),
-                bac_luong=command.data.get("bac_luong"),
+                bac_luong=str(command.data.get("bac_luong"))
+                if command.data.get("bac_luong") is not None
+                else None,
                 ghi_chu=command.data.get("ghi_chu"),
             )
             created = await uow.cong_tac_repository.create(ct)

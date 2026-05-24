@@ -7,6 +7,7 @@ import type { LichChamCong, CreateLichChamCongData, ToggleLichChamCongData } fro
 export const lichChamCongKeys = {
   all: ["lich-cham-cong"] as const,
   config: () => [...lichChamCongKeys.all, "config"] as const,
+  todayQr: () => [...lichChamCongKeys.all, "today-qr"] as const,
 }
 
 export function useLichChamCong() {
@@ -48,5 +49,26 @@ export function useToggleLichChamCong() {
       const message = (error as { message?: string })?.message || "Thao tác thất bại"
       toastError("Lỗi", message)
     },
+  })
+}
+
+interface TodayQR {
+  id: string
+  ngay: string
+  qr_data: string
+  ma_nhap: string | null
+  trang_thai: string
+}
+
+export function useTodayQR() {
+  const today = new Date().toISOString().slice(0, 10)
+  return useQuery({
+    queryKey: lichChamCongKeys.todayQr(),
+    queryFn: () => {
+      const qs = new URLSearchParams({ ngay: today })
+      return apiGateway.get<TodayQR[]>(`${ApiEndpoints.ADMIN_CHAM_CONG_QR_BY_DATE}?${qs}`)
+    },
+    select: (data) => data?.[0] ?? null,
+    refetchInterval: 30000,
   })
 }

@@ -1,14 +1,20 @@
 import logging
 
 from fastapi import APIRouter, Depends, status, Response
+from pydantic import BaseModel
 
 from libs.result import is_err
 from src.api.depends import get_unit_of_work, get_auth_service
-from src.api.auth import get_user_context
+from src.api.auth import get_cookie_user_context, require_permission, UserContext
 from src.api.error import ClientError, ServerError
+from libs.result import Error
 from src.api.schemas.auth import LoginRequest, LoginDataResponse
 from src.api.schemas.common import APIResponse
 from src.app.usecases.auth.login_uc import LoginCommand, LoginUseCase
+from src.app.usecases.auth.change_password_uc import (
+    ChangePasswordCommand,
+    ChangePasswordUseCase,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -85,21 +91,49 @@ async def refresh(
 
 
 @router.get("/me", response_model=APIResponse[dict])
-async def me(current_user=Depends(get_user_context)):
-    """
-    Get current user info from token.
-    """
-    from src.domain.models.tai_khoan import TaiKhoan
-    from src.repository.user_repository import UserRepository
-
-    # TODO: Implement proper user fetch
+async def me(
+    current_user=Depends(require_permission("profile:read")),
+):
+    """Get current user info from token. Requires authentication."""
     return APIResponse(
         message="User info",
         data={
             "id": current_user.user_id,
             "email": current_user.email,
+            "username": current_user.username,
+            "roles": current_user.roles,
         },
     )
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
+@router.post("/change-password", response_model=APIResponse[dict])
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: UserContext = Depends(require_permission("profile:update")),
+    uow=Depends(get_unit_of_work),
+):
+    """Đổi mật khẩu cho user hiện tại."""
+    command = ChangePasswordCommand(
+        user_id=current_user.user_id,
+        old_password=body.old_password,
+        new_password=body.new_password,
+    )
+
+    use_case = ChangePasswordUseCase(uow)
+    result = await use_case.execute(command)
+
+    if is_err(result):
+        error = result.value
+        if error.code in ["wrong_password", "weak_password"]:
+            raise ClientError(base_error=error, status_code=400)
+        raise ServerError(base_error=error)
+
+    return APIResponse(message="Đổi mật khẩu thành công", data={})
 
 
 @router.post("/logout", response_model=APIResponse[dict])

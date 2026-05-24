@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { User, Calendar as CalendarIcon, Check, X, AlertTriangle, Search, ChevronDown } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -17,6 +20,7 @@ import type { DonXinNghi, LoaiNghi, ChamCongThang } from "@/types/nghi-phep.type
 import { createDonXinNghiSchema } from "@/schemas/nghi-phep.schema"
 import { toastError } from "@/lib/utils"
 import { format, addDays, differenceInDays } from "date-fns"
+import { formatDateVN } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
 import { useNhanVienList } from "@/hooks/nhan-vien"
 
@@ -30,6 +34,22 @@ const LOAI_NGHI_OPTIONS: { value: LoaiNghi; label: string }[] = [
   { value: "thai_san", label: "Thai sản" },
 ]
 
+const loaiNghiValues = ["phep_nam", "nghi_om", "viec_rieng", "cong_tac", "ket_hon", "mai_tang", "thai_san"] as const
+
+const createDonNghiFormSchema = z.object({
+  nhan_vien_id: z.string().min(1, "Vui lòng chọn nhân viên"),
+  nhan_vien_ten: z.string(),
+  loai_nghi: z.enum(loaiNghiValues, { message: "Vui lòng chọn loại nghỉ phép" }),
+  tu_ngay: z.date({ message: "Vui lòng chọn ngày bắt đầu" }),
+  den_ngay: z.date({ message: "Vui lòng chọn ngày kết thúc" }),
+  ly_do: z.string().max(500, "Lý do không quá 500 ký tự"),
+}).refine((data) => data.den_ngay >= data.tu_ngay, {
+  message: "Ngày kết thúc phải từ ngày bắt đầu trở đi",
+  path: ["den_ngay"],
+})
+
+type CreateDonNghiFormValues = z.infer<typeof createDonNghiFormSchema>
+
 const LOAI_NGHI_COLORS: Record<string, string> = {
   phep_nam: "bg-blue-100 text-blue-700 border-blue-200",
   nghi_om: "bg-red-100 text-red-700 border-red-200",
@@ -42,20 +62,14 @@ const LOAI_NGHI_COLORS: Record<string, string> = {
 
 const TRANG_THAI_COLORS: Record<string, string> = {
   cho_duyet: "bg-amber-100 text-amber-700 border-amber-200",
-  cho_duyet_cap_1: "bg-amber-100 text-amber-700 border-amber-200",
-  cho_duyet_cap_2: "bg-blue-100 text-blue-700 border-blue-200",
   da_duyet: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  da_duyet_cap_2: "bg-emerald-100 text-emerald-700 border-emerald-200",
   tu_choi: "bg-red-100 text-red-700 border-red-200",
   huy: "bg-slate-100 text-slate-700 border-slate-200",
 }
 
 const TRANG_THAI_LABELS: Record<string, string> = {
   cho_duyet: "Chờ duyệt",
-  cho_duyet_cap_1: "Chờ cấp 1",
-  cho_duyet_cap_2: "Chờ cấp 2",
   da_duyet: "Đã duyệt",
-  da_duyet_cap_2: "Đã duyệt",
   tu_choi: "Từ chối",
   huy: "Đã hủy",
 }
@@ -64,8 +78,7 @@ interface DonNghiDetailDialogProps {
   don: DonXinNghi | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDuyetCap1?: () => void
-  onDuyetCap2?: () => void
+  onDuyet?: () => void
   onTuChoi: (lyDo: string) => void
 }
 
@@ -73,8 +86,7 @@ export function DonNghiDetailDialog({
   don,
   open,
   onOpenChange,
-  onDuyetCap1,
-  onDuyetCap2,
+  onDuyet,
   onTuChoi,
 }: DonNghiDetailDialogProps) {
   const [lyDoTuChoi, setLyDoTuChoi] = useState("")
@@ -127,17 +139,17 @@ export function DonNghiDetailDialog({
           <div className="grid grid-cols-2 gap-4">
             <Field>
               <FieldLabel>Từ ngày</FieldLabel>
-              <p className="text-sm font-medium mt-1">{format(new Date(don.tu_ngay), "dd/MM/yyyy")}</p>
-            </Field>
-            <Field>
-              <FieldLabel>Đến ngày</FieldLabel>
-              <p className="text-sm font-medium mt-1">{format(new Date(don.den_ngay), "dd/MM/yyyy")}</p>
+              <p className="text-sm font-medium mt-1">{formatDateVN(don.tu_ngay)}</p>
+             </Field>
+             <Field>
+               <FieldLabel>Đến ngày</FieldLabel>
+              <p className="text-sm font-medium mt-1">{formatDateVN(don.den_ngay)}</p>
             </Field>
           </div>
 
           <Field>
             <FieldLabel>Số ngày nghỉ</FieldLabel>
-            <p className="text-2xl font-bold text-indigo-600 mt-1">{don.so_ngay} ngày</p>
+            <p className="text-2xl font-bold text-blue-600 mt-1">{don.so_ngay} ngày</p>
           </Field>
 
           {don.ly_do && (
@@ -154,7 +166,7 @@ export function DonNghiDetailDialog({
             </div>
           )}
 
-          {(don.trang_thai === "cho_duyet_cap_1" || don.trang_thai === "cho_duyet_cap_2") && (
+          {don.trang_thai === "cho_duyet" && (
             <Field>
               <FieldLabel htmlFor="ly-do-tu-choi">Lý do từ chối (tùy chọn)</FieldLabel>
               <Textarea
@@ -167,22 +179,10 @@ export function DonNghiDetailDialog({
               />
             </Field>
           )}
-
-          {(don.trang_thai === "cho_duyet_cap_2" || don.trang_thai === "da_duyet_cap_2") && don.nguoi_duyet_cap_1 && (
-            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-              <p className="text-sm font-medium text-emerald-700">Đã duyệt cấp 1</p>
-              <p className="text-sm text-emerald-600 mt-1">
-                Bởi: {don.nguoi_duyet_cap_1} • {don.ngay_duyet_cap_1 ? format(new Date(don.ngay_duyet_cap_1), "dd/MM/yyyy HH:mm") : ""}
-              </p>
-              {don.ghi_chu_duyet_cap_1 && (
-                <p className="text-sm text-emerald-600 mt-1">Ghi chú: {don.ghi_chu_duyet_cap_1}</p>
-              )}
-            </div>
-          )}
         </div>
 
         <DialogFooter>
-          {don.trang_thai === "cho_duyet_cap_1" ? (
+          {don.trang_thai === "cho_duyet" ? (
             <div className="flex gap-2 w-full">
               <Button
                 variant="outline"
@@ -194,28 +194,10 @@ export function DonNghiDetailDialog({
               </Button>
               <Button
                 className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                onClick={onDuyetCap1}
+                onClick={onDuyet}
               >
                 <Check className="size-4 mr-2" data-icon="inline-start" />
-                Duyệt cấp 1
-              </Button>
-            </div>
-          ) : don.trang_thai === "cho_duyet_cap_2" ? (
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={handleTuChoi}
-              >
-                <X className="size-4 mr-2" data-icon="inline-start" />
-                Từ chối
-              </Button>
-              <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                onClick={onDuyetCap2}
-              >
-                <Check className="size-4 mr-2" data-icon="inline-start" />
-                Duyệt cấp 2
+                Duyệt
               </Button>
             </div>
           ) : (
@@ -250,18 +232,43 @@ export function CreateDonNghiDialog({
   onSubmit,
   isPending = false,
 }: CreateDonNghiDialogProps) {
-  const [form, setForm] = useState({
-    nhan_vien_id: "",
-    nhan_vien_ten: "",
-    loai_nghi: "phep_nam" as LoaiNghi,
-    tu_ngay: undefined as Date | undefined,
-    den_ngay: undefined as Date | undefined,
-    ly_do: "",
-  })
   const [employeeSearch, setEmployeeSearch] = useState("")
   const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false)
   const [tuNgayPopoverOpen, setTuNgayPopoverOpen] = useState(false)
   const [denNgayPopoverOpen, setDenNgayPopoverOpen] = useState(false)
+
+  const { register, handleSubmit: rhfSubmit, reset, setValue, watch, formState: { errors } } = useForm<CreateDonNghiFormValues>({
+    resolver: zodResolver(createDonNghiFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      nhan_vien_id: "",
+      nhan_vien_ten: "",
+      loai_nghi: "phep_nam" as LoaiNghi,
+      tu_ngay: undefined as unknown as Date,
+      den_ngay: undefined as unknown as Date,
+      ly_do: "",
+    },
+  })
+
+  const nhanVienId = watch("nhan_vien_id")
+  const nhanVienTen = watch("nhan_vien_ten")
+  const loaiNghi = watch("loai_nghi")
+  const tuNgay = watch("tu_ngay")
+  const denNgay = watch("den_ngay")
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        nhan_vien_id: "",
+        nhan_vien_ten: "",
+        loai_nghi: "phep_nam" as LoaiNghi,
+        tu_ngay: undefined as unknown as Date,
+        den_ngay: undefined as unknown as Date,
+        ly_do: "",
+      })
+      setEmployeeSearch("")
+    }
+  }, [open, reset])
 
   const { data: nhanVienResult } = useNhanVienList({ page: 1, page_size: 100, trang_thai: "dang_lam" })
   const nhanVienList = nhanVienResult?.data || []
@@ -277,64 +284,51 @@ export function CreateDonNghiDialog({
   }, [nhanVienList, employeeSearch])
 
   const handleSelectEmployee = (nv: { id: string; ho_ten: string }) => {
-    setForm((prev) => ({ ...prev, nhan_vien_id: nv.id, nhan_vien_ten: nv.ho_ten }))
+    setValue("nhan_vien_id", nv.id, { shouldValidate: true })
+    setValue("nhan_vien_ten", nv.ho_ten)
     setEmployeeSearch("")
     setEmployeePopoverOpen(false)
   }
 
-  const handleTuNgaySelect = (date: Date | undefined) => {
-    setForm((prev) => {
-      const newForm = { ...prev, tu_ngay: date }
-      if (date && prev.den_ngay && date > prev.den_ngay) {
-        newForm.den_ngay = date
-      }
-      return newForm
-    })
-    setTuNgayPopoverOpen(false)
-  }
-
-  const handleDenNgaySelect = (date: Date | undefined) => {
-    setForm((prev) => ({ ...prev, den_ngay: date }))
-    setDenNgayPopoverOpen(false)
-  }
-
   const soNgay = useMemo(() => {
-    if (form.tu_ngay && form.den_ngay) {
-      return differenceInDays(form.den_ngay, form.tu_ngay) + 1
+    if (tuNgay && denNgay) {
+      return differenceInDays(denNgay, tuNgay) + 1
     }
     return 0
-  }, [form.tu_ngay, form.den_ngay])
+  }, [tuNgay, denNgay])
 
-  const handleSubmit = () => {
-    if (!form.nhan_vien_id || !form.loai_nghi || !form.tu_ngay || !form.den_ngay) {
-      toastError("Lỗi", "Vui lòng điền đầy đủ thông tin")
-      return
-    }
+  const onFormSubmit = () => {
     const submitData = {
-      nhan_vien_id: form.nhan_vien_id,
-      loai_nghi: form.loai_nghi,
-      tu_ngay: format(form.tu_ngay, "yyyy-MM-dd"),
-      den_ngay: format(form.den_ngay, "yyyy-MM-dd"),
-      ly_do: form.ly_do || undefined,
+      nhan_vien_id: nhanVienId,
+      loai_nghi: loaiNghi,
+      tu_ngay: tuNgay ? format(tuNgay, "yyyy-MM-dd") : "",
+      den_ngay: denNgay ? format(denNgay, "yyyy-MM-dd") : "",
+      ly_do: watch("ly_do") || undefined,
     }
     onSubmit(submitData)
-    resetForm()
-  }
-
-  const resetForm = () => {
-    setForm({
+    reset({
       nhan_vien_id: "",
       nhan_vien_ten: "",
-      loai_nghi: "phep_nam",
-      tu_ngay: undefined,
-      den_ngay: undefined,
+      loai_nghi: "phep_nam" as LoaiNghi,
+      tu_ngay: undefined as unknown as Date,
+      den_ngay: undefined as unknown as Date,
       ly_do: "",
     })
     setEmployeeSearch("")
   }
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) resetForm()
+    if (!open) {
+      reset({
+        nhan_vien_id: "",
+        nhan_vien_ten: "",
+        loai_nghi: "phep_nam" as LoaiNghi,
+        tu_ngay: undefined as unknown as Date,
+        den_ngay: undefined as unknown as Date,
+        ly_do: "",
+      })
+      setEmployeeSearch("")
+    }
     onOpenChange(open)
   }
 
@@ -355,12 +349,13 @@ export function CreateDonNghiDialog({
                   <Button
                     variant="outline"
                     role="combobox"
+                    type="button"
                     className={cn(
                       "w-full justify-between font-normal",
-                      !form.nhan_vien_id && "text-muted-foreground"
+                      !nhanVienId && "text-muted-foreground"
                     )}
                   >
-                    {form.nhan_vien_ten || "Tìm và chọn nhân viên..."}
+                    {nhanVienTen || "Tìm và chọn nhân viên..."}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -390,7 +385,7 @@ export function CreateDonNghiDialog({
                             onClick={() => handleSelectEmployee(nv)}
                             className={cn(
                               "w-full flex cursor-default items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none select-none hover:bg-muted",
-                              form.nhan_vien_id === nv.id && "bg-muted"
+                              nhanVienId === nv.id && "bg-muted"
                             )}
                           >
                             <User className="mr-2 h-4 w-4 shrink-0" />
@@ -400,7 +395,7 @@ export function CreateDonNghiDialog({
                                 {nv.ma_nhan_vien} • {nv.loai_nhan_vien === "giao_vien" ? "Giáo viên" : "Nhân viên"}
                               </span>
                             </div>
-                            {form.nhan_vien_id === nv.id && (
+                            {nhanVienId === nv.id && (
                               <Check className="ml-auto h-4 w-4 text-emerald-600 shrink-0" />
                             )}
                           </button>
@@ -410,13 +405,16 @@ export function CreateDonNghiDialog({
                   </div>
                 </PopoverContent>
               </Popover>
+              {errors.nhan_vien_id && (
+                <p className="text-xs text-destructive mt-1">{errors.nhan_vien_id.message}</p>
+              )}
             </Field>
 
             <Field>
               <FieldLabel>Loại nghỉ phép</FieldLabel>
               <Select
-                value={form.loai_nghi}
-                onValueChange={(v) => setForm({ ...form, loai_nghi: v as LoaiNghi })}
+                value={loaiNghi}
+                onValueChange={(v) => setValue("loai_nghi", v as LoaiNghi, { shouldValidate: true })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn loại nghỉ" />
@@ -438,25 +436,35 @@ export function CreateDonNghiDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      type="button"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !form.tu_ngay && "text-muted-foreground"
+                        !tuNgay && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.tu_ngay ? format(form.tu_ngay, "dd/MM/yyyy") : "Chọn ngày"}
+                      {tuNgay ? format(tuNgay, "dd/MM/yyyy") : "Chọn ngày"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={form.tu_ngay}
-                      onSelect={handleTuNgaySelect}
+                      selected={tuNgay}
+                      onSelect={(d) => {
+                        if (d && denNgay && d > denNgay) {
+                          setValue("den_ngay", d as Date, { shouldValidate: true })
+                        }
+                        setValue("tu_ngay", d as Date, { shouldValidate: true })
+                        setTuNgayPopoverOpen(false)
+                      }}
                       disabled={(date) => date < new Date()}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.tu_ngay && (
+                  <p className="text-xs text-destructive mt-1">{errors.tu_ngay.message}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel>Đến ngày</FieldLabel>
@@ -464,32 +472,39 @@ export function CreateDonNghiDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      type="button"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !form.den_ngay && "text-muted-foreground"
+                        !denNgay && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.den_ngay ? format(form.den_ngay, "dd/MM/yyyy") : "Chọn ngày"}
+                      {denNgay ? format(denNgay, "dd/MM/yyyy") : "Chọn ngày"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={form.den_ngay}
-                      onSelect={handleDenNgaySelect}
-                      disabled={(date) => !form.tu_ngay || date < form.tu_ngay}
-                      fromDate={form.tu_ngay}
+                      selected={denNgay}
+                      onSelect={(d) => {
+                        setValue("den_ngay", d as Date, { shouldValidate: true })
+                        setDenNgayPopoverOpen(false)
+                      }}
+                      disabled={(date) => !tuNgay || date < tuNgay}
+                      fromDate={tuNgay}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.den_ngay && (
+                  <p className="text-xs text-destructive mt-1">{errors.den_ngay.message}</p>
+                )}
               </Field>
             </div>
 
             {soNgay > 0 && (
-              <div className="flex items-center justify-center p-3 rounded-lg bg-indigo-50 border border-indigo-200">
-                <span className="text-sm text-indigo-700">
+              <div className="flex items-center justify-center p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <span className="text-sm text-blue-700">
                   Số ngày nghỉ: <strong className="text-lg">{soNgay}</strong> ngày
                 </span>
               </div>
@@ -498,11 +513,13 @@ export function CreateDonNghiDialog({
             <Field>
               <FieldLabel>Lý do (tùy chọn)</FieldLabel>
               <Textarea
-                value={form.ly_do}
-                onChange={(e) => setForm({ ...form, ly_do: e.target.value })}
+                {...register("ly_do")}
                 placeholder="Nhập lý do nghỉ phép..."
                 rows={3}
               />
+              {errors.ly_do && (
+                <p className="text-xs text-destructive mt-1">{errors.ly_do.message}</p>
+              )}
             </Field>
           </FieldGroup>
         </div>
@@ -512,9 +529,9 @@ export function CreateDonNghiDialog({
             Hủy
           </Button>
           <Button
-            onClick={handleSubmit}
-            disabled={!form.nhan_vien_id || !form.loai_nghi || !form.tu_ngay || !form.den_ngay || isPending}
-            className="bg-indigo-600 hover:bg-indigo-700"
+            onClick={rhfSubmit(onFormSubmit)}
+            disabled={!nhanVienId || !loaiNghi || !tuNgay || !denNgay || isPending}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {isPending ? "Đang tạo..." : "Tạo đơn"}
           </Button>
@@ -588,7 +605,7 @@ export function ChamCongDetailDialog({
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Hệ số ngày công</span>
-                <span className="text-2xl font-bold text-indigo-600">{heSo.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-blue-600">{heSo.toFixed(2)}</span>
               </div>
               <Progress value={heSoPercent} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">
@@ -729,7 +746,7 @@ export function GenerateChamCongDialog({
           <Button
             onClick={handleSubmit}
             disabled={isPending}
-            className="bg-indigo-600 hover:bg-indigo-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {isPending ? "Đang tạo..." : "Tạo chấm công"}
           </Button>
@@ -771,6 +788,17 @@ const TRANG_THAI_CHAM_CONG_LABELS: Record<string, string> = {
   da_chot: "Đã chốt",
 }
 
+const chamCongEditSchema = z.object({
+  so_ngay_co_mat: z.number().min(0, "Số ngày không được âm").max(31, "Tối đa 31 ngày"),
+  so_ngay_vang_co_phep: z.number().min(0, "Số ngày không được âm").max(31, "Tối đa 31 ngày"),
+  so_ngay_vang_khong_phep: z.number().min(0, "Số ngày không được âm").max(31, "Tối đa 31 ngày"),
+  so_ngay_nghi_le_tet: z.number().min(0, "Số ngày không được âm").max(31, "Tối đa 31 ngày"),
+  so_ngay_cong_tac: z.number().min(0, "Số ngày không được âm").max(31, "Tối đa 31 ngày"),
+  ghi_chu: z.string().max(500, "Ghi chú tối đa 500 ký tự"),
+})
+
+type ChamCongEditFormData = z.infer<typeof chamCongEditSchema>
+
 export function ChamCongEditDialog({
   chamCong,
   open,
@@ -781,18 +809,29 @@ export function ChamCongEditDialog({
   onChot,
   isPending = false,
 }: ChamCongEditDialogProps) {
-  const [form, setForm] = useState({
-    so_ngay_co_mat: 0,
-    so_ngay_vang_co_phep: 0,
-    so_ngay_vang_khong_phep: 0,
-    so_ngay_nghi_le_tet: 0,
-    so_ngay_cong_tac: 0,
-    ghi_chu: "",
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<ChamCongEditFormData>({
+    resolver: zodResolver(chamCongEditSchema),
+    mode: "onChange",
+    defaultValues: {
+      so_ngay_co_mat: 0,
+      so_ngay_vang_co_phep: 0,
+      so_ngay_vang_khong_phep: 0,
+      so_ngay_nghi_le_tet: 0,
+      so_ngay_cong_tac: 0,
+      ghi_chu: "",
+    },
   })
 
   useEffect(() => {
-    if (chamCong) {
-      setForm({
+    if (chamCong && open) {
+      reset({
         so_ngay_co_mat: chamCong.so_ngay_co_mat,
         so_ngay_vang_co_phep: chamCong.so_ngay_vang_co_phep,
         so_ngay_vang_khong_phep: chamCong.so_ngay_vang_khong_phep,
@@ -801,12 +840,13 @@ export function ChamCongEditDialog({
         ghi_chu: chamCong.ghi_chu || "",
       })
     }
-  }, [chamCong])
+  }, [chamCong, open, reset])
 
   if (!chamCong) return null
 
-  const handleSave = () => {
-    onUpdate(chamCong.id, form)
+  const onSubmitEdit = () => {
+    const values = watch()
+    onUpdate(chamCong.id, values)
     onOpenChange(false)
   }
 
@@ -831,7 +871,7 @@ export function ChamCongEditDialog({
               {TRANG_THAI_CHAM_CONG_LABELS[chamCong.trang_thai] || chamCong.trang_thai}
             </Badge>
             <span className="text-sm text-slate-500">
-              Hệ số: <span className="font-semibold text-indigo-600">{chamCong.he_so_ngay_cong.toFixed(2)}</span>
+              Hệ số: <span className="font-semibold text-blue-600">{chamCong.he_so_ngay_cong.toFixed(2)}</span>
             </span>
           </div>
 
@@ -844,10 +884,10 @@ export function ChamCongEditDialog({
                 type="number"
                 min={0}
                 max={31}
-                value={form.so_ngay_co_mat}
-                onChange={(e) => setForm({ ...form, so_ngay_co_mat: parseInt(e.target.value) || 0 })}
+                {...register("so_ngay_co_mat", { valueAsNumber: true })}
                 disabled={!canEdit}
               />
+              {errors.so_ngay_co_mat && <p className="text-xs text-red-500">{errors.so_ngay_co_mat.message}</p>}
             </Field>
             <Field>
               <FieldLabel>Vắng có phép</FieldLabel>
@@ -855,10 +895,10 @@ export function ChamCongEditDialog({
                 type="number"
                 min={0}
                 max={31}
-                value={form.so_ngay_vang_co_phep}
-                onChange={(e) => setForm({ ...form, so_ngay_vang_co_phep: parseInt(e.target.value) || 0 })}
+                {...register("so_ngay_vang_co_phep", { valueAsNumber: true })}
                 disabled={!canEdit}
               />
+              {errors.so_ngay_vang_co_phep && <p className="text-xs text-red-500">{errors.so_ngay_vang_co_phep.message}</p>}
             </Field>
             <Field>
               <FieldLabel>Vắng không phép</FieldLabel>
@@ -866,10 +906,10 @@ export function ChamCongEditDialog({
                 type="number"
                 min={0}
                 max={31}
-                value={form.so_ngay_vang_khong_phep}
-                onChange={(e) => setForm({ ...form, so_ngay_vang_khong_phep: parseInt(e.target.value) || 0 })}
+                {...register("so_ngay_vang_khong_phep", { valueAsNumber: true })}
                 disabled={!canEdit}
               />
+              {errors.so_ngay_vang_khong_phep && <p className="text-xs text-red-500">{errors.so_ngay_vang_khong_phep.message}</p>}
             </Field>
             <Field>
               <FieldLabel>Nghỉ lễ tết</FieldLabel>
@@ -877,10 +917,10 @@ export function ChamCongEditDialog({
                 type="number"
                 min={0}
                 max={31}
-                value={form.so_ngay_nghi_le_tet}
-                onChange={(e) => setForm({ ...form, so_ngay_nghi_le_tet: parseInt(e.target.value) || 0 })}
+                {...register("so_ngay_nghi_le_tet", { valueAsNumber: true })}
                 disabled={!canEdit}
               />
+              {errors.so_ngay_nghi_le_tet && <p className="text-xs text-red-500">{errors.so_ngay_nghi_le_tet.message}</p>}
             </Field>
             <Field>
               <FieldLabel>Công tác</FieldLabel>
@@ -888,22 +928,22 @@ export function ChamCongEditDialog({
                 type="number"
                 min={0}
                 max={31}
-                value={form.so_ngay_cong_tac}
-                onChange={(e) => setForm({ ...form, so_ngay_cong_tac: parseInt(e.target.value) || 0 })}
+                {...register("so_ngay_cong_tac", { valueAsNumber: true })}
                 disabled={!canEdit}
               />
+              {errors.so_ngay_cong_tac && <p className="text-xs text-red-500">{errors.so_ngay_cong_tac.message}</p>}
             </Field>
           </div>
 
           <Field>
             <FieldLabel>Ghi chú</FieldLabel>
             <Textarea
-              value={form.ghi_chu}
-              onChange={(e) => setForm({ ...form, ghi_chu: e.target.value })}
+              {...register("ghi_chu")}
               placeholder="Ghi chú chấm công..."
               rows={2}
               disabled={!canEdit}
             />
+            {errors.ghi_chu && <p className="text-xs text-red-500">{errors.ghi_chu.message}</p>}
           </Field>
 
           {(canXacNhan || canDuyet || canChot) && (
@@ -932,7 +972,7 @@ export function ChamCongEditDialog({
             Đóng
           </Button>
           {canEdit && (
-            <Button onClick={handleSave} disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={onSubmitEdit} disabled={isPending || !isValid} className="bg-blue-600 hover:bg-blue-700">
               {isPending ? "Đang lưu..." : "Lưu thay đổi"}
             </Button>
           )}

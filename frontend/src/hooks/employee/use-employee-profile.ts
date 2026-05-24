@@ -13,7 +13,7 @@ export const employeeProfileQueryKeys = {
 export function useEmployeeProfile() {
   return useQuery({
     queryKey: employeeProfileQueryKeys.detail(),
-    queryFn: () => apiGateway.get<EmployeeProfile>("/api/employee/profile"),
+    queryFn: () => apiGateway.get<EmployeeProfile>("/api/v1/nhan-vien/profile"),
   })
 }
 
@@ -22,7 +22,7 @@ export function useUpdateEmployeeProfile() {
 
   return useMutation({
     mutationFn: (data: UpdateProfileInput) =>
-      apiGateway.put("/api/employee/profile", data),
+      apiGateway.put("/api/v1/nhan-vien/profile", data),
     onSuccess: () => {
       toast.success("Cập nhật thành công!", {
         description: "Thông tin cá nhân đã được lưu.",

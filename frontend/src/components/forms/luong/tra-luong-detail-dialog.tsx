@@ -12,8 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, AlertTriangle, Clock, TrendingUp, Minus } from "lucide-react"
 import type { TraLuong } from "@/types/luong.types"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDateTimeVN } from "@/lib/date-utils"
 
 interface TraLuongDetailDialogProps {
   open: boolean
@@ -60,7 +59,7 @@ export function TraLuongDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Chi tiết phiếu lương</span>
@@ -74,7 +73,7 @@ export function TraLuongDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
           {/* Alerts */}
           {(hasTamDinhChi || hasKyLuat) && (
             <div className="space-y-2">
@@ -110,7 +109,7 @@ export function TraLuongDetailDialog({
                 <p className="text-xs text-slate-500">Ngày chuẩn</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-indigo-600">{traLuong.so_ngay_cong_thuc_te}</p>
+                <p className="text-2xl font-bold text-blue-600">{traLuong.so_ngay_cong_thuc_te}</p>
                 <p className="text-xs text-slate-500">Ngày thực tế</p>
               </div>
               <div>
@@ -156,10 +155,10 @@ export function TraLuongDetailDialog({
           </div>
 
           {/* Thực nhận */}
-          <div className="rounded-lg border-2 border-indigo-200 bg-indigo-50 p-4">
+          <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-indigo-900">LƯƠNG THỰC NHẬN</span>
-              <span className="text-2xl font-bold text-indigo-600">
+              <span className="text-lg font-bold text-blue-900">LƯƠNG THỰC NHẬN</span>
+              <span className="text-2xl font-bold text-blue-600">
                 {formatCurrency(traLuong.luong_thuc_nhan)}
               </span>
             </div>
@@ -167,7 +166,7 @@ export function TraLuongDetailDialog({
 
           {/* Footer info */}
           <div className="text-xs text-slate-400 text-center">
-            Ngày chạy: {format(new Date(traLuong.ngay_chay), "dd/MM/yyyy HH:mm", { locale: vi })}
+            Ngày chạy: {formatDateTimeVN(traLuong.ngay_chay)}
           </div>
         </div>
       </DialogContent>

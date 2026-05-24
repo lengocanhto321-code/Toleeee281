@@ -1,7 +1,7 @@
 export interface BaoCaoFilters {
   [key: string]: string | number | boolean | undefined
-  thang?: number
-  nam?: number
+  start_date?: string
+  end_date?: string
   phong_ban_id?: string
   loai_nhan_vien?: string
   trang_thai?: string
@@ -106,4 +106,73 @@ export interface BaoCaoXuHuongData {
   xu_huong_nghi_phep: { thang: string; so_ngay: number }[]
   change_thang_truoc: { percent: number; direction: string }
   change_nam_truoc: { percent: number; direction: string }
+}
+
+// Nhan Su - Tong Hop (reuses BaoCaoTongQuanData)
+
+// Nhan Su - Bien Dong
+export interface BaoCaoNhanSuBienDongData {
+  tong_vao: number
+  tong_ra: number
+  tong_chuyen: number
+  ly_do: { ly_do: string; so_luong: number }[]
+  theo_thang: { thang: string; vao: number; ra: number }[]
+}
+
+// Nhan Su - Demographics
+export interface BaoCaoNhanSuDemoData {
+  gioi_tinh: { name: string; value: number }[]
+  do_tuoi: { name: string; value: number }[]
+  loai_nhan_vien: { name: string; value: number }[]
+}
+
+// Nhan Su - Trinh Do
+export interface BaoCaoNhanSuTrinhDoData {
+  trinh_do_hoc_van: { name: string; value: number }[]
+  chuyen_mon: { name: string; value: number }[]
+}
+
+// Cham Cong - Tong Hop
+export interface BaoCaoChamCongTongHopData {
+  tong_co_mat: number
+  tong_chuan: number
+  tong_nhan_vien: number
+  ty_le_co_mat: number
+  theo_phong_ban: {
+    phong_ban: string
+    co_mat: number
+    chuan: number
+    so_nv: number
+    ty_le: number
+  }[]
+}
+
+// Cham Cong - Nghi Phep
+export interface BaoCaoNghiPhepData {
+  tong_don: number
+  da_duyet: number
+  cho_duyet: number
+  tong_ngay_nghi: number
+  theo_ly_do: { name: string; value: number }[]
+  theo_thang: { thang: string; so_don: number; so_ngay: number }[]
+}
+
+// Luong - Chi Phi
+export interface BaoCaoChiPhiData {
+  tong_chi_phi: number
+  tong_luong_co_ban: number
+  so_nhan_vien: number
+  chi_phi_tb: number
+  theo_phong_ban: { phong_ban: string; chi_phi: number; so_nv: number }[]
+  theo_thang: { thang: string; chi_phi: number }[]
+}
+
+// Luong - Thue BHXH
+export interface BaoCaoThueBHXHData {
+  tong_bhxh: number
+  tong_bhyt: number
+  tong_thue_tncn: number
+  tong_cong: number
+  phan_bo: { name: string; value: number }[]
+  theo_thang: { thang: string; bhxh: number; bhyt: number; thue: number }[]
 }

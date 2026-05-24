@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 import { NghiPhepPage } from '../pages/admin/nghi-phep.page'
 
 test.describe('Nghỉ phép', () => {
@@ -9,10 +9,16 @@ test.describe('Nghỉ phép', () => {
     await nghiPhepPage.goto()
   })
 
-  test('duyệt đơn nghỉ phép', async () => {
+  test('duyệt đơn nghỉ phép', async ({ page }) => {
     await nghiPhepPage.filterByStatus('Chờ duyệt')
 
-    const dialog = await nghiPhepPage.openFirstPendingRequest()
-    await nghiPhepPage.approve(dialog as any)
+    const hasPending = page.getByRole('row').filter({ hasText: 'Chờ duyệt' }).first()
+    const eyeButton = hasPending.getByRole('button', { name: /eye/i })
+    if (await eyeButton.isVisible()) {
+      await eyeButton.click()
+      const dialog = page.getByRole('dialog')
+      await expect(dialog.getByText('Chi tiết đơn nghỉ phép')).toBeVisible()
+      await nghiPhepPage.approve(dialog as any)
+    }
   })
 })

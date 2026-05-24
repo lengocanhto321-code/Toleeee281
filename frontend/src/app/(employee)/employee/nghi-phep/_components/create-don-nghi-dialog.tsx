@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback, useRef } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import {
   CalendarIcon,
   Upload,
@@ -35,6 +35,23 @@ import { toastError } from "@/lib/utils"
 import { format, differenceInDays } from "date-fns"
 import { cn } from "@/lib/utils"
 import { useUploadTaiLieu } from "@/hooks/upload/use-upload-query"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+const loaiNghiValues = ["phep_nam", "nghi_om", "viec_rieng", "cong_tac", "ket_hon", "mai_tang", "thai_san"] as const
+
+const donNghiSchema = z.object({
+  loai_nghi: z.enum(loaiNghiValues, { message: "Vui lòng chọn loại nghỉ phép" }),
+  tu_ngay: z.date({ message: "Vui lòng chọn ngày bắt đầu" }),
+  den_ngay: z.date({ message: "Vui lòng chọn ngày kết thúc" }),
+  ly_do: z.string().max(500, "Lý do không quá 500 ký tự"),
+}).refine((data) => data.den_ngay >= data.tu_ngay, {
+  message: "Ngày kết thúc phải từ ngày bắt đầu trở đi",
+  path: ["den_ngay"],
+})
+
+type DonNghiFormValues = z.infer<typeof donNghiSchema>
 
 const LOAI_NGHI_OPTIONS: { value: LoaiNghi; label: string; canGiayTo: boolean }[] = [
   { value: "phep_nam", label: "Phép năm", canGiayTo: false },
@@ -92,12 +109,6 @@ export function CreateEmployeeDonNghiDialog({
   nhanVienId,
   hoTen,
 }: CreateEmployeeDonNghiDialogProps) {
-  const [form, setForm] = useState({
-    loai_nghi: "phep_nam" as LoaiNghi,
-    tu_ngay: undefined as Date | undefined,
-    den_ngay: undefined as Date | undefined,
-    ly_do: "",
-  })
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [tuNgayOpen, setTuNgayOpen] = useState(false)
   const [denNgayOpen, setDenNgayOpen] = useState(false)
@@ -105,15 +116,42 @@ export function CreateEmployeeDonNghiDialog({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadMutation = useUploadTaiLieu()
 
-  const selectedOption = LOAI_NGHI_OPTIONS.find((o) => o.value === form.loai_nghi)
+  const { register, handleSubmit: rhfSubmit, reset, setValue, watch, formState: { errors } } = useForm<DonNghiFormValues>({
+    resolver: zodResolver(donNghiSchema),
+    mode: "onChange",
+    defaultValues: {
+      loai_nghi: "phep_nam" as LoaiNghi,
+      tu_ngay: undefined as unknown as Date,
+      den_ngay: undefined as unknown as Date,
+      ly_do: "",
+    },
+  })
+
+  const loaiNghi = watch("loai_nghi")
+  const tuNgay = watch("tu_ngay")
+  const denNgay = watch("den_ngay")
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        loai_nghi: "phep_nam" as LoaiNghi,
+        tu_ngay: undefined as unknown as Date,
+        den_ngay: undefined as unknown as Date,
+        ly_do: "",
+      })
+      setUploadedFiles([])
+    }
+  }, [open, reset])
+
+  const selectedOption = LOAI_NGHI_OPTIONS.find((o) => o.value === loaiNghi)
   const needsDocument = selectedOption?.canGiayTo ?? false
 
   const soNgay = useMemo(() => {
-    if (form.tu_ngay && form.den_ngay) {
-      return differenceInDays(form.den_ngay, form.tu_ngay) + 1
+    if (tuNgay && denNgay) {
+      return differenceInDays(denNgay, tuNgay) + 1
     }
     return 0
-  }, [form.tu_ngay, form.den_ngay])
+  }, [tuNgay, denNgay])
 
   const handleUploadFile = useCallback(
     async (file: File) => {
@@ -139,7 +177,7 @@ export function CreateEmployeeDonNghiDialog({
         const result = await uploadMutation.mutateAsync({
           file,
           nhan_vien_id: nhanVienId,
-          loai_tai_lieu: `nghi_phep_${form.loai_nghi}`,
+          loai_tai_lieu: `nghi_phep_${loaiNghi}`,
           ten_tai_lieu: `Giấy tờ nghỉ phép - ${file.name}`,
           ho_ten: hoTen,
         })
@@ -159,7 +197,7 @@ export function CreateEmployeeDonNghiDialog({
         toastError("Lỗi", `Không thể tải lên file ${file.name}`)
       }
     },
-    [nhanVienId, hoTen, form.loai_nghi, uploadMutation]
+    [nhanVienId, hoTen, loaiNghi, uploadMutation]
   )
 
   const handleFilesSelected = (files: FileList | null) => {
@@ -190,16 +228,11 @@ export function CreateEmployeeDonNghiDialog({
     }
   }
 
-  const handleSubmit = () => {
-    if (!form.loai_nghi || !form.tu_ngay || !form.den_ngay) {
-      toastError("Lỗi", "Vui lòng điền đầy đủ thông tin")
-      return
-    }
-
+  const onFormSubmit = () => {
     if (needsDocument && uploadedFiles.filter((f) => f.status === "done").length === 0) {
       toastError(
         "Thiếu giấy tờ",
-        `Loại nghỉ "${selectedOption?.label}" yêu cầu đính kèm ${GIAY_TO_LABELS[form.loai_nghi] || "giấy tờ"}`
+        `Loại nghỉ "${selectedOption?.label}" yêu cầu đính kèm ${GIAY_TO_LABELS[loaiNghi] || "giấy tờ"}`
       )
       return
     }
@@ -209,35 +242,39 @@ export function CreateEmployeeDonNghiDialog({
       .map((f) => f.url)
 
     onSubmit({
-      loai_nghi: form.loai_nghi,
-      tu_ngay: format(form.tu_ngay, "yyyy-MM-dd"),
-      den_ngay: format(form.den_ngay, "yyyy-MM-dd"),
-      ly_do: form.ly_do || undefined,
+      loai_nghi: loaiNghi,
+      tu_ngay: tuNgay ? format(tuNgay, "yyyy-MM-dd") : "",
+      den_ngay: denNgay ? format(denNgay, "yyyy-MM-dd") : "",
+      ly_do: watch("ly_do") || undefined,
       files: fileUrls.length > 0 ? fileUrls : undefined,
     })
-    resetForm()
-  }
-
-  const resetForm = () => {
-    setForm({
-      loai_nghi: "phep_nam",
-      tu_ngay: undefined,
-      den_ngay: undefined,
+    reset({
+      loai_nghi: "phep_nam" as LoaiNghi,
+      tu_ngay: undefined as unknown as Date,
+      den_ngay: undefined as unknown as Date,
       ly_do: "",
     })
     setUploadedFiles([])
   }
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) resetForm()
+    if (!open) {
+      reset({
+        loai_nghi: "phep_nam" as LoaiNghi,
+        tu_ngay: undefined as unknown as Date,
+        den_ngay: undefined as unknown as Date,
+        ly_do: "",
+      })
+      setUploadedFiles([])
+    }
     onOpenChange(open)
   }
 
   const isUploading = uploadedFiles.some((f) => f.status === "uploading")
   const canSubmit =
-    form.loai_nghi &&
-    form.tu_ngay &&
-    form.den_ngay &&
+    loaiNghi &&
+    tuNgay &&
+    denNgay &&
     !isPending &&
     !isUploading
 
@@ -254,9 +291,9 @@ export function CreateEmployeeDonNghiDialog({
             <Field>
               <FieldLabel>Loại nghỉ phép</FieldLabel>
               <Select
-                value={form.loai_nghi}
+                value={loaiNghi}
                 onValueChange={(v) => {
-                  setForm({ ...form, loai_nghi: v as LoaiNghi })
+                  setValue("loai_nghi", v as LoaiNghi, { shouldValidate: true })
                   setUploadedFiles([])
                 }}
               >
@@ -287,31 +324,34 @@ export function CreateEmployeeDonNghiDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      type="button"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !form.tu_ngay && "text-muted-foreground"
+                        !tuNgay && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.tu_ngay ? format(form.tu_ngay, "dd/MM/yyyy") : "Chọn ngày"}
+                      {tuNgay ? format(tuNgay, "dd/MM/yyyy") : "Chọn ngày"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={form.tu_ngay}
+                      selected={tuNgay}
                       onSelect={(d) => {
-                        setForm((prev) => {
-                          const next = { ...prev, tu_ngay: d }
-                          if (d && prev.den_ngay && d > prev.den_ngay) next.den_ngay = d
-                          return next
-                        })
+                        if (d && denNgay && d > denNgay) {
+                          setValue("den_ngay", d as Date, { shouldValidate: true })
+                        }
+                        setValue("tu_ngay", d as Date, { shouldValidate: true })
                         setTuNgayOpen(false)
                       }}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.tu_ngay && (
+                  <p className="text-xs text-destructive mt-1">{errors.tu_ngay.message}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel>Đến ngày</FieldLabel>
@@ -319,35 +359,39 @@ export function CreateEmployeeDonNghiDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      type="button"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !form.den_ngay && "text-muted-foreground"
+                        !denNgay && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {form.den_ngay ? format(form.den_ngay, "dd/MM/yyyy") : "Chọn ngày"}
+                      {denNgay ? format(denNgay, "dd/MM/yyyy") : "Chọn ngày"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={form.den_ngay}
+                      selected={denNgay}
                       onSelect={(d) => {
-                        setForm({ ...form, den_ngay: d })
+                        setValue("den_ngay", d as Date, { shouldValidate: true })
                         setDenNgayOpen(false)
                       }}
-                      disabled={(date) => !form.tu_ngay || date < form.tu_ngay}
-                      fromDate={form.tu_ngay}
+                      disabled={(date) => !tuNgay || date < tuNgay}
+                      fromDate={tuNgay}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+                {errors.den_ngay && (
+                  <p className="text-xs text-destructive mt-1">{errors.den_ngay.message}</p>
+                )}
               </Field>
             </div>
 
             {soNgay > 0 && (
-              <div className="flex items-center justify-center p-3 rounded-lg bg-indigo-50 border border-indigo-200">
-                <span className="text-sm text-indigo-700">
+              <div className="flex items-center justify-center p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <span className="text-sm text-blue-700">
                   Số ngày nghỉ: <strong className="text-lg">{soNgay}</strong> ngày
                 </span>
               </div>
@@ -358,7 +402,7 @@ export function CreateEmployeeDonNghiDialog({
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
                   <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
                   <span className="text-sm text-amber-700">
-                    Yêu cầu đính kèm: <strong>{GIAY_TO_LABELS[form.loai_nghi]}</strong>
+                    Yêu cầu đính kèm: <strong>{GIAY_TO_LABELS[loaiNghi]}</strong>
                   </span>
                 </div>
 
@@ -366,8 +410,8 @@ export function CreateEmployeeDonNghiDialog({
                   className={cn(
                     "relative border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
                     dragActive
-                      ? "border-indigo-400 bg-indigo-50"
-                      : "border-slate-300 hover:border-indigo-300 hover:bg-slate-50"
+                      ? "border-blue-400 bg-blue-50"
+                      : "border-slate-300 hover:border-blue-300 hover:bg-slate-50"
                   )}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
@@ -385,7 +429,7 @@ export function CreateEmployeeDonNghiDialog({
                   />
                   <Upload className="mx-auto h-8 w-8 text-slate-400 mb-2" />
                   <p className="text-sm text-slate-600">
-                    Kéo thả file hoặc <span className="text-indigo-600 font-medium">nhấn để chọn</span>
+                    Kéo thả file hoặc <span className="text-blue-600 font-medium">nhấn để chọn</span>
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
                     JPG, PNG, PDF — tối đa 10MB
@@ -408,7 +452,7 @@ export function CreateEmployeeDonNghiDialog({
                           {uf.name}
                         </span>
                         {uf.status === "uploading" && (
-                          <Loader2 className="h-4 w-4 text-indigo-500 animate-spin shrink-0" />
+                          <Loader2 className="h-4 w-4 text-blue-500 animate-spin shrink-0" />
                         )}
                         {uf.status === "done" && (
                           <span className="text-xs text-emerald-600 shrink-0">Đã tải lên</span>
@@ -438,11 +482,13 @@ export function CreateEmployeeDonNghiDialog({
             <Field>
               <FieldLabel>Lý do (tùy chọn)</FieldLabel>
               <Textarea
-                value={form.ly_do}
-                onChange={(e) => setForm({ ...form, ly_do: e.target.value })}
+                {...register("ly_do")}
                 placeholder="Nhập lý do nghỉ phép..."
                 rows={3}
               />
+              {errors.ly_do && (
+                <p className="text-xs text-destructive mt-1">{errors.ly_do.message}</p>
+              )}
             </Field>
           </FieldGroup>
         </div>
@@ -452,9 +498,9 @@ export function CreateEmployeeDonNghiDialog({
             Hủy
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={rhfSubmit(onFormSubmit)}
             disabled={!canSubmit}
-            className="bg-indigo-600 hover:bg-indigo-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
             {isPending ? "Đang gửi..." : "Gửi đơn"}
           </Button>

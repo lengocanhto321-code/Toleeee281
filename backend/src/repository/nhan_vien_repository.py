@@ -2,10 +2,12 @@ import secrets
 import string
 from typing import Optional, List, Tuple
 from dataclasses import dataclass, field
+from decimal import Decimal
 from sqlalchemy import select, func, or_, and_, cast, Integer, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 from libs.result import Result, Return, Error
 from src.domain.models.nhan_vien import NhanVien
+from src.domain.models.luong import Luong
 
 LOAI_PREFIX = {
     "giao_vien": "NV",
@@ -43,7 +45,7 @@ class NhanVienRepository:
         self._session = session
 
     async def generate_ma_nhan_vien(self, loai_nhan_vien: str) -> str:
-        chars = string.ascii_lowercase + string.digits
+        chars = string.ascii_uppercase + string.digits
         suffix = "".join(secrets.choice(chars) for _ in range(6))
         return f"NV-{suffix}"
 
@@ -216,7 +218,39 @@ class NhanVienRepository:
         try:
             result = await self._session.execute(base_stmt)
             nhan_viens = result.scalars().all()
-            items = [self._serialize_nhan_vien(nv) for nv in nhan_viens]
+
+            nv_ids = [nv.id for nv in nhan_viens]
+            luong_result = await self._session.execute(
+                select(Luong).where(Luong.nhan_vien_id.in_(nv_ids))
+            )
+            luong_map = {}
+            for l in luong_result.scalars().all():
+                existing = luong_map.get(l.nhan_vien_id)
+                if not existing or (
+                    l.hieu_luc_tu
+                    and (
+                        not existing.hieu_luc_tu or l.hieu_luc_tu > existing.hieu_luc_tu
+                    )
+                ):
+                    luong_map[l.nhan_vien_id] = l
+
+            items = []
+            for nv in nhan_viens:
+                d = self._serialize_nhan_vien(nv)
+                l = luong_map.get(nv.id)
+                if l:
+                    d["luong"] = {
+                        "id": l.id,
+                        "luong_co_ban": float(l.luong_co_ban or 0),
+                        "he_so_luong": float(l.he_so_luong or 0),
+                        "phu_cap_chuc_vu": float(l.phu_cap_chuc_vu or 0),
+                        "phu_cap_uu_dai": float(l.phu_cap_uu_dai or 0),
+                        "phu_cap_khac": float(l.phu_cap_khac or 0),
+                    }
+                else:
+                    d["luong"] = None
+                items.append(d)
+
             return Return.ok((total, items))
         except Exception as e:
             return Return.err(

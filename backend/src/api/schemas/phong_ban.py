@@ -23,7 +23,7 @@ class PhongBanBase(BaseModel):
     trang_thai: bool = True
 
     model_config = ConfigDict(
-        str_strip_whitespace=True,   # Tự động strip khoảng trắng cho tất cả string
+        str_strip_whitespace=True,  # Tự động strip khoảng trắng cho tất cả string
     )
 
     @field_validator("so_dien_thoai")
@@ -37,11 +37,8 @@ class PhongBanBase(BaseModel):
 class PhongBanCreateRequest(PhongBanBase):
     """Schema dùng khi tạo mới PhongBan."""
 
-    ma_phong_ban: str = Field(
-        ...,
-        min_length=3,
-        max_length=20,
-        pattern=r"^[A-Z0-9\-]+$"   # Dùng pattern thay vì validator riêng
+    ma_phong_ban: Optional[str] = Field(
+        None, min_length=3, max_length=20, pattern=r"^[A-Z0-9\-]+$"
     )
 
     @field_validator("ma_phong_ban", mode="before")
@@ -85,5 +82,5 @@ class PhongBanDataResponse(PhongBanBase):
     deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(
-        from_attributes=True,      # Rất quan trọng để convert từ ORM model
+        from_attributes=True,  # Rất quan trọng để convert từ ORM model
     )

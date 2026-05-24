@@ -45,16 +45,16 @@ export function useTuChoiDon() {
 
   return useMutation({
     mutationFn: async ({ id, ghi_chu }: { id: string; ghi_chu: string }) => {
-      return apiGateway.put<any>(`/api/v1/nghi-phep/don/${id}/tu-choi`, {
-        ghi_chu,
+      return apiGateway.put<any>(`/api/v1/admin/nghi-phep/don/${id}/tu-choi`, {
+        ly_do: ghi_chu,
       })
     },
     onSuccess: () => {
       toastSuccess("Từ chối đơn thành công")
-      queryClient.invalidateQueries({ queryKey: ["don-nghi"] })
+      queryClient.invalidateQueries({ queryKey: ["nghi-phep"] })
     },
     onError: (error: any) => {
-      toastError(error.response?.data?.message || "Từ chối thất bại")
+      toastError("Lỗi", error.response?.data?.message || "Từ chối thất bại")
     },
   })
 }
@@ -226,7 +226,7 @@ export function useGetMyQR() {
   return useQuery({
     queryKey: ["my-qr"],
     queryFn: async () => {
-      const res = await apiGateway.get<any>("/api/v1/nv/cham-cong/my-qr")
+      const res = await apiGateway.get<any>("/api/v1/nhan-vien/cham-cong/my-qr")
       return res.data.data
     },
   })

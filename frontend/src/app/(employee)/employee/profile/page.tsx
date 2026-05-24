@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useEmployeeProfile, useUpdateEmployeeProfile } from "@/hooks/employee/use-employee-profile"
+import { useChangePassword } from "@/hooks/nhan-vien"
 import {
   User,
   Mail,
@@ -18,6 +19,7 @@ import {
   Pencil,
   Check,
   X,
+  Shield,
 } from "lucide-react"
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
@@ -74,6 +76,9 @@ export default function EmployeeProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<Record<string, string>>({})
+  const [pwOpen, setPwOpen] = useState(false)
+  const [pwData, setPwData] = useState({ old_password: "", new_password: "", confirm: "" })
+  const changePwMutation = useChangePassword()
 
   if (isLoading) {
     return (
@@ -195,6 +200,58 @@ export default function EmployeeProfilePage() {
           <InfoRow icon={Calendar} label="Ngày vào làm" value={profile?.ngay_vao_lam} />
           <InfoRow icon={Briefcase} label="Loại nhân viên" value={loaiLabel(profile?.loai_nhan_vien || "")} />
         </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-slate-400" />
+            <h3 className="text-sm font-semibold text-slate-900">Bảo mật</h3>
+          </div>
+          {!pwOpen && (
+            <Button variant="ghost" size="sm" onClick={() => setPwOpen(true)} className="text-blue-600 h-7 text-xs">
+              Đổi mật khẩu
+            </Button>
+          )}
+        </div>
+        {pwOpen && (
+          <div className="space-y-3 mt-2">
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Mật khẩu cũ</p>
+              <Input type="password" value={pwData.old_password} onChange={(e) => setPwData({ ...pwData, old_password: e.target.value })} className="h-8 text-sm" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Mật khẩu mới</p>
+              <Input type="password" value={pwData.new_password} onChange={(e) => setPwData({ ...pwData, new_password: e.target.value })} className="h-8 text-sm" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 mb-1">Xác nhận mật khẩu mới</p>
+              <Input type="password" value={pwData.confirm} onChange={(e) => setPwData({ ...pwData, confirm: e.target.value })} className="h-8 text-sm" />
+            </div>
+            {pwData.new_password && pwData.confirm && pwData.new_password !== pwData.confirm && (
+              <p className="text-xs text-red-500">Mật khẩu xác nhận không khớp</p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <Button variant="ghost" size="sm" onClick={() => { setPwOpen(false); setPwData({ old_password: "", new_password: "", confirm: "" }) }} className="h-7 text-xs">Hủy</Button>
+              <Button
+                size="sm"
+                disabled={
+                  !pwData.old_password || !pwData.new_password || pwData.new_password !== pwData.confirm || pwData.new_password.length < 6 || changePwMutation.isPending
+                }
+                onClick={() => {
+                  changePwMutation.mutate(
+                    { old_password: pwData.old_password, new_password: pwData.new_password },
+                    { onSuccess: () => { setPwOpen(false); setPwData({ old_password: "", new_password: "", confirm: "" }) } }
+                  )
+                }}
+                className="h-7 text-xs bg-blue-600 hover:bg-blue-700"
+              >
+                {changePwMutation.isPending ? "Đang đổi..." : "Đổi mật khẩu"}
+              </Button>
+            </div>
+          </div>
+        )}
+        {!pwOpen && <p className="text-xs text-slate-400">Mật khẩu nên có ít nhất 6 ký tự</p>}
       </div>
     </div>
   )

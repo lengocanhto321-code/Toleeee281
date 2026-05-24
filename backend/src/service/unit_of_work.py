@@ -117,6 +117,11 @@ class UnitOfWork:
         if self._session:
             await self._session.commit()
 
+    async def flush(self):
+        """Flush the current session."""
+        if self._session:
+            await self._session.flush()
+
     async def rollback(self):
         """Rollback the current transaction."""
         if self._session:

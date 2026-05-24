@@ -1,4 +1,5 @@
 let counter = Date.now()
+let phoneCounter = 1000000000
 
 export const testData = {
   get phongBan() {
@@ -6,6 +7,7 @@ export const testData = {
       ten: `Phòng Test ${counter++}`,
       tenSua: `Phòng Test ${counter++} (Đã sửa)`,
       loai: 'Tổ chuyên môn',
+      moTa: 'Phòng ban test',
     }
   },
 
@@ -13,7 +15,7 @@ export const testData = {
     return {
       ten: `Chức vụ Test ${counter++}`,
       tenSua: `Chức vụ Test ${counter++} (Đã sửa)`,
-      loai: 'Quản lý',
+      loai: 'Giáo viên',
       capBac: 'Cấp 1',
       heSoPhuCap: '0.5',
     }
@@ -21,27 +23,28 @@ export const testData = {
 
   get nhanVien() {
     const id = counter++
+    const phone = phoneCounter++
     return {
       hoTen: `Nguyễn Văn Test ${id}`,
       hoTenSua: `Nguyễn Văn Test ${id} (Đã sửa)`,
       gioiTinh: 'Nam',
-      ngaySinh: '15/05/1990',
+      ngaySinh: '15',
       noiSinh: 'TP. Hồ Chí Minh',
       danToc: 'Kinh',
       tonGiao: 'Không',
-      soDienThoai: `0912${String(id).padStart(6, '0')}`,
+      soDienThoai: `${phone}`,
       emailTruong: `test${id}@thanglong.edu.vn`,
       emailCaNhan: `test${id}@gmail.com`,
       tinhTrangHonNhan: 'Độc thân',
       queQuan: 'Quận 1, TP. Hồ Chí Minh',
       diaChiThuongTru: '123 Đường ABC, Quận 1',
-      soCCCD: `${String(id).padStart(12, '0')}`,
+      soCCCD: `${String(phone).slice(0, 9)}${String(id).slice(-3)}`,
       ngayCapCCCD: '01/01/2015',
       noiCapCCCD: 'CA TP. Hồ Chí Minh',
       trangThai: 'Đang làm',
       monDay: 'Toán',
       capHoc: 'THPT',
-      loaiHopDong: 'Vien chuc',
+      loaiHopDong: 'Viên chức',
       soHopDong: `HD-TEST-${id}`,
       ngayVaoLam: '01/01/2026',
       hinhThucTuyenDung: 'Thi tuyển',
@@ -96,7 +99,7 @@ export const testData = {
     const id = counter++
     return {
       soHopDong: `HC-E2E-${id}`,
-      loaiHopDong: 'Hợp đồng',
+      loaiHopDong: 'Viên chức',
       ngayBatDau: '2026-06-01',
       ngayKetThuc: '2027-06-01',
       luongCoBan: '5000000',

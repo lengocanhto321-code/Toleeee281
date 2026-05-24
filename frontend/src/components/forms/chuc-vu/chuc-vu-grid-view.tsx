@@ -72,7 +72,7 @@ export function ChucVuGridView({ data, onEdit }: ChucVuGridViewProps) {
                     <LoaiIcon className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                       {cv.ten_chuc_vu}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">

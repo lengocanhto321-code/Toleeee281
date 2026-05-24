@@ -1,13 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { DataTable } from "@/components/ui/data-table"
+import { StatCard } from "@/components/ui/stat-card"
+import { Wallet, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import {
   createKyLuongColumns,
   createTraLuongColumns,
-  LuongToolbar,
   ChayLuongDialog,
   TraLuongDetailDialog,
   CauHinhLuongDialog,
@@ -20,10 +22,11 @@ import {
   useDuyetKyLuong,
   useChotKyLuong,
   useCreateCauHinhLuong,
+  useActivateCauHinhLuong,
 } from "@/hooks/luong"
 import type { TraLuong, KyLuong, CauHinhLuong } from "@/types/luong.types"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
+import { formatDateVN } from "@/lib/date-utils"
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("vi-VN", {
@@ -35,55 +38,50 @@ function formatCurrency(amount: number): string {
 
 export default function LuongPage() {
   const queryClient = useQueryClient()
-  const currentDate = new Date()
-  
-  // Filters
-  const [activeTab, setActiveTab] = useState<"ky-luong" | "tra-luong" | "cau-hinh">("ky-luong")
-  const [search, setSearch] = useState("")
-  const [thang, setThang] = useState(currentDate.getMonth() + 1)
-  const [nam, setNam] = useState(currentDate.getFullYear())
 
-  // Dialog states
+  const [activeTab, setActiveTab] = useState<"ky-luong" | "tra-luong" | "cau-hinh">("ky-luong")
   const [chayLuongOpen, setChayLuongOpen] = useState(false)
   const [cauHinhOpen, setCauHinhOpen] = useState(false)
   const [selectedKyLuong, setSelectedKyLuong] = useState<KyLuong | null>(null)
   const [detailTraLuong, setDetailTraLuong] = useState<TraLuong | null>(null)
 
-  // Data queries
-  const { data: kyLuongData, isLoading: isKyLuongLoading } = useKyLuongList({
-    thang,
-    nam,
-  })
+  const { data: kyLuongData, isLoading: isKyLuongLoading } = useKyLuongList({ page_size: 100 })
   const { data: traLuongData, isLoading: isTraLuongLoading } = useTraLuongByKyLuong(
     selectedKyLuong?.id || "",
     { page: 1, page_size: 100 }
   )
   const { data: cauHinhData, isLoading: isCauHinhLoading } = useCauHinhLuongList()
 
-  // Mutations
   const chayLuongMutation = useChayLuong()
   const duyetKyLuongMutation = useDuyetKyLuong()
   const chotKyLuongMutation = useChotKyLuong()
   const createCauHinhMutation = useCreateCauHinhLuong()
+  const activateCauHinhMutation = useActivateCauHinhLuong()
 
-  // Listen for sidebar "add" event
   useEffect(() => {
-    const handler = () => setCauHinhOpen(true)
-    window.addEventListener("sidebar:luong:add", handler)
-    return () => window.removeEventListener("sidebar:luong:add", handler)
+    const handlers: Record<string, () => void> = {
+      "sidebar:luong:add": () => setCauHinhOpen(true),
+      "sidebar:luong:chay": () => setChayLuongOpen(true),
+      "sidebar:luong:cau-hinh": () => setCauHinhOpen(true),
+      "sidebar:luong:xem-ky": () => setActiveTab("ky-luong"),
+    }
+    Object.entries(handlers).forEach(([event, handler]) => {
+      window.addEventListener(event, handler)
+    })
+    return () => {
+      Object.entries(handlers).forEach(([event, handler]) => {
+        window.removeEventListener(event, handler)
+      })
+    }
   }, [])
 
-  // Handlers
-  const handleChayLuong = () => {
-    chayLuongMutation.mutate(
-      { thang, nam },
-      {
-        onSuccess: () => {
-          setChayLuongOpen(false)
-          queryClient.invalidateQueries({ queryKey: ["luong", "ky-luong"] })
-        },
-      }
-    )
+  const handleChayLuong = (data: { thang: number; nam: number }) => {
+    chayLuongMutation.mutate(data, {
+      onSuccess: () => {
+        setChayLuongOpen(false)
+        queryClient.invalidateQueries({ queryKey: ["luong", "ky-luong"] })
+      },
+    })
   }
 
   const handleDuyet = (kyLuong: { id: string }) => {
@@ -102,16 +100,18 @@ export default function LuongPage() {
     })
   }
 
-  const handleViewKyLuong = (kyLuong: { id: string }) => {
-    const fullKyLuong = kyLuongs.find((k) => k.id === kyLuong.id)
+  const handleViewKyLuong = (kyLuong: { id: string; thang?: number; nam?: number }) => {
+    const fullKyLuong = kyLuongs.find((k: any) => k.id === kyLuong.id)
     if (fullKyLuong) {
       setSelectedKyLuong(fullKyLuong)
+      setActiveTab("tra-luong")
+    } else {
+      setSelectedKyLuong(kyLuong as any)
       setActiveTab("tra-luong")
     }
   }
 
   const handleCreateCauHinh = (data: {
-    ten_cau_hinh: string
     ngay_ap_dung: string
     luong_co_so: number
     he_so_dac_thu: number
@@ -120,6 +120,7 @@ export default function LuongPage() {
     ty_le_bhtn: number
     muc_giam_tru_ban_than: number
     muc_giam_tru_nguoi_phu_thuoc: number
+    ghi_chu?: string
   }) => {
     createCauHinhMutation.mutate(data, {
       onSuccess: () => {
@@ -129,7 +130,6 @@ export default function LuongPage() {
     })
   }
 
-  // Column definitions
   const kyLuongColumns = useMemo(
     () =>
       createKyLuongColumns({
@@ -150,96 +150,64 @@ export default function LuongPage() {
     []
   )
 
-  // Stats
-  const kyLuongs = kyLuongData?.data || []
-  const traLuongs = traLuongData?.data || []
-  const cauHinhs = cauHinhData?.data || []
+  const kyLuongs = kyLuongData || []
+  const traLuongs = traLuongData || []
+  const cauHinhs = cauHinhData || []
 
   const tongNhanVien = kyLuongs.reduce((sum, k) => sum + (k.tong_nhan_vien || 0), 0)
   const tongThuNhap = kyLuongs.reduce((sum, k) => sum + (k.tong_thu_nhap || 0), 0)
   const tongThucNhan = kyLuongs.reduce((sum, k) => sum + (k.tong_thuc_nhan || 0), 0)
 
-  // Filtered data
-  const filteredKyLuong = useMemo(() => {
-    if (!search) return kyLuongs
-    return kyLuongs.filter(
-      (k) =>
-        k.thang.toString().includes(search) ||
-        k.nam.toString().includes(search)
-    )
-  }, [kyLuongs, search])
-
-  const filteredTraLuong = useMemo(() => {
-    if (!search) return traLuongs
-    return traLuongs.filter(
-      (t) =>
-        t.nhan_vien_ho_ten?.toLowerCase().includes(search.toLowerCase())
-    )
-  }, [traLuongs, search])
-
   return (
     <AuthenticatedLayout>
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <span className="text-lg font-bold text-indigo-600">{kyLuongs.length}</span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{kyLuongs.length}</p>
-            <p className="text-xs text-slate-500">Kỳ lương</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-            <span className="text-lg font-bold text-emerald-600">{tongNhanVien}</span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{tongNhanVien}</p>
-            <p className="text-xs text-slate-500">Nhân viên</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-            <span className="text-lg font-bold text-blue-600">₫</span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{formatCurrency(tongThuNhap)}</p>
-            <p className="text-xs text-slate-500">Tổng thu nhập</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <span className="text-lg font-bold text-indigo-600">₫</span>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-indigo-700">{formatCurrency(tongThucNhan)}</p>
-            <p className="text-xs text-indigo-600">Tổng thực nhận</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard icon={Wallet} label="Kỳ lương" value={kyLuongs.length} accent="primary" />
+        <StatCard icon={Wallet} label="Nhân viên" value={tongNhanVien} accent="info" />
+        <StatCard icon={Wallet} label="Tổng thu nhập" value={formatCurrency(tongThuNhap)} accent="success" />
+        <StatCard icon={Wallet} label="Tổng thực nhận" value={formatCurrency(tongThucNhan)} accent="primary" />
       </div>
 
-      {/* Toolbar */}
-      <LuongToolbar
-        search={search}
-        onSearchChange={setSearch}
-        thang={thang}
-        onThangChange={setThang}
-        nam={nam}
-        onNamChange={setNam}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onChayLuong={() => setChayLuongOpen(true)}
-        onCauHinh={() => setCauHinhOpen(true)}
-        isChayLuongPending={chayLuongMutation.isPending}
-      />
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-1 border-b border-border pb-1">
+        <button
+          onClick={() => setActiveTab("ky-luong")}
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
+            activeTab === "ky-luong"
+              ? "bg-accent/50 text-primary border border-primary/20 border-b-white"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          Kỳ lương
+        </button>
+        <button
+          onClick={() => setActiveTab("tra-luong")}
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
+            activeTab === "tra-luong"
+              ? "bg-accent/50 text-primary border border-primary/20 border-b-white"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          Phiếu lương
+        </button>
+        <button
+          onClick={() => setActiveTab("cau-hinh")}
+          className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
+            activeTab === "cau-hinh"
+              ? "bg-accent/50 text-primary border border-primary/20 border-b-white"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+          }`}
+        >
+          Cấu hình
+        </button>
+      </div>
 
       {/* Tab Content */}
       <div className="mt-4">
         {activeTab === "ky-luong" && (
           <DataTable
             columns={kyLuongColumns}
-            data={filteredKyLuong}
+            data={kyLuongs}
             loading={isKyLuongLoading}
             emptyMessage="Chưa có kỳ lương nào"
           />
@@ -250,7 +218,7 @@ export default function LuongPage() {
             {selectedKyLuong ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-slate-600">
+                  <h3 className="text-sm font-medium text-muted-foreground">
                     Phiếu lương - Kỳ: Tháng {selectedKyLuong.thang}/{selectedKyLuong.nam}
                   </h3>
                   <Badge variant="outline">
@@ -259,13 +227,13 @@ export default function LuongPage() {
                 </div>
                 <DataTable
                   columns={traLuongColumns}
-                  data={filteredTraLuong}
+                  data={traLuongs}
                   loading={isTraLuongLoading}
                   emptyMessage="Chưa có phiếu lương nào"
                 />
               </div>
             ) : (
-              <div className="flex items-center justify-center rounded-lg border border-dashed border-slate-300 p-8 text-slate-500">
+              <div className="flex items-center justify-center rounded-lg border border-dashed border-border p-8 text-muted-foreground">
                 Chọn một kỳ lương để xem phiếu lương
               </div>
             )}
@@ -273,35 +241,49 @@ export default function LuongPage() {
         )}
 
         {activeTab === "cau-hinh" && (
-          <div className="rounded-lg border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-4 py-3">
-              <h3 className="text-sm font-medium text-slate-900">Danh sách cấu hình lương</h3>
+          <div className="rounded-lg border border-border bg-card">
+            <div className="border-b border-border px-4 py-3">
+              <h3 className="text-sm font-medium text-foreground">Danh sách cấu hình lương</h3>
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {isCauHinhLoading ? (
-                <div className="p-8 text-center text-slate-400">Đang tải...</div>
+                <div className="p-8 text-center text-muted-foreground/70">Đang tải...</div>
               ) : cauHinhs.length === 0 ? (
-                <div className="p-8 text-center text-slate-400">Chưa có cấu hình nào</div>
+                <div className="p-8 text-center text-muted-foreground/70">Chưa có cấu hình nào</div>
               ) : (
                 cauHinhs.map((cauHinh: CauHinhLuong) => (
-                  <div key={cauHinh.id} className="p-4 hover:bg-slate-50/50">
+                  <div key={cauHinh.id} className={`p-4 ${cauHinh.trang_thai === "dang_ap_dung" ? "bg-accent/30" : "hover:bg-muted/50"}`}>
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-slate-900">{cauHinh.ten_cau_hinh}</h4>
-                        <p className="text-sm text-slate-500 mt-1">
-                          Áp dụng từ: {format(new Date(cauHinh.ngay_ap_dung), "dd/MM/yyyy")}
+                        <h4 className="font-medium text-foreground">{cauHinh.ghi_chu || `Cấu hình ${formatDateVN(cauHinh.ngay_ap_dung)}`}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Áp dụng từ: {formatDateVN(cauHinh.ngay_ap_dung)}
                         </p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-slate-600">
-                          <span>Lương cơ sở: <strong className="text-slate-900">{formatCurrency(cauHinh.luong_co_so)}</strong></span>
-                          <span>Hệ số đặc thù: <strong className="text-slate-900">{cauHinh.he_so_dac_thu}</strong></span>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                          <span>Lương cơ sở: <strong className="text-foreground">{formatCurrency(cauHinh.luong_co_so)}</strong></span>
+                          <span>Hệ số đặc thù: <strong className="text-foreground">{cauHinh.he_so_dac_thu}</strong></span>
                         </div>
                       </div>
-                      <Badge 
-                        variant={cauHinh.trang_thai === "dang_ap_dung" ? "default" : "secondary"}
-                      >
-                        {cauHinh.trang_thai === "dang_ap_dung" ? "Đang áp dụng" : 
-                         cauHinh.trang_thai === "sap_hieu_luc" ? "Sắp hiệu lực" : "Hết hiệu lực"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={cauHinh.trang_thai === "dang_ap_dung" ? "default" : "secondary"}
+                        >
+                          {cauHinh.trang_thai === "dang_ap_dung" ? "Đang áp dụng" :
+                           cauHinh.trang_thai === "sap_hieu_luc" ? "Sắp hiệu lực" : "Hết hiệu lực"}
+                        </Badge>
+                        {cauHinh.trang_thai !== "dang_ap_dung" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs gap-1"
+                            disabled={activateCauHinhMutation.isPending}
+                            onClick={() => activateCauHinhMutation.mutate(cauHinh.id)}
+                          >
+                            <Check className="h-3 w-3" />
+                            Áp dụng
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -316,11 +298,7 @@ export default function LuongPage() {
         open={chayLuongOpen}
         onOpenChange={setChayLuongOpen}
         isPending={chayLuongMutation.isPending}
-        onSubmit={(data) => {
-          setThang(data.thang)
-          setNam(data.nam)
-          handleChayLuong()
-        }}
+        onSubmit={handleChayLuong}
       />
 
       <TraLuongDetailDialog

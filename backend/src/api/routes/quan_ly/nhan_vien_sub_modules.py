@@ -21,17 +21,26 @@ from src.api.schemas.sub_modules import (
 from src.api.schemas.common import APIResponse
 from src.api.error import ClientError, ServerError
 from src.app.usecases.sub_module import (
-    NguoiThanUseCase,
+    GetListNguoiThanUseCase,
+    CreateNguoiThanUseCase,
+    UpdateNguoiThanUseCase,
+    DeleteNguoiThanUseCase,
     GetListNguoiThanQuery,
     CreateNguoiThanCommand,
     UpdateNguoiThanCommand,
     DeleteNguoiThanCommand,
-    BangCapUseCase,
+    GetListBangCapUseCase,
+    CreateBangCapUseCase,
+    UpdateBangCapUseCase,
+    DeleteBangCapUseCase,
     GetListBangCapQuery,
     CreateBangCapCommand,
     UpdateBangCapCommand,
     DeleteBangCapCommand,
-    KhenThuongKyLuatUseCase,
+    GetListKhenThuongKyLuatUseCase,
+    CreateKhenThuongKyLuatUseCase,
+    UpdateKhenThuongKyLuatUseCase,
+    DeleteKhenThuongKyLuatUseCase,
     GetListKhenThuongKyLuatQuery,
     CreateKhenThuongKyLuatCommand,
     UpdateKhenThuongKyLuatCommand,
@@ -54,8 +63,8 @@ async def get_nguoi_than_list(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     query = GetListNguoiThanQuery(nhan_vien_id=nhan_vien_id)
-    use_case = NguoiThanUseCase(uow)
-    result = await use_case.get_list(query)
+    use_case = GetListNguoiThanUseCase(uow)
+    result = await use_case.execute(query)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -82,8 +91,8 @@ async def create_nguoi_than(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = NguoiThanUseCase(uow)
-    result = await use_case.create(command)
+    use_case = CreateNguoiThanUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -114,8 +123,8 @@ async def update_nguoi_than(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = NguoiThanUseCase(uow)
-    result = await use_case.update(command)
+    use_case = UpdateNguoiThanUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -144,8 +153,8 @@ async def delete_nguoi_than(
         item_id=item_id,
         actor_id=user_context.user_id,
     )
-    use_case = NguoiThanUseCase(uow)
-    result = await use_case.delete(command)
+    use_case = DeleteNguoiThanUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -169,8 +178,8 @@ async def get_bang_cap_list(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     query = GetListBangCapQuery(nhan_vien_id=nhan_vien_id)
-    use_case = BangCapUseCase(uow)
-    result = await use_case.get_list(query)
+    use_case = GetListBangCapUseCase(uow)
+    result = await use_case.execute(query)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -197,8 +206,8 @@ async def create_bang_cap(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = BangCapUseCase(uow)
-    result = await use_case.create(command)
+    use_case = CreateBangCapUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -229,8 +238,8 @@ async def update_bang_cap(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = BangCapUseCase(uow)
-    result = await use_case.update(command)
+    use_case = UpdateBangCapUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -259,8 +268,8 @@ async def delete_bang_cap(
         item_id=item_id,
         actor_id=user_context.user_id,
     )
-    use_case = BangCapUseCase(uow)
-    result = await use_case.delete(command)
+    use_case = DeleteBangCapUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -285,8 +294,8 @@ async def get_khen_thuong_ky_luat_list(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     query = GetListKhenThuongKyLuatQuery(nhan_vien_id=nhan_vien_id, loai=loai)
-    use_case = KhenThuongKyLuatUseCase(uow)
-    result = await use_case.get_list(query)
+    use_case = GetListKhenThuongKyLuatUseCase(uow)
+    result = await use_case.execute(query)
 
     if is_err(result):
         raise ServerError(base_error=result.value)
@@ -313,8 +322,8 @@ async def create_khen_thuong_ky_luat(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = KhenThuongKyLuatUseCase(uow)
-    result = await use_case.create(command)
+    use_case = CreateKhenThuongKyLuatUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -345,8 +354,8 @@ async def update_khen_thuong_ky_luat(
         data=body,
         actor_id=user_context.user_id,
     )
-    use_case = KhenThuongKyLuatUseCase(uow)
-    result = await use_case.update(command)
+    use_case = UpdateKhenThuongKyLuatUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value
@@ -375,8 +384,8 @@ async def delete_khen_thuong_ky_luat(
         item_id=item_id,
         actor_id=user_context.user_id,
     )
-    use_case = KhenThuongKyLuatUseCase(uow)
-    result = await use_case.delete(command)
+    use_case = DeleteKhenThuongKyLuatUseCase(uow)
+    result = await use_case.execute(command)
 
     if is_err(result):
         error = result.value

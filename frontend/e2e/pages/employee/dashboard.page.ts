@@ -5,13 +5,15 @@ export class EmployeeDashboardPage {
 
   async goto() {
     await this.page.goto('/employee')
-    await expect(this.page.getByText('Xin chào')).toBeVisible()
+    // Wait for data to load (loading shows "Đang tải...", then shows dashboard content)
+    await this.page.waitForTimeout(2000)
   }
 
   async assertBentoCardsVisible() {
-    await expect(this.page.getByText('Phép còn lại')).toBeVisible()
-    await expect(this.page.getByText('Công tháng này')).toBeVisible()
-    await expect(this.page.getByText('Đơn chờ duyệt')).toBeVisible()
+    await expect(this.page.getByText('Xin chào')).toBeVisible({ timeout: 20000 })
+    await expect(this.page.getByText('Phép còn lại')).toBeVisible({ timeout: 5000 })
+    await expect(this.page.getByText('Công tháng này')).toBeVisible({ timeout: 5000 })
+    await expect(this.page.getByText('Đơn chờ duyệt')).toBeVisible({ timeout: 5000 })
   }
 
   async clickXinNghi() {

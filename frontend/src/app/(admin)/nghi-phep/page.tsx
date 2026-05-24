@@ -1,10 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { DataTable } from "@/components/ui/data-table"
-import { Button } from "@/components/ui/button"
+import { StatCard } from "@/components/ui/stat-card"
 import { cn } from "@/lib/utils"
 import {
   createDonNghiColumns,
@@ -15,21 +15,18 @@ import {
 import {
   useDonXinNghiList,
   useCreateDonXinNghi,
-  useDuyetCap1,
-  useDuyetCap2,
+  useDuyetDonXinNghi,
   useTuChoiDon,
 } from "@/hooks/nghi-phep"
-import { useDuyetDonXinNghi } from "@/hooks/nghi-phep"
 import type { DonXinNghi, LoaiNghi, TrangThaiDon } from "@/types/nghi-phep.types"
 import { toastSuccess, toastError } from "@/lib/utils"
-import { FileText, Clock, CheckCircle2, XCircle, Users } from "lucide-react"
+import { FileText, Clock, CheckCircle2, XCircle } from "lucide-react"
 
-type NghiPhepTab = "all" | "cho_cap_1" | "cho_cap_2" | "da_duyet" | "tu_choi"
+type NghiPhepTab = "all" | "cho_duyet" | "da_duyet" | "tu_choi"
 
 const TAB_CONFIG: { value: NghiPhepTab; label: string; icon: any; color: string }[] = [
   { value: "all", label: "Tất cả", icon: FileText, color: "slate" },
-  { value: "cho_cap_1", label: "Chờ cấp 1", icon: Clock, color: "amber" },
-  { value: "cho_cap_2", label: "Chờ cấp 2", icon: Users, color: "blue" },
+  { value: "cho_duyet", label: "Chờ duyệt", icon: Clock, color: "amber" },
   { value: "da_duyet", label: "Đã duyệt", icon: CheckCircle2, color: "emerald" },
   { value: "tu_choi", label: "Từ chối", icon: XCircle, color: "red" },
 ]
@@ -46,6 +43,12 @@ export default function NghiPhepPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
 
+  useEffect(() => {
+    const handler = () => setCreateOpen(true)
+    window.addEventListener("sidebar:nghi-phep:create", handler)
+    return () => window.removeEventListener("sidebar:nghi-phep:create", handler)
+  }, [])
+
   const { data: donListData, isLoading, refetch } = useDonXinNghiList({
     page: 1,
     page_size: 100,
@@ -55,8 +58,6 @@ export default function NghiPhepPage() {
 
   const createMutation = useCreateDonXinNghi()
   const duyetMutation = useDuyetDonXinNghi()
-  const duyetCap1Mutation = useDuyetCap1()
-  const duyetCap2Mutation = useDuyetCap2()
   const tuChoiMutation = useTuChoiDon()
 
   const donItems = donListData?.data || []
@@ -73,20 +74,7 @@ export default function NghiPhepPage() {
     }
 
     if (nghiPhepTab !== "all") {
-      items = items.filter((d) => {
-        switch (nghiPhepTab) {
-          case "cho_cap_1":
-            return d.trang_thai === "cho_duyet_cap_1"
-          case "cho_cap_2":
-            return d.trang_thai === "cho_duyet_cap_2"
-          case "da_duyet":
-            return d.trang_thai === "da_duyet_cap_2"
-          case "tu_choi":
-            return d.trang_thai === "tu_choi"
-          default:
-            return true
-        }
-      })
+      items = items.filter((d) => d.trang_thai === nghiPhepTab)
     }
 
     return items
@@ -95,25 +83,22 @@ export default function NghiPhepPage() {
   const stats = useMemo(() => {
     return {
       total: donItems.length,
-      choCap1: donItems.filter((d) => d.trang_thai === "cho_duyet_cap_1").length,
-      choCap2: donItems.filter((d) => d.trang_thai === "cho_duyet_cap_2").length,
-      daDuyet: donItems.filter((d) => d.trang_thai === "da_duyet_cap_2").length,
+      choDuyet: donItems.filter((d) => d.trang_thai === "cho_duyet").length,
+      daDuyet: donItems.filter((d) => d.trang_thai === "da_duyet").length,
       tuChoi: donItems.filter((d) => d.trang_thai === "tu_choi").length,
     }
   }, [donItems])
 
   const getTrangThaiLabel = (status: string) => {
     switch (status) {
-      case "cho_duyet_cap_1":
-        return { text: "Chờ cấp 1", color: "bg-amber-100 text-amber-700 border-amber-200" }
-      case "cho_duyet_cap_2":
-        return { text: "Chờ cấp 2", color: "bg-blue-100 text-blue-700 border-blue-200" }
-      case "da_duyet_cap_2":
+      case "cho_duyet":
+        return { text: "Chờ duyệt", color: "bg-amber-100 text-amber-700 border-amber-200" }
+      case "da_duyet":
         return { text: "Đã duyệt", color: "bg-emerald-100 text-emerald-700 border-emerald-200" }
       case "tu_choi":
         return { text: "Từ chối", color: "bg-red-100 text-red-700 border-red-200" }
       default:
-        return { text: status, color: "bg-slate-100 text-slate-700" }
+        return { text: status, color: "bg-muted text-muted-foreground" }
     }
   }
 
@@ -125,35 +110,18 @@ export default function NghiPhepPage() {
           setDetailOpen(true)
         },
         onDuyet: (don) => {
-          const capLabel = getTrangThaiLabel(don.trang_thai)
-          
-          if (don.trang_thai === "cho_duyet_cap_1") {
-            duyetCap1Mutation.mutate(
-              { id: don.id },
-              {
-                onSuccess: () => {
-                  toastSuccess("Thành công", "Đã duyệt cấp 1")
-                  refetch()
-                },
-                onError: (err: any) => {
-                  toastError("Lỗi", err.message || "Duyệt thất bại")
-                },
-              }
-            )
-          } else if (don.trang_thai === "cho_duyet_cap_2") {
-            duyetCap2Mutation.mutate(
-              { id: don.id },
-              {
-                onSuccess: () => {
-                  toastSuccess("Thành công", "Đã duyệt cấp 2")
-                  refetch()
-                },
-                onError: (err: any) => {
-                  toastError("Lỗi", err.message || "Duyệt thất bại")
-                },
-              }
-            )
-          }
+          duyetMutation.mutate(
+            don.id,
+            {
+              onSuccess: () => {
+                toastSuccess("Thành công", "Đã duyệt đơn")
+                refetch()
+              },
+              onError: (err: any) => {
+                toastError("Lỗi", err.message || "Duyệt thất bại")
+              },
+            }
+          )
         },
         onTuChoi: (don) => {
           setSelectedDon(don)
@@ -161,7 +129,7 @@ export default function NghiPhepPage() {
         },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [duyetCap1Mutation, duyetCap2Mutation]
+    [duyetMutation]
   )
 
   const handleCreate = (data: {
@@ -180,28 +148,13 @@ export default function NghiPhepPage() {
     })
   }
 
-  const handleDuyetCap1 = () => {
+  const handleDuyet = () => {
     if (!selectedDon) return
-    duyetCap1Mutation.mutate(
-      { id: selectedDon.id, ghi_chu: "" },
+    duyetMutation.mutate(
+      selectedDon.id,
       {
         onSuccess: () => {
-          toastSuccess("Thành công", "Đã duyệt cấp 1")
-          setDetailOpen(false)
-          setSelectedDon(null)
-          refetch()
-        },
-      }
-    )
-  }
-
-  const handleDuyetCap2 = () => {
-    if (!selectedDon) return
-    duyetCap2Mutation.mutate(
-      { id: selectedDon.id, ghi_chu: "" },
-      {
-        onSuccess: () => {
-          toastSuccess("Thành công", "Đã duyệt cấp 2")
+          toastSuccess("Thành công", "Đã duyệt đơn")
           setDetailOpen(false)
           setSelectedDon(null)
           refetch()
@@ -227,57 +180,14 @@ export default function NghiPhepPage() {
 
   return (
     <AuthenticatedLayout>
-      {/* Stats Cards with 2-level approval design */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100">
-            <FileText className="h-5 w-5 text-slate-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-            <p className="text-xs text-slate-500">Tổng đơn</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-            <Clock className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-700">{stats.choCap1}</p>
-            <p className="text-xs text-amber-600">Chờ cấp 1</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-            <Users className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-blue-700">{stats.choCap2}</p>
-            <p className="text-xs text-blue-600">Chờ cấp 2</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-emerald-700">{stats.daDuyet}</p>
-            <p className="text-xs text-emerald-600">Đã duyệt</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-            <XCircle className="h-5 w-5 text-red-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-red-700">{stats.tuChoi}</p>
-            <p className="text-xs text-red-600">Từ chối</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <StatCard icon={FileText} label="Tổng đơn" value={stats.total} accent="neutral" />
+        <StatCard icon={Clock} label="Chờ duyệt" value={stats.choDuyet} accent="warning" />
+        <StatCard icon={CheckCircle2} label="Đã duyệt" value={stats.daDuyet} accent="success" />
+        <StatCard icon={XCircle} label="Từ chối" value={stats.tuChoi} accent="danger" />
       </div>
 
-      {/* Tab Filter for 2-level approval */}
-      <div className="flex items-center gap-1 mb-4 p-1 bg-slate-100 rounded-lg w-fit">
+      <div className="flex items-center gap-1 mb-4 p-1 bg-muted rounded-lg w-fit">
         {TAB_CONFIG.map((tab) => {
           const Icon = tab.icon
           const isActive = nghiPhepTab === tab.value
@@ -288,8 +198,8 @@ export default function NghiPhepPage() {
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
                 isActive
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card/50"
               )}
             >
               <Icon className={cn("h-4 w-4", isActive && `text-${tab.color}-600`)} />
@@ -298,13 +208,11 @@ export default function NghiPhepPage() {
                 <span
                   className={cn(
                     "ml-1 rounded-full px-1.5 py-0.5 text-xs",
-                    isActive ? `bg-${tab.color}-100 text-${tab.color}-700` : "bg-slate-200"
+                    isActive ? `bg-${tab.color}-100 text-${tab.color}-700` : "bg-accent"
                   )}
                 >
-                  {tab.value === "cho_cap_1"
-                    ? stats.choCap1
-                    : tab.value === "cho_cap_2"
-                    ? stats.choCap2
+                  {tab.value === "cho_duyet"
+                    ? stats.choDuyet
                     : tab.value === "da_duyet"
                     ? stats.daDuyet
                     : stats.tuChoi}
@@ -338,8 +246,8 @@ export default function NghiPhepPage() {
         )}
 
         {activeTab === "cham-cong" && (
-          <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500">
-            Chuyển sang trang <a href="/cham-cong" className="text-indigo-600 hover:underline">Chấm công</a> để quản lý chấm công
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+            Chuyển sang trang <a href="/cham-cong" className="text-primary hover:underline">Chấm công</a> để quản lý chấm công
           </div>
         )}
       </div>
@@ -348,8 +256,7 @@ export default function NghiPhepPage() {
         don={selectedDon}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onDuyetCap1={handleDuyetCap1}
-        onDuyetCap2={handleDuyetCap2}
+        onDuyet={handleDuyet}
         onTuChoi={handleTuChoi}
       />
 

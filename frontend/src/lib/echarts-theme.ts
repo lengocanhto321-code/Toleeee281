@@ -31,8 +31,9 @@ export const corporateCleanTheme = {
     type: 'plain',
     textGap: 8,
     orient: 'horizontal',
-    top: 0,
+    top: 5,
     left: 'center',
+    padding: [5, 10],
   },
   tooltip: {
     trigger: 'item',
@@ -100,7 +101,7 @@ export const corporateCleanTheme = {
     left: '3%',
     right: '3%',
     bottom: '12%',
-    top: '20%',
+    top: '22%',
     containLabel: true,
   },
 }

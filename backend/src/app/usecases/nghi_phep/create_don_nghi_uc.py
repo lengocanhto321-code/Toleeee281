@@ -86,7 +86,7 @@ class CreateDonNghiUseCase:
                 return Return.err(
                     Error(
                         code="invalid_data",
-                        message="Số ngày nghỉ phải lớn hơn 0 và không trùng cuối tuần/lễ",
+                        message="Số ngày nghỉ phải lớn hơn 0 và không trùng ngày lễ",
                         reason="Invalid days",
                     )
                 )

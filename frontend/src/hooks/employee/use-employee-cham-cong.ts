@@ -20,7 +20,7 @@ export function useEmployeeChamCong(params?: { thang?: number; nam?: number }) {
       if (params?.thang) searchParams.set("thang", params.thang.toString())
       if (params?.nam) searchParams.set("nam", params.nam.toString())
       const query = searchParams.toString() ? `?${searchParams.toString()}` : ""
-      return apiGateway.get<ChamCongResponse>(`/api/cham-cong/me${query}`)
+      return apiGateway.get<ChamCongResponse>(`/api/v1/nhan-vien/nghi-phep/cham-cong/me${query}`)
     },
   })
 }
@@ -28,7 +28,7 @@ export function useEmployeeChamCong(params?: { thang?: number; nam?: number }) {
 export function useEmployeeChamCongThang(thang: number, nam: number) {
   return useQuery({
     queryKey: employeeChamCongQueryKeys.thang(thang, nam),
-    queryFn: () => apiGateway.get<EmployeeChamCong>(`/api/cham-cong/me/${thang}/${nam}`),
+    queryFn: () => apiGateway.get<EmployeeChamCong>(`/api/v1/nhan-vien/nghi-phep/cham-cong/me?thang=${thang}&nam=${nam}`),
     enabled: !!thang && !!nam,
   })
 }

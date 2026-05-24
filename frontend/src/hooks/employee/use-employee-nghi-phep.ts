@@ -25,7 +25,7 @@ export function useEmployeeNghiPhepList(params?: { trang_thai?: string }) {
       const searchParams = new URLSearchParams()
       if (params?.trang_thai) searchParams.set("trang_thai", params.trang_thai)
       const query = searchParams.toString() ? `?${searchParams.toString()}` : ""
-      return apiGateway.get<DonNghiPhepResponse>(`/api/nghi-phep/me${query}`)
+      return apiGateway.get<DonNghiPhepResponse>(`/api/v1/nhan-vien/nghi-phep/me${query}`)
     },
   })
 }
@@ -35,7 +35,7 @@ export function useCreateEmployeeDonNghi() {
 
   return useMutation({
     mutationFn: (data: CreateDonXinNghiEmployeeInput & { files?: string[] }) =>
-      apiGateway.post("/api/nghi-phep", data),
+      apiGateway.post("/api/v1/nhan-vien/nghi-phep/don", data),
     onSuccess: () => {
       toast.success("Gửi đơn thành công!", {
         description: "Đơn nghỉ phép của bạn đã được gửi và đang chờ duyệt.",
@@ -56,7 +56,7 @@ export function useHuyDonNghi() {
 
   return useMutation({
     mutationFn: (donId: string) =>
-      apiGateway.put(`/api/nghi-phep/${donId}/huy`),
+      apiGateway.put(`/api/v1/nhan-vien/nghi-phep/don/${donId}/huy`),
     onSuccess: () => {
       toast.success("Hủy đơn thành công!")
       queryClient.invalidateQueries({ queryKey: employeeNghiPhepQueryKeys.list() })

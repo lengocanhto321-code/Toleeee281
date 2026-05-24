@@ -26,6 +26,7 @@ async def handle_unexpected_error(request: Request, exc: Exception):
 
 
 async def handle_client_error(request, exc: ClientError) -> JSONResponse:
+    logger.warning(f"Client error detail: base_error={exc.base_error}, type={type(exc.base_error)}, hasattr_code={hasattr(exc.base_error, 'code')}")
     logger.warning(f"Client error: {exc.to_dict()}")
     return JSONResponse(
         status_code=exc.get_status_code(),

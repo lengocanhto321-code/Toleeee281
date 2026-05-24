@@ -11,15 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLogin } from "@/hooks/use-auth-query";
+import { useAuthStore } from "@/stores/auth.store";
 import type { LoginRequest } from "@/types/auth.types";
+
+const EMPLOYEE_ROLES = ["GIAO_VIEN", "NHAN_VIEN"];
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const login = useLogin();
+  const user = useAuthStore((state) => state.user);
 
-  // Lấy redirect param từ URL (do middleware set)
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const redirectParam = searchParams.get("redirect");
 
   const [formData, setFormData] = useState<LoginRequest>({
     username: "",
@@ -51,8 +54,14 @@ export function LoginForm() {
     if (!validate()) return;
     try {
       await login.mutateAsync(formData);
-      // Redirect về trang user muốn vào (hoặc dashboard mặc định)
-      router.push(redirectTo);
+      const currentUser = useAuthStore.getState().user;
+      if (redirectParam) {
+        router.push(redirectParam);
+      } else if (currentUser && EMPLOYEE_ROLES.includes(currentUser.role)) {
+        router.push("/employee");
+      } else {
+        router.push("/dashboard");
+      }
     } catch {}
   };
 
@@ -62,7 +71,7 @@ export function LoginForm() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Đăng nhập</CardTitle>
-        <CardDescription>Nhập tên đăng nhập và mật khẩu để truy cập hệ thống</CardDescription>
+        <CardDescription>Nhập thông tin đăng nhập để tiếp tục</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -71,7 +80,7 @@ export function LoginForm() {
             <Input
               id="username"
               type="text"
-              placeholder="admin"
+              placeholder="Tên đăng nhập"
               value={formData.username}
               onChange={handleChange("username")}
               disabled={isLoading}

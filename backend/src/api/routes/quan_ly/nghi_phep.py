@@ -70,6 +70,8 @@ async def create_don_nghi(
         ly_do=body.get("ly_do", ""),
         files=body.get("files", []),
         nguoi_tao_id=user_context.user_id,
+        skip_document_check=True,
+        auto_approve=True,
     )
 
     use_case = CreateDonNghiUseCase(uow)

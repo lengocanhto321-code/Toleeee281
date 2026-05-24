@@ -55,7 +55,7 @@ function OrgNode({ node, level = 0 }: { node: PhongBanNode; level?: number }) {
           isInactive
             ? "border-slate-200 bg-slate-50 opacity-60"
             : node.loai === "hanh_chinh"
-            ? "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50"
+            ? "border-blue-200 bg-blue-50/50 hover:bg-blue-50"
             : "border-amber-200 bg-amber-50/50 hover:bg-amber-50"
         }`}
       >
@@ -65,7 +65,7 @@ function OrgNode({ node, level = 0 }: { node: PhongBanNode; level?: number }) {
               isInactive
                 ? "bg-slate-200 text-slate-500"
                 : node.loai === "hanh_chinh"
-                ? "bg-indigo-100 text-indigo-600"
+                ? "bg-blue-100 text-blue-600"
                 : "bg-amber-100 text-amber-600"
             }`}
           >
@@ -155,7 +155,7 @@ export function PhongBanCoCauView({ onClose }: PhongBanCoCauViewProps) {
     <div className="space-y-4">
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded bg-indigo-400" />
+          <div className="h-3 w-3 rounded bg-blue-400" />
           <span className="text-muted-foreground">Hành chính ({stats.hanhChinh})</span>
         </div>
         <div className="flex items-center gap-2">

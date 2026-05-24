@@ -53,7 +53,6 @@ class DuyetCap1DonNghiUseCase:
             don.nguoi_duyet_cap_1_id = command.nguoi_duyet_id
             don.ngay_duyet_cap_1 = get_utc_now()
             don.ghi_chu_duyet_cap_1 = command.ghi_chu
-            await uow.session.commit()
 
             don = await uow.don_xin_nghi_repository.find_by_id(command.don_id)
 
@@ -63,9 +62,9 @@ class DuyetCap1DonNghiUseCase:
                     "id": don.id,
                     "trang_thai": don.trang_thai,
                     "cap_duyet_hien_tai": don.cap_duyet_hien_tai,
-                    "ngay_duyet_cap_1": str(don.ngay_duyet_cap_1)
-                    if don.ngay_duyet_cap_1
-                    else None,
+                    "ngay_duyet_cap_1": (
+                        str(don.ngay_duyet_cap_1) if don.ngay_duyet_cap_1 else None
+                    ),
                 }
             )
         )
@@ -118,7 +117,6 @@ class DuyetCap2DonNghiUseCase:
             don.nguoi_duyet_cap_2_id = command.nguoi_duyet_id
             don.ngay_duyet_cap_2 = get_utc_now()
             don.ghi_chu_duyet_cap_2 = command.ghi_chu
-            await uow.session.commit()
 
             # Trừ ngày phép nếu là phep_nam
             phep_con_lai = None
@@ -148,9 +146,9 @@ class DuyetCap2DonNghiUseCase:
                 don={
                     "id": don.id,
                     "trang_thai": don.trang_thai,
-                    "ngay_duyet_cap_2": str(don.ngay_duyet_cap_2)
-                    if don.ngay_duyet_cap_2
-                    else None,
+                    "ngay_duyet_cap_2": (
+                        str(don.ngay_duyet_cap_2) if don.ngay_duyet_cap_2 else None
+                    ),
                 },
                 phep_con_lai=phep_con_lai,
             )

@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     DateTime,
     SmallInteger,
+    Boolean,
 )
 from datetime import datetime
 
@@ -48,6 +49,9 @@ class QRConfig(Base):
     ban_kinh_cho_phep = Column(Integer, default=100)
 
     trang_thai = Column(String(20), nullable=False, default="active")
+    bat_gps = Column(Boolean, nullable=False, default=True)
+
+    ma_nhap = Column(String(6), nullable=True, unique=True)
 
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
@@ -77,7 +81,9 @@ class QRConfig(Base):
             "kinh_do": self.kinh_do,
             "vi_do": self.vi_do,
             "ban_kinh_cho_phep": self.ban_kinh_cho_phep,
+            "bat_gps": self.bat_gps,
             "trang_thai": self.trang_thai,
+            "ma_nhap": self.ma_nhap,
             "created_at": serialize_dt(self.created_at),
             "created_by": self.created_by,
         }

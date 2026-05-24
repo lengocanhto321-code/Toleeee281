@@ -76,21 +76,12 @@ export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenti
 export const useIsLoading = () => useAuthStore((state) => state.isLoading);
 
 // Actions hook - memoized to prevent infinite loops
-let cachedActions: AuthActions | null = null;
 export const useAuthActions = (): AuthActions => {
-  const actions = useAuthStore((state) => ({
-    setAuth: state.setAuth,
-    setUser: state.setUser,
-    setTokens: state.setTokens,
-    logout: state.logout,
-    clearAuth: state.clearAuth,
-    setLoading: state.setLoading,
-  }));
-  
-  // Cache on client to prevent re-renders
-  if (typeof window !== "undefined" && !cachedActions) {
-    cachedActions = actions;
-  }
-  
-  return cachedActions || actions;
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const setUser = useAuthStore((state) => state.setUser);
+  const setTokens = useAuthStore((state) => state.setTokens);
+  const logout = useAuthStore((state) => state.logout);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const setLoading = useAuthStore((state) => state.setLoading);
+  return { setAuth, setUser, setTokens, logout, clearAuth, setLoading };
 };

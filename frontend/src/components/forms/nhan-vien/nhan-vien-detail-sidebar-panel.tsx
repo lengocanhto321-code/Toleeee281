@@ -4,13 +4,6 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
   Pencil,
-  Banknote,
-  FileText,
-  Award,
-  ShieldAlert,
-  Printer,
-  Download,
-  History,
   RotateCcw,
   ArrowRightLeft,
 } from "lucide-react"
@@ -19,14 +12,6 @@ import { Separator } from "@/components/ui/separator"
 import { useNhanVienDetail } from "@/hooks/nhan-vien"
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_NHAN_VIEN_LABELS } from "@/types/nhan-vien.types"
 import type { TrangThaiNhanVien } from "@/types/nhan-vien.types"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -36,27 +21,15 @@ function getInitials(name: string) {
 
 type SidebarAction =
   | "edit"
-  | "viewSalary"
-  | "createContract"
-  | "addReward"
-  | "addDiscipline"
-  | "print"
-  | "export"
   | "back"
   | "restore"
   | "transfer"
 
 const ACTION_CONFIG: Record<SidebarAction, { label: string; icon: React.ElementType; className?: string }> = {
-  back: { label: "Quay lại", icon: ArrowLeft, className: "text-slate-600" },
+  back: { label: "Quay lại", icon: ArrowLeft, className: "text-muted-foreground" },
   edit: { label: "Sửa thông tin", icon: Pencil },
-  viewSalary: { label: "Xem lương", icon: Banknote },
-  createContract: { label: "Hợp đồng", icon: FileText },
-  addReward: { label: "Khen thưởng", icon: Award, className: "text-amber-600 hover:text-amber-700" },
-  addDiscipline: { label: "Kỷ luật", icon: ShieldAlert, className: "text-red-600 hover:text-red-700" },
   restore: { label: "Khôi phục", icon: RotateCcw, className: "text-emerald-600 hover:text-emerald-700" },
   transfer: { label: "Điều chuyển", icon: ArrowRightLeft },
-  print: { label: "In hồ sơ", icon: Printer },
-  export: { label: "Xuất PDF", icon: Download },
 }
 
 interface NhanVienDetailSidebarPanelProps {
@@ -75,50 +48,20 @@ export function NhanVienDetailSidebarPanel({ nhanVienId }: NhanVienDetailSidebar
       case "edit":
         window.dispatchEvent(new CustomEvent("sidebar:nv-detail:edit"))
         break
-      case "viewSalary":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:viewSalary"))
-        break
-      case "createContract":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:createContract"))
-        break
-      case "addReward":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:addReward"))
-        break
-      case "addDiscipline":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:addDiscipline"))
-        break
       case "restore":
         window.dispatchEvent(new CustomEvent("sidebar:nv-detail:restore"))
         break
       case "transfer":
         window.dispatchEvent(new CustomEvent("sidebar:nv-detail:transfer"))
         break
-      case "print":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:print"))
-        break
-      case "export":
-        window.dispatchEvent(new CustomEvent("sidebar:nv-detail:export"))
-        break
     }
   }
 
   const getVisibleActions = (): SidebarAction[] => {
     if (!nhanVien) return []
-    const isActive = nhanVien.trang_thai === "dang_lam"
-    const isGiaoVien = nhanVien.loai_nhan_vien === "giao_vien"
     const isDeleted = !!nhanVien.deleted_at
 
-    const actions: SidebarAction[] = ["edit", "viewSalary"]
-
-    if (isGiaoVien) {
-      actions.push("createContract")
-    }
-
-    actions.push("addReward")
-
-    if (isActive) {
-      actions.push("addDiscipline")
-    }
+    const actions: SidebarAction[] = ["edit"]
 
     if (isDeleted) {
       actions.push("restore")
@@ -139,7 +82,7 @@ export function NhanVienDetailSidebarPanel({ nhanVienId }: NhanVienDetailSidebar
         <>
           <div className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-lg font-bold text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
                 {getInitials(nhanVien.ho_ten)}
               </div>
               <div className="min-w-0">
@@ -163,7 +106,7 @@ export function NhanVienDetailSidebarPanel({ nhanVienId }: NhanVienDetailSidebar
             <Button
               variant="ghost"
               size="sm"
-              className="w-full gap-2 cursor-pointer justify-start text-slate-600"
+              className="w-full gap-2 cursor-pointer justify-start text-muted-foreground"
               onClick={dispatch("back")}
             >
               <ArrowLeft className="h-4 w-4" />
@@ -196,32 +139,6 @@ export function NhanVienDetailSidebarPanel({ nhanVienId }: NhanVienDetailSidebar
           </div>
 
           <Separator />
-
-          <div className="p-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full gap-2 cursor-pointer justify-start">
-                  <MoreHorizontal className="h-4 w-4" />
-                  Thêm...
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuItem onClick={dispatch("print")} className="cursor-pointer">
-                  <Printer className="mr-2 h-4 w-4" />
-                  In hồ sơ
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={dispatch("export")} className="cursor-pointer">
-                  <Download className="mr-2 h-4 w-4" />
-                  Xuất PDF
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
-                  <History className="mr-2 h-4 w-4" />
-                  Lịch sử thay đổi
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </>
       )}
 

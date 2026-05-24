@@ -14,8 +14,6 @@ export interface NhanVien {
   ngay_cap_cccd?: string;
   noi_cap_cccd?: string;
   anh_dai_dien?: string;
-  cccd_front?: string;
-  cccd_back?: string;
   noi_sinh?: string;
   dan_toc?: string;
   ton_giao?: string;
@@ -116,6 +114,8 @@ export interface KhenThuong {
   nam: number;
   hinh_thuc: string;
   ly_do: string;
+  gia_tri_thuong?: number;
+  so_quyet_dinh?: string;
   co_quan_ban_hanh?: string;
   ngay_quyet_dinh?: string;
 }
@@ -126,6 +126,7 @@ export interface KyLuat {
   hinh_thuc: string;
   ly_do: string;
   muc_do?: string;
+  so_quyet_dinh?: string;
   co_quan_ban_hanh?: string;
   ngay_quyet_dinh?: string;
   trang_thai: "dang_xu_ly" | "da_xu_ly" | "da_xoa";

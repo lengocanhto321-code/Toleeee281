@@ -123,10 +123,12 @@ class KyLuongResponse(BaseModel):
     ngay_bat_dau: date
     ngay_ket_thuc: date
     trang_thai: str
-    tong_nhan_vien: Optional[int]
-    tong_thu_nhap: Optional[int]
-    tong_thuc_nhan: Optional[int]
-    ngay_chot: Optional[datetime]
+    tong_nhan_vien: Optional[int] = None
+    tong_thu_nhap: Optional[int] = None
+    tong_thuc_nhan: Optional[int] = None
+    ngay_chay: Optional[datetime] = None
+    nguoi_duyet: Optional[str] = None
+    ngay_duyet: Optional[datetime] = None
     created_at: datetime
 
     class Config:

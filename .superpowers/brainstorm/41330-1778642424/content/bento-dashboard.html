@@ -1,0 +1,170 @@
+<h2>Bento Grid Dashboard</h2>
+<p class="subtitle">Ocean Calm palette. Click để chọn biến thể.</p>
+
+<div class="cards">
+  <div class="card" data-choice="bento-compact" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8fafc;">
+      <div style="max-width: 360px; margin: 0 auto;">
+        <div style="background: white; border-radius: 18px; padding: 16px; border: 1px solid #e2e8f0;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #1e3a5f, #3b82f6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;">NL</div>
+            <div>
+              <div style="font-size: 14px; font-weight: 700; color: #1e3a5f;">Cô Nguyễn Thị Lan 👋</div>
+              <div style="font-size: 10px; color: #64748b;">GV Toán · Tổ KHTN</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div style="background: linear-gradient(135deg, #1e3a5f, #2563eb); border-radius: 14px; padding: 14px 10px; color: white; text-align: center;">
+              <div style="font-size: 10px; opacity: 0.7;">Ngày phép</div>
+              <div style="font-size: 24px; font-weight: 800; line-height: 1.2;">12</div>
+              <div style="font-size: 9px; opacity: 0.6;">còn lại</div>
+            </div>
+            <div style="background: #eff6ff; border-radius: 14px; padding: 14px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #64748b;">Ngày làm</div>
+              <div style="font-size: 24px; font-weight: 800; color: #1e3a5f; line-height: 1.2;">22</div>
+              <div style="font-size: 9px; color: #94a3b8;">tháng 5</div>
+            </div>
+            <div style="background: #fef3c7; border-radius: 14px; padding: 14px 10px; text-align: center;">
+              <div style="font-size: 10px; color: #92400e;">Chờ duyệt</div>
+              <div style="font-size: 24px; font-weight: 800; color: #d97706; line-height: 1.2;">2</div>
+              <div style="font-size: 9px; color: #b45309;">đơn</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div style="background: #f0fdf4; border-radius: 14px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-size: 11px; font-weight: 600; color: #065f46;">Hoạt động gần đây</div>
+                <div style="font-size: 9px; color: #059669;">Xem tất cả →</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 6px; height: 6px; background: #f59e0b; border-radius: 50%;"></div>
+                  <div style="font-size: 10px; color: #374151;">Nghỉ phép 19/05 <span style="color: #d97706; font-size: 9px;">chờ</span></div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 6px; height: 6px; background: #059669; border-radius: 50%;"></div>
+                  <div style="font-size: 10px; color: #374151;">Chấm công 07:45 <span style="color: #059669; font-size: 9px;">OK</span></div>
+                </div>
+              </div>
+            </div>
+            <div style="background: #eff6ff; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+              <div style="font-size: 11px; color: #64748b;">Hệ số</div>
+              <div style="font-size: 22px; font-weight: 800; color: #3b82f6;">0.95</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <div style="background: #3b82f6; border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer;">
+              <div style="font-size: 18px; margin-bottom: 2px;">✏️</div>
+              <div style="font-size: 10px; color: white; font-weight: 600;">Xin nghỉ</div>
+            </div>
+            <div style="background: #1e3a5f; border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer;">
+              <div style="font-size: 18px; margin-bottom: 2px;">📷</div>
+              <div style="font-size: 10px; color: white; font-weight: 600;">QR của tôi</div>
+            </div>
+            <div style="background: #dbeafe; border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer;">
+              <div style="font-size: 18px; margin-bottom: 2px;">💰</div>
+              <div style="font-size: 10px; color: #1e3a5f; font-weight: 600;">Xem lương</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Bento Compact</h3>
+      <p>3 cột chặt, card sizes đa dạng (1x1, 2x1). Stats 3 ô bằng → activity + metric → 3 action buttons. Gọn gàng, vừa 1 màn hình.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="bento-generous" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8fafc;">
+      <div style="max-width: 360px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e3a5f, #2563eb); border-radius: 18px; padding: 20px; color: white; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 11px; opacity: 0.7; margin-bottom: 2px;">Xin chào</div>
+              <div style="font-size: 18px; font-weight: 700;">Cô Nguyễn Thị Lan 👋</div>
+              <div style="font-size: 11px; opacity: 0.6; margin-top: 2px;">Giáo viên Toán · Tổ KHTN · GV001</div>
+            </div>
+            <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🎓</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <div style="background: white; border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">🏖️ Ngày phép</div>
+            <div style="display: flex; align-items: baseline; gap: 4px;">
+              <span style="font-size: 28px; font-weight: 800; color: #1e3a5f;">12</span>
+              <span style="font-size: 11px; color: #94a3b8;">/14 ngày</span>
+            </div>
+          </div>
+          <div style="background: white; border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">📋 Chấm công</div>
+            <div style="display: flex; align-items: baseline; gap: 4px;">
+              <span style="font-size: 28px; font-weight: 800; color: #3b82f6;">22</span>
+              <span style="font-size: 11px; color: #94a3b8;">ngày</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <div style="background: #fef3c7; border-radius: 16px; padding: 16px;">
+            <div style="font-size: 11px; color: #92400e; font-weight: 600; margin-bottom: 8px;">⏳ Đơn chờ duyệt</div>
+            <div style="display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px;">
+              <span style="font-size: 28px; font-weight: 800; color: #d97706;">2</span>
+              <span style="font-size: 11px; color: #b45309;">đơn nghỉ phép</span>
+            </div>
+            <div style="font-size: 10px; color: #92400e; background: rgba(255,255,255,0.6); border-radius: 8px; padding: 6px 8px;">Nghỉ ốm 19/05 · Nghỉ việc riêng 22/05</div>
+          </div>
+          <div style="background: white; border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="font-size: 10px; color: #64748b; margin-bottom: 2px;">Hệ số CC</div>
+            <div style="font-size: 32px; font-weight: 800; color: #3b82f6;">.95</div>
+          </div>
+        </div>
+
+        <div style="background: white; border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
+          <div style="font-size: 11px; font-weight: 600; color: #1e3a5f; margin-bottom: 10px;">Hoạt động gần đây</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #f8fafc; border-radius: 10px;">
+              <div style="width: 32px; height: 32px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px;">📅</div>
+              <div style="flex: 1;">
+                <div style="font-size: 11px; font-weight: 600; color: #374151;">Xin nghỉ phép</div>
+                <div style="font-size: 9px; color: #9ca3af;">19/05/2026 · Nghỉ ốm 1 ngày</div>
+              </div>
+              <div style="background: #fef3c7; color: #d97706; font-size: 9px; padding: 3px 8px; border-radius: 6px; font-weight: 600;">Chờ duyệt</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: #f8fafc; border-radius: 10px;">
+              <div style="width: 32px; height: 32px; background: #f0fdf4; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px;">✅</div>
+              <div style="flex: 1;">
+                <div style="font-size: 11px; font-weight: 600; color: #374151;">Chấm công thành công</div>
+                <div style="font-size: 9px; color: #9ca3af;">Hôm nay · 07:45</div>
+              </div>
+              <div style="background: #f0fdf4; color: #059669; font-size: 9px; padding: 3px 8px; border-radius: 6px; font-weight: 600;">Đúng giờ</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div style="background: #3b82f6; border-radius: 14px; padding: 14px; text-align: center; cursor: pointer;">
+            <div style="font-size: 20px; margin-bottom: 4px;">✏️</div>
+            <div style="font-size: 10px; color: white; font-weight: 600;">Xin nghỉ</div>
+          </div>
+          <div style="background: #1e3a5f; border-radius: 14px; padding: 14px; text-align: center; cursor: pointer;">
+            <div style="font-size: 20px; margin-bottom: 4px;">📷</div>
+            <div style="font-size: 10px; color: white; font-weight: 600;">QR của tôi</div>
+          </div>
+          <div style="background: white; border: 1.5px solid #3b82f6; border-radius: 14px; padding: 14px; text-align: center; cursor: pointer;">
+            <div style="font-size: 20px; margin-bottom: 4px;">💰</div>
+            <div style="font-size: 10px; color: #3b82f6; font-weight: 600;">Xem lương</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Bento Generous</h3>
+      <p>Hero banner riêng → bento grid 2 cột không đều → activity feed → actions. Thoáng hơn, card to, nhiều khoảng trắng. Cuộn nhẹ.</p>
+    </div>
+  </div>
+</div>

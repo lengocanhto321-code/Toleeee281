@@ -1,0 +1,83 @@
+<h2>Chọn phong cách trang đăng nhập</h2>
+<p class="subtitle">Chọn 1 trong 3 mockup dưới đây. Nhấn vào option để chọn.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A: Cổng thông tin trường học</div>
+        <div class="mockup-body" style="background: linear-gradient(135deg, #1e3a5f 0%, #2e75b6 50%, #5ba3e6 100%); min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: Arial, sans-serif;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+            <div style="width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;">🎓</div>
+            <div>
+              <div style="font-size:18px;font-weight:700;">THPT Thăng Long</div>
+              <div style="font-size:11px;opacity:0.8;">Hệ thống quản lý nhân sự</div>
+            </div>
+          </div>
+          <div style="background:white;border-radius:16px;padding:24px;width:280px;margin-top:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+            <div style="font-size:14px;font-weight:600;color:#1e3a5f;margin-bottom:4px;">Đăng nhập</div>
+            <div style="font-size:11px;color:#888;margin-bottom:16px;">Nhập thông tin để truy cập hệ thống</div>
+            <div style="background:#f1f5f9;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#94a3b8;">Tên đăng nhập</div>
+            <div style="background:#f1f5f9;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#94a3b8;">Mật khẩu</div>
+            <div style="background:#1e3a5f;color:white;text-align:center;padding:10px;border-radius:8px;font-size:13px;font-weight:600;">Đăng nhập</div>
+          </div>
+          <div style="margin-top:16px;font-size:10px;opacity:0.6;">© 2026 THPT Thăng Long</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Cổng trường học (Recommended)</h3>
+      <p>Gradient xanh dương đậm + card trắng. Tên trường + "Hệ thống quản lý nhân sự" chung chung. Không lộ admin. Chuyên nghiệp, giống portal giáo dục.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B: Hai cột - Ảnh + Form</div>
+        <div class="mockup-body" style="display: flex; min-height: 340px; font-family: Arial, sans-serif;">
+          <div style="flex:1;background:linear-gradient(135deg,#0f172a,#1e3a5f);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;padding:20px;">
+            <div style="font-size:40px;margin-bottom:12px;">🏫</div>
+            <div style="font-size:16px;font-weight:700;">THPT Thăng Long</div>
+            <div style="font-size:11px;opacity:0.7;margin-top:4px;text-align:center;">"Trường học hạnh phúc<br>Nơi ươm mầm tri thức"</div>
+            <div style="margin-top:20px;font-size:10px;opacity:0.5;">Quản lý · Đào tạo · Phát triển</div>
+          </div>
+          <div style="flex:1;background:white;display:flex;flex-direction:column;justify-content:center;padding:28px;">
+            <div style="font-size:16px;font-weight:700;color:#1e3a5f;">Chào mừng trở lại</div>
+            <div style="font-size:11px;color:#888;margin:6px 0 20px;">Đăng nhập để tiếp tục</div>
+            <div style="background:#f1f5f9;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#94a3b8;">Tên đăng nhập</div>
+            <div style="background:#f1f5f9;border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:#94a3b8;">Mật khẩu</div>
+            <div style="background:#1e3a5f;color:white;text-align:center;padding:10px;border-radius:8px;font-size:13px;font-weight:600;">Đăng nhập</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Hai cột (Split Layout)</h3>
+      <p>Bên trái: branding trường + slogan giáo dục. Bên phải: form đăng nhập đơn giản. Trông giống portal trường đại học. Tuy nhiên phức tạp hơn trên mobile.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C: Minimal - Card đơn giản</div>
+        <div class="mockup-body" style="background:#f8fafc; min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: Arial, sans-serif;">
+          <div style="background:white;border-radius:12px;padding:32px;width:300px;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #e2e8f0;">
+            <div style="text-align:center;margin-bottom:20px;">
+              <div style="font-size:28px;margin-bottom:8px;">🎓</div>
+              <div style="font-size:15px;font-weight:600;color:#1e293b;">THPT Thăng Long</div>
+            </div>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:9px 12px;margin-bottom:8px;font-size:12px;color:#94a3b8;">Tên đăng nhập</div>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:9px 12px;margin-bottom:14px;font-size:12px;color:#94a3b8;">Mật khẩu</div>
+            <div style="background:#1e3a5f;color:white;text-align:center;padding:9px;border-radius:6px;font-size:12px;font-weight:500;">Đăng nhập</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Minimal (Sạch nhẹ)</h3>
+      <p>Giống hiện tại nhưng polish hơn: bỏ placeholder "admin", thêm icon trường. Đơn giản, không lộ gì. Nhưng hơi đơn điệu.</p>
+    </div>
+  </div>
+</div>

@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { apiGateway } from "@/lib/axios";
+import { apiGateway, axiosInstance } from "@/lib/axios";
 import { ApiEndpoints } from "@/types/api.types";
 import type {
   DonXinNghi,
@@ -38,15 +38,22 @@ export const nghiPhepQueryKeys = {
 export function useDonXinNghiList(params?: DonXinNghiParams) {
   return useQuery({
     queryKey: nghiPhepQueryKeys.don.list(params),
-    queryFn: () => apiGateway.get<DonXinNghiListResponse>(ApiEndpoints.NGHI_PHEP_DON_LIST, {
-      params: {
-        page: params?.page ?? 1,
-        page_size: params?.page_size ?? 20,
-        nhan_vien_id: params?.nhan_vien_id,
-        trang_thai: params?.trang_thai !== "all" ? params?.trang_thai : undefined,
-        loai_nghi: params?.loai_nghi !== "all" ? params?.loai_nghi : undefined,
-      },
-    }),
+    queryFn: async (): Promise<DonXinNghiListResponse> => {
+      const res = await axiosInstance.get(ApiEndpoints.NGHI_PHEP_DON_LIST, {
+        params: {
+          page: params?.page ?? 1,
+          page_size: params?.page_size ?? 20,
+          nhan_vien_id: params?.nhan_vien_id,
+          trang_thai: params?.trang_thai !== "all" ? params?.trang_thai : undefined,
+          loai_nghi: params?.loai_nghi !== "all" ? params?.loai_nghi : undefined,
+        },
+      })
+      const body = res.data
+      return {
+        data: body.data ?? [],
+        metadata: body.metadata ?? { total: 0, page: 1, per_page: 20, total_pages: 0 },
+      }
+    },
   });
 }
 

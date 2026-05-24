@@ -28,23 +28,29 @@ class CreateChucVuUseCase:
     def __init__(self, unit_of_work):
         self.unit_of_work = unit_of_work
 
-    async def execute(self, command: CreateChucVuCommand) -> Result[CreateChucVuResult, Error]:
+    async def execute(
+        self, command: CreateChucVuCommand
+    ) -> Result[CreateChucVuResult, Error]:
         """Execute create chuc vu use case."""
-        logger.info(f"User {command.actor_id} is creating ChucVu {command.data.ma_chuc_vu}")
 
         async with self.unit_of_work as uow:
             chuc_vu_repo = uow.chuc_vu_repository
             audit_repo = uow.audit_log_repository
 
-            # Create new ChucVu
+            ma_chuc_vu = (
+                command.data.ma_chuc_vu or await chuc_vu_repo.generate_ma_chuc_vu()
+            )
+            logger.info(f"User {command.actor_id} is creating ChucVu {ma_chuc_vu}")
+
             new_cv = ChucVu(
-                ma_chuc_vu=command.data.ma_chuc_vu,
+                ma_chuc_vu=ma_chuc_vu,
                 ten_chuc_vu=command.data.ten_chuc_vu,
                 he_so_phu_cap=command.data.he_so_phu_cap,
                 mo_ta=command.data.mo_ta,
                 tieu_chuan=command.data.tieu_chuan,
                 trang_thai=command.data.trang_thai,
-                cap_bac=command.data.cap_bac if hasattr(command.data, 'cap_bac') else 1,
+                cap_bac=command.data.cap_bac if hasattr(command.data, "cap_bac") else 1,
+                loai=command.data.loai,
             )
 
             try:
@@ -56,7 +62,7 @@ class CreateChucVuUseCase:
                     Error(
                         code="code_exists",
                         message="Mã chức vụ đã tồn tại",
-                        reason="Conflict"
+                        reason="Conflict",
                     )
                 )
 
@@ -68,7 +74,7 @@ class CreateChucVuUseCase:
                 ban_ghi_id=created_cv.id,
                 du_lieu_cu=None,
                 du_lieu_moi=command.data.model_dump(mode="json"),
-                ghi_chu="Tạo mới chức vụ"
+                ghi_chu="Tạo mới chức vụ",
             )
             await audit_repo.create(audit_log)
 

@@ -21,7 +21,7 @@ from src.app.usecases.cong_tac import (
     CreateCongTacCommand,
 )
 
-router = APIRouter(tags=["CongTac"])
+router = APIRouter()
 
 
 @router.get(

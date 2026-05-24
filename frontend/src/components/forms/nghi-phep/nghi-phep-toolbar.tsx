@@ -25,9 +25,8 @@ const LOAI_NGHI_OPTIONS: { value: LoaiNghi | "all"; label: string }[] = [
 
 const TRANG_THAI_OPTIONS: { value: TrangThaiDon | "all"; label: string }[] = [
   { value: "all", label: "Tất cả trạng thái" },
-  { value: "cho_duyet_cap_1", label: "Chờ cấp 1" },
-  { value: "cho_duyet_cap_2", label: "Chờ cấp 2" },
-  { value: "da_duyet_cap_2", label: "Đã duyệt" },
+  { value: "cho_duyet", label: "Chờ duyệt" },
+  { value: "da_duyet", label: "Đã duyệt" },
   { value: "tu_choi", label: "Từ chối" },
 ]
 
@@ -62,7 +61,7 @@ export function NghiPhepToolbar({
             onClick={() => onTabChange("don-nghi")}
             className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
               activeTab === "don-nghi"
-                ? "bg-indigo-50 text-indigo-700 border border-indigo-200 border-b-white"
+                ? "bg-blue-50 text-blue-700 border border-blue-200 border-b-white"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
@@ -73,7 +72,7 @@ export function NghiPhepToolbar({
             onClick={() => onTabChange("cham-cong")}
             className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
               activeTab === "cham-cong"
-                ? "bg-indigo-50 text-indigo-700 border border-indigo-200 border-b-white"
+                ? "bg-blue-50 text-blue-700 border border-blue-200 border-b-white"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
@@ -124,7 +123,7 @@ export function NghiPhepToolbar({
         </div>
 
         <div className="ml-auto">
-          <Button onClick={onCreate} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700">
+          <Button onClick={onCreate} className="gap-1.5 bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4" data-icon="inline-start" />
             Tạo đơn nghỉ
           </Button>

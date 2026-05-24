@@ -9,7 +9,7 @@ export interface PhongBan {
 }
 
 export interface PhongBanFormData {
-  ma_phong_ban: string;
+  ma_phong_ban?: string;
   ten_phong_ban: string;
   loai: "chuyen_mon" | "hanh_chinh";
   trang_thai: boolean;

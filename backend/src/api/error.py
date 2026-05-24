@@ -42,7 +42,12 @@ class ClientError(APIError):
         super().__init__(base_error, status_code, headers)
 
     def to_dict(self):
-        return {"code": self.get_status_code(), "message": self.base_error.message}
+        return {
+            "code": self.base_error.code
+            if hasattr(self.base_error, "code")
+            else self.get_status_code(),
+            "message": self.base_error.message,
+        }
 
     def get_status_code(self) -> int:
         return self.status_code
@@ -64,8 +69,14 @@ class ServerError(APIError):
         super().__init__(base_error, status_code, headers)
 
     def to_dict(self):
-        # Expose numeric HTTP status code as "code"
-        return {"code": self.get_status_code(), "message": "Internal server error"}
+        return {
+            "code": self.base_error.code
+            if hasattr(self.base_error, "code")
+            else self.get_status_code(),
+            "message": self.base_error.message
+            if hasattr(self.base_error, "message")
+            else "Internal server error",
+        }
 
     def get_reason(self):
         return self.base_error.reason

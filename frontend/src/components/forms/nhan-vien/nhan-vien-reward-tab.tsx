@@ -1,36 +1,30 @@
 "use client"
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Trophy, 
-  Award, 
+import {
+  Trophy,
+  Award,
   Medal,
   Star,
   ShieldAlert,
   Clock,
   CheckCircle2,
-  XCircle,
   Plus,
-  Trash2
+  Trash2,
+  Banknote,
 } from "lucide-react"
 import { useDeleteKhenThuongKyLuat } from "@/hooks/nhan-vien/use-sub-modules"
 import { KhenThuongKyLuatDialog } from "./sub-module"
 import type { NhanVien, KhenThuong, KyLuat } from "@/types/nhan-vien.types"
+import { formatDateVN } from "@/lib/date-utils"
 
 interface NhanVienRewardTabProps {
   nhanVien: NhanVien
   khenThuongs?: KhenThuong[]
   kyLuats?: KyLuat[]
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—"
-  const d = new Date(dateStr)
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
 function RewardCard({ khenThuong, onDelete }: { khenThuong: KhenThuong; onDelete: () => void }) {
@@ -40,44 +34,52 @@ function RewardCard({ khenThuong, onDelete }: { khenThuong: KhenThuong; onDelete
     "huy hiệu": Medal,
     "thành tích": Star,
   }
-  
   const lowerHinhThuc = khenThuong.hinh_thuc.toLowerCase()
   const Icon = Object.entries(icons).find(([key]) => lowerHinhThuc.includes(key))?.[1] || Award
 
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 transition-colors group">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
-        <Icon className="h-6 w-6 text-emerald-600" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <p className="font-semibold text-slate-900">{khenThuong.hinh_thuc}</p>
-          <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">
-            Năm {khenThuong.nam}
-          </Badge>
+    <div className="detail-section p-4 accent-border-emerald group hover:shadow-md transition-shadow animate-detail-slide">
+      <div className="flex items-start gap-3.5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-amber-50">
+          <Icon className="h-5 w-5 text-amber-600" />
         </div>
-        <p className="text-sm text-slate-600 leading-relaxed">{khenThuong.ly_do}</p>
-        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
-          {khenThuong.co_quan_ban_hanh && (
-            <span>Cơ quan: {khenThuong.co_quan_ban_hanh}</span>
-          )}
-          {khenThuong.ngay_quyet_dinh && (
-            <span>Ngày: {formatDate(khenThuong.ngay_quyet_dinh)}</span>
-          )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-semibold text-slate-900">{khenThuong.hinh_thuc}</p>
+            <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+              Năm {khenThuong.nam}
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">{khenThuong.ly_do}</p>
+          <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
+            {khenThuong.gia_tri_thuong != null && khenThuong.gia_tri_thuong > 0 && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
+                <Banknote className="h-3 w-3" />
+                {khenThuong.gia_tri_thuong >= 1_000_000_000
+                  ? `${(khenThuong.gia_tri_thuong / 1_000_000_000).toFixed(1)}B`
+                  : khenThuong.gia_tri_thuong >= 1_000_000
+                  ? `${(khenThuong.gia_tri_thuong / 1_000_000).toFixed(0)}M`
+                  : khenThuong.gia_tri_thuong.toLocaleString()} đ
+              </span>
+            )}
+            {khenThuong.so_quyet_dinh && <span>QĐ: {khenThuong.so_quyet_dinh}</span>}
+            {khenThuong.co_quan_ban_hanh && <span>{khenThuong.co_quan_ban_hanh}</span>}
+            {khenThuong.ngay_quyet_dinh && <span>{formatDateVN(khenThuong.ngay_quyet_dinh)}</span>}
+          </div>
         </div>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0" onClick={onDelete}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={onDelete}>
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
     </div>
   )
 }
 
 function DisciplineCard({ kyLuat, onDelete }: { kyLuat: KyLuat; onDelete: () => void }) {
   const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-    da_xu_ly: { label: "Đã xử lý", className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-    dang_xu_ly: { label: "Đang xử lý", className: "bg-amber-100 text-amber-700 border-amber-200", icon: Clock },
-    da_xoa: { label: "Đã xóa", className: "bg-slate-100 text-slate-600 border-slate-200", icon: XCircle },
+    da_xu_ly: { label: "Đã xử lý", className: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
+    dang_xu_ly: { label: "Đang xử lý", className: "bg-amber-50 text-amber-700 border-amber-200", icon: Clock },
+    da_xoa: { label: "Đã xóa", className: "bg-slate-50 text-slate-600 border-slate-200", icon: Clock },
   }
   const status = statusConfig[kyLuat.trang_thai] || statusConfig.da_xu_ly
   const StatusIcon = status.icon
@@ -90,59 +92,37 @@ function DisciplineCard({ kyLuat, onDelete }: { kyLuat: KyLuat; onDelete: () => 
   }
 
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 transition-colors group">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-100">
-        <ShieldAlert className="h-6 w-6 text-red-600" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <p className="font-semibold text-slate-900">{kyLuat.hinh_thuc}</p>
-          <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">
-            Năm {kyLuat.nam}
-          </Badge>
-          <Badge variant="outline" className={status.className}>
-            <StatusIcon className="h-3 w-3 mr-1" />
-            {status.label}
-          </Badge>
+    <div className="detail-section p-4 accent-border-rose group hover:shadow-md transition-shadow animate-detail-slide">
+      <div className="flex items-start gap-3.5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-red-100 to-red-50">
+          <ShieldAlert className="h-5 w-5 text-red-600" />
         </div>
-        <p className="text-sm text-slate-600 leading-relaxed">{kyLuat.ly_do}</p>
-        <div className="flex items-center gap-4 mt-2">
-          {kyLuat.muc_do && (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${severityConfig[kyLuat.muc_do] || "bg-slate-100 text-slate-600"}`}>
-              {kyLuat.muc_do.replace(/_/g, " ")}
-            </span>
-          )}
-          {kyLuat.co_quan_ban_hanh && (
-            <span className="text-xs text-slate-500">Cơ quan: {kyLuat.co_quan_ban_hanh}</span>
-          )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-semibold text-slate-900">{kyLuat.hinh_thuc}</p>
+            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
+              Năm {kyLuat.nam}
+            </Badge>
+            <Badge variant="outline" className={`text-[10px] ${status.className}`}>
+              <StatusIcon className="h-3 w-3 mr-0.5" />
+              {status.label}
+            </Badge>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">{kyLuat.ly_do}</p>
+          <div className="flex items-center gap-3 mt-2">
+            {kyLuat.muc_do && (
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium ${severityConfig[kyLuat.muc_do] || "bg-slate-50 text-slate-600"}`}>
+                {kyLuat.muc_do.replace(/_/g, " ")}
+              </span>
+            )}
+            {kyLuat.co_quan_ban_hanh && (
+              <span className="text-[11px] text-slate-400">{kyLuat.co_quan_ban_hanh}</span>
+            )}
+          </div>
         </div>
-      </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={onDelete}>
-        <Trash2 className="h-3.5 w-3.5" />
-      </Button>
-    </div>
-  )
-}
-
-function StatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  accent 
-}: { 
-  icon: React.ElementType
-  label: string
-  value: number | string
-  accent: string
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${accent}`}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <p className="text-xs text-slate-500">{label}</p>
-        <p className="text-xl font-bold text-slate-900">{value}</p>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0" onClick={onDelete}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
       </div>
     </div>
   )
@@ -155,7 +135,6 @@ export function NhanVienRewardTab({ nhanVien, khenThuongs = [], kyLuats = [] }: 
 
   const khenThuongCount = khenThuongs.length
   const kyLuatCount = kyLuats.length
-  const xuLyKyLuat = kyLuats.filter(k => k.trang_thai === "dang_xu_ly").length
 
   const handleAddKhenThuong = () => {
     setDialogLoai("khen_thuong")
@@ -174,106 +153,132 @@ export function NhanVienRewardTab({ nhanVien, khenThuongs = [], kyLuats = [] }: 
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Trophy} label="Khen thưởng" value={khenThuongCount} accent="bg-emerald-100 text-emerald-600" />
-        <StatCard icon={ShieldAlert} label="Kỷ luật" value={kyLuatCount} accent="bg-red-100 text-red-600" />
-        <StatCard icon={CheckCircle2} label="Đã xử lý" value={kyLuats.filter(k => k.trang_thai === "da_xu_ly").length} accent="bg-blue-100 text-blue-600" />
-        <StatCard icon={Clock} label="Đang xử lý" value={xuLyKyLuat} accent="bg-amber-100 text-amber-600" />
+    <div className="space-y-4 animate-detail-fade">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="detail-section flex items-center gap-3 p-3.5 animate-detail-fade">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600">
+            <Trophy className="h-[18px] w-[18px] text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] text-slate-500">Khen thưởng</p>
+            <p className="text-lg font-bold text-slate-900">{khenThuongCount}</p>
+          </div>
+        </div>
+        <div className="detail-section flex items-center gap-3 p-3.5 animate-detail-fade delay-75">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 to-red-600">
+            <ShieldAlert className="h-[18px] w-[18px] text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] text-slate-500">Kỷ luật</p>
+            <p className="text-lg font-bold text-slate-900">{kyLuatCount}</p>
+          </div>
+        </div>
+        <div className="detail-section flex items-center gap-3 p-3.5 animate-detail-fade delay-150">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600">
+            <CheckCircle2 className="h-[18px] w-[18px] text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] text-slate-500">Đã xử lý</p>
+            <p className="text-lg font-bold text-slate-900">{kyLuats.filter(k => k.trang_thai === "da_xu_ly").length}</p>
+          </div>
+        </div>
+        <div className="detail-section flex items-center gap-3 p-3.5 animate-detail-fade delay-225">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-500">
+            <Clock className="h-[18px] w-[18px] text-white" />
+          </div>
+          <div>
+            <p className="text-[11px] text-slate-500">Đang xử lý</p>
+            <p className="text-lg font-bold text-slate-900">{kyLuats.filter(k => k.trang_thai === "dang_xu_ly").length}</p>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="rewards" className="w-full">
-        <TabsList className="w-full justify-start bg-slate-100/50 p-1 rounded-xl">
-          <TabsTrigger 
-            value="rewards" 
-            className="cursor-pointer rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm gap-1.5"
+        <TabsList className="w-full justify-start bg-white/60 border border-slate-200/60 p-1 rounded-xl shadow-sm">
+          <TabsTrigger
+            value="rewards"
+            className="cursor-pointer rounded-lg text-[12px] data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-slate-200/80 transition-all gap-1.5"
           >
-            <Trophy className="h-4 w-4" />
+            <Trophy className="h-3.5 w-3.5" />
             Khen thưởng ({khenThuongCount})
           </TabsTrigger>
-          <TabsTrigger 
-            value="discipline" 
-            className="cursor-pointer rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm gap-1.5"
+          <TabsTrigger
+            value="discipline"
+            className="cursor-pointer rounded-lg text-[12px] data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-slate-200/80 transition-all gap-1.5"
           >
-            <ShieldAlert className="h-4 w-4" />
+            <ShieldAlert className="h-3.5 w-3.5" />
             Kỷ luật ({kyLuatCount})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="rewards" className="mt-4">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-                  <Trophy className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">Lịch sử khen thưởng</h3>
-                  <p className="text-xs text-slate-500">Các danh hiệu, khen thưởng đã nhận được</p>
-                </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-50">
+                <Trophy className="h-3.5 w-3.5 text-amber-500" />
               </div>
-              <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleAddKhenThuong}>
-                <Plus className="h-3.5 w-3.5" />
-                Thêm khen thưởng
-              </Button>
+              <h3 className="text-sm font-semibold text-slate-800">Lịch sử khen thưởng</h3>
             </div>
+            <Button size="sm" className="gap-1.5 cursor-pointer h-8 text-[11px]" onClick={handleAddKhenThuong}>
+              <Plus className="h-3.5 w-3.5" />
+              Thêm khen thưởng
+            </Button>
+          </div>
 
-            {khenThuongs.length > 0 ? (
-              <div className="space-y-4">
-                {khenThuongs.map((kt, index) => (
-                  <RewardCard key={kt.id || index} khenThuong={kt} onDelete={() => handleDelete(kt.id)} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
-                  <Trophy className="h-8 w-8 text-emerald-300" />
+          {khenThuongs.length > 0 ? (
+            <div className="space-y-2.5">
+              {khenThuongs.map((kt, index) => (
+                <RewardCard key={kt.id || index} khenThuong={kt} onDelete={() => handleDelete(kt.id)} />
+              ))}
+            </div>
+          ) : (
+            <div className="detail-section">
+              <div className="dot-grid-bg rounded-xl py-12 flex flex-col items-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 mb-3">
+                  <Trophy className="h-6 w-6 text-amber-300" />
                 </div>
-                <h4 className="font-medium text-slate-700 mb-1">Chưa có khen thưởng</h4>
-                <p className="text-sm text-slate-500 mb-4">Danh sách khen thưởng sẽ hiển thị tại đây</p>
-                <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer" onClick={handleAddKhenThuong}>
+                <h4 className="text-sm font-medium text-slate-600 mb-1">Chưa có khen thưởng</h4>
+                <p className="text-[11px] text-slate-400 mb-4">Danh sách sẽ hiển thị tại đây</p>
+                <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer h-8 text-[11px]" onClick={handleAddKhenThuong}>
                   <Plus className="h-3.5 w-3.5" />
                   Thêm khen thưởng
                 </Button>
               </div>
-            )}
-          </Card>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="discipline" className="mt-4">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-                  <ShieldAlert className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">Lịch sử kỷ luật</h3>
-                  <p className="text-xs text-slate-500">Các quyết định kỷ luật (nếu có)</p>
-                </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-red-50">
+                <ShieldAlert className="h-3.5 w-3.5 text-red-500" />
               </div>
-              <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer border-red-200 text-red-600 hover:bg-red-50" onClick={handleAddKyLuat}>
-                <Plus className="h-3.5 w-3.5" />
-                Thêm kỷ luật
-              </Button>
+              <h3 className="text-sm font-semibold text-slate-800">Lịch sử kỷ luật</h3>
             </div>
+            <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer border-red-200 text-red-600 hover:bg-red-50 h-8 text-[11px]" onClick={handleAddKyLuat}>
+              <Plus className="h-3.5 w-3.5" />
+              Thêm kỷ luật
+            </Button>
+          </div>
 
-            {kyLuats.length > 0 ? (
-              <div className="space-y-4">
-                {kyLuats.map((kl, index) => (
-                  <DisciplineCard key={kl.id || index} kyLuat={kl} onDelete={() => handleDelete(kl.id)} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 mb-4">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+          {kyLuats.length > 0 ? (
+            <div className="space-y-2.5">
+              {kyLuats.map((kl, index) => (
+                <DisciplineCard key={kl.id || index} kyLuat={kl} onDelete={() => handleDelete(kl.id)} />
+              ))}
+            </div>
+          ) : (
+            <div className="detail-section">
+              <div className="dot-grid-bg rounded-xl py-12 flex flex-col items-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 mb-3">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-400" />
                 </div>
-                <h4 className="font-medium text-emerald-700 mb-1">Không có kỷ luật</h4>
-                <p className="text-sm text-slate-500">Nhân viên chưa có quyết định kỷ luật nào</p>
+                <h4 className="text-sm font-medium text-emerald-700 mb-1">Không có kỷ luật</h4>
+                <p className="text-[11px] text-slate-400">Nhân viên chưa có quyết định kỷ luật nào</p>
               </div>
-            )}
-          </Card>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

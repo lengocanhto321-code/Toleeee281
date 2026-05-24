@@ -20,7 +20,7 @@ const navItems = [
   { href: "/employee", icon: LayoutDashboard, label: "Trang chủ" },
   { href: "/employee/cham-cong", icon: Clock, label: "Chấm công" },
   { href: "/employee/nghi-phep", icon: Calendar, label: "Nghỉ phép" },
-  { href: "/employee/my-qr", icon: QrCode, label: "QR Cá nhân" },
+  { href: "/employee/my-qr", icon: QrCode, label: "Quét QR" },
   { href: "/employee/luong", icon: Wallet, label: "Lương" },
   { href: "/employee/profile", icon: User, label: "Hồ sơ" },
 ]
@@ -30,14 +30,14 @@ export function EmployeeSidebar() {
   const { logout } = useAuthActions()
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-40 w-60 bg-white border-r border-blue-100 flex-col hidden lg:flex">
-      <div className="h-14 flex items-center gap-2.5 px-5 border-b border-blue-100">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+    <aside className="fixed left-0 top-0 bottom-0 z-40 w-60 bg-sidebar flex-col hidden lg:flex">
+      <div className="h-14 flex items-center gap-2.5 px-5 border-b border-sidebar-border">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
           <GraduationCap className="size-4" />
         </div>
         <div className="leading-tight">
-          <span className="block text-sm font-semibold text-slate-900">THPT Thăng Long</span>
-          <span className="block text-[11px] text-slate-500">Cổng nhân viên</span>
+          <span className="block text-sm font-semibold text-sidebar-foreground">THPT Thăng Long</span>
+          <span className="block text-[11px] text-sidebar-foreground/60">Cổng nhân viên</span>
         </div>
       </div>
 
@@ -54,21 +54,21 @@ export function EmployeeSidebar() {
               className={cn(
                 "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-blue-50 text-blue-700"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               )}
             >
-              <item.icon className={cn("h-4.5 w-4.5", isActive ? "text-blue-600" : "text-slate-400")} />
+              <item.icon className={cn("h-4.5 w-4.5", isActive ? "text-sidebar-primary" : "text-sidebar-foreground/50")} />
               {item.label}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-3 border-t border-blue-100">
+      <div className="p-3 border-t border-sidebar-border">
         <button
           onClick={() => logout()}
-          className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+          className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
         >
           <LogOut className="h-4.5 w-4.5" />
           Đăng xuất

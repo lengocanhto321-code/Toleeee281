@@ -3,106 +3,235 @@ API Routes for HR Reports (Thong Ke Bao Cao)
 """
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 
 from fastapi import Request
 
+from libs.result import is_err
 from src.api.auth import UserContext, require_permission
 from src.api.depends import get_unit_of_work
-from src.domain.models.audit_log import AuditLog
 from src.service.unit_of_work import UnitOfWork
-from src.service.bao_cao_service import BaoCaoService
+from src.api.error import ServerError
+from src.api.schemas.common import APIResponse
+from src.app.usecases.bao_cao import (
+    GetTongQuanBaoCaoUseCase,
+    GetHopDongSapHetHanUseCase,
+    GetDiMuonBaoCaoUseCase,
+    GetLuongSoSanhUseCase,
+    GetKhenThuongUseCase,
+    GetXuHuongUseCase,
+    BaoCaoBienDongUseCase,
+    BaoCaoDemoGraphicsUseCase,
+    BaoCaoTrinhDoUseCase,
+    BaoCaoChamCongTongHopUseCase,
+    BaoCaoNghiPhepUseCase,
+    BaoCaoChiPhiUseCase,
+    BaoCaoThueBHXHUseCase,
+    LogExportBaoCaoUseCase,
+    LogExportCommand,
+)
 
-router = APIRouter(prefix="/bao-cao", tags=["Báo Cáo"])
+router = APIRouter(prefix="/bao-cao")
+
+
+def _derive_month_year(start_date: Optional[date], end_date: Optional[date]):
+    ref = end_date or start_date or date.today()
+    return ref.month, ref.year
 
 
 @router.get("/tong-quan")
 async def get_tong_quan(
-    thang: int = Query(default=None),
-    nam: int = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get executive dashboard KPIs"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        result = await service.get_tong_quan(thang or 1, nam or 2026)
-        return {"message": "OK", "data": result}
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = GetTongQuanBaoCaoUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
 
 
 @router.get("/hop-dong/sap-het-han")
 async def get_hop_dong_sap_het_han(
-    ngay_chieu: date = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     phong_ban_id: Optional[str] = Query(default=None),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get contracts expiring within 30 days"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        ngay_chieu = ngay_chieu or date.today()
-        result = await service.get_hop_dong_sap_het_han(ngay_chieu, phong_ban_id)
-        return {"message": "OK", "data": result}
+    ngay_chieu = end_date or date.today()
+    use_case = GetHopDongSapHetHanUseCase(uow)
+    result = await use_case.execute(ngay_chieu=ngay_chieu, phong_ban_id=phong_ban_id)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
 
 
 @router.get("/cham-cong/di-muon")
 async def get_di_muon(
-    thang: int = Query(default=None),
-    nam: int = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get late attendance statistics"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        now = datetime.now()
-        result = await service.get_di_muon(thang or now.month, nam or now.year)
-        return {"message": "OK", "data": result}
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = GetDiMuonBaoCaoUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
 
 
 @router.get("/luong/so-sanh")
 async def get_luong_so_sanh(
-    thang: int = Query(default=None),
-    nam: int = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get salary comparison data"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        now = datetime.now()
-        result = await service.get_luong_so_sanh(thang or now.month, nam or now.year)
-        return {"message": "OK", "data": result}
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = GetLuongSoSanhUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
 
 
 @router.get("/khen-thuong")
 async def get_khen_thuong(
-    thang: int = Query(default=None),
-    nam: int = Query(default=None),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get rewards and disciplines statistics"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        now = datetime.now()
-        result = await service.get_khen_thuong(thang or now.month, nam or now.year)
-        return {"message": "OK", "data": result}
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = GetKhenThuongUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
 
 
 @router.get("/xu-huong")
 async def get_xu_huong(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
     so_thang: int = Query(default=12),
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Get trend data for last N months"""
-    async with uow:
-        service = BaoCaoService(uow.session)
-        result = await service.get_xu_huong(so_thang)
-        return {"message": "OK", "data": result}
+    use_case = GetXuHuongUseCase(uow)
+    result = await use_case.execute(so_thang=so_thang)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value}
+
+
+@router.get("/nhan-su/bien-dong")
+async def get_nhan_su_bien_dong(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = BaoCaoBienDongUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/nhan-su/demo")
+async def get_nhan_su_demo(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    use_case = BaoCaoDemoGraphicsUseCase(uow)
+    result = await use_case.execute(phong_ban_id=None)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/nhan-su/trinh-do")
+async def get_nhan_su_trinh_do(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    use_case = BaoCaoTrinhDoUseCase(uow)
+    result = await use_case.execute(phong_ban_id=None)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/cham-cong/tong-hop")
+async def get_cham_cong_tong_hop(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = BaoCaoChamCongTongHopUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/cham-cong/nghi-phep")
+async def get_cham_cong_nghi_phep(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = BaoCaoNghiPhepUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/luong/chi-phi")
+async def get_luong_chi_phi(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = BaoCaoChiPhiUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
+
+
+@router.get("/luong/thue-bhxh")
+async def get_luong_thue_bhxh(
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    current_user: UserContext = Depends(require_permission("thong_ke:read")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    thang, nam = _derive_month_year(start_date, end_date)
+    use_case = BaoCaoThueBHXHUseCase(uow)
+    result = await use_case.execute(thang=thang, nam=nam)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+    return {"message": "OK", "data": result.value.__dict__}
 
 
 @router.post("/export", summary="Ghi log xuất báo cáo")
@@ -115,16 +244,13 @@ async def log_export(
     current_user: UserContext = Depends(require_permission("thong_ke:read")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    async with uow:
-        audit_log = AuditLog(
-            tai_khoan_id=current_user.id,
-            hanh_dong="EXPORT",
-            bang_du_lieu="bao_cao",
-            ban_ghi_id=None,
-            du_lieu_cu=None,
-            du_lieu_moi={"loai": loai_bao_cao, "dinh_dang": dinh_dang},
-            ghi_chu=f"Xuất báo cáo {loai_bao_cao} ({dinh_dang})",
-        )
-        await uow.audit_log_repository.create(audit_log)
-        await uow.commit()
+    command = LogExportCommand(
+        tai_khoan_id=current_user.id,
+        loai_bao_cao=loai_bao_cao,
+        dinh_dang=dinh_dang,
+    )
+    use_case = LogExportBaoCaoUseCase(uow)
+    result = await use_case.execute(command)
+    if is_err(result):
+        raise ServerError(base_error=result.value)
     return {"message": "Đã ghi log xuất báo cáo", "data": None}

@@ -1,19 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { 
-  GraduationCap, 
-  Award, 
-  FileText, 
-  Laptop, 
-  Languages, 
+import {
+  GraduationCap,
+  Award,
+  FileText,
+  Laptop,
+  Languages,
   BookOpen,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
 } from "lucide-react"
 import { useDeleteBangCap } from "@/hooks/nhan-vien/use-sub-modules"
 import { BangCapDialog } from "./sub-module"
@@ -31,27 +30,26 @@ function formatYear(year?: number) {
   return year.toString()
 }
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="text-sm font-medium text-slate-900">{value || <span className="text-slate-300">—</span>}</p>
+    <div className="space-y-0.5">
+      <p className="detail-field-label">{label}</p>
+      <p className="detail-field-value">{value || <span className="text-slate-300">—</span>}</p>
     </div>
   )
 }
 
 function DegreeBadge({ degree }: { degree: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    dai_hoc: { label: "Đại học", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    dai_hoc: { label: "Đại học", className: "bg-blue-50 text-blue-700 border-blue-200" },
     cao_dang: { label: "Cao đẳng", className: "bg-blue-50 text-blue-700 border-blue-200" },
     trung_cap: { label: "Trung cấp", className: "bg-cyan-50 text-cyan-700 border-cyan-200" },
     chung_chi: { label: "Chứng chỉ", className: "bg-violet-50 text-violet-700 border-violet-200" },
     bang_khac: { label: "Bằng khác", className: "bg-slate-50 text-slate-600 border-slate-200" },
   }
   const cfg = config[degree] || { label: degree, className: "bg-slate-50 text-slate-600 border-slate-200" }
-  
   return (
-    <Badge variant="outline" className={cfg.className}>
+    <Badge variant="outline" className={`text-[10px] ${cfg.className}`}>
       {cfg.label}
     </Badge>
   )
@@ -66,10 +64,9 @@ function CertificateBadge({ type }: { type: string }) {
   }
   const cfg = config[type] || { label: type, className: "bg-slate-50 text-slate-600 border-slate-200", icon: FileText }
   const Icon = cfg.icon
-  
   return (
-    <Badge variant="outline" className={cfg.className}>
-      <Icon className="h-3 w-3 mr-1" />
+    <Badge variant="outline" className={`text-[10px] ${cfg.className}`}>
+      <Icon className="h-3 w-3 mr-0.5" />
       {cfg.label}
     </Badge>
   )
@@ -78,6 +75,8 @@ function CertificateBadge({ type }: { type: string }) {
 export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }: NhanVienTrainingTabProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<BangCap | null>(null)
+  const [dialogDefaultLoai, setDialogDefaultLoai] = useState<string | undefined>(undefined)
+  const [dialogTitle, setDialogTitle] = useState<string | undefined>(undefined)
   const deleteMutation = useDeleteBangCap(nhanVien.id)
 
   const trinhDoDaoTao = bangCaps.find(b => b.loai === "dai_hoc")
@@ -88,6 +87,15 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
 
   const handleAdd = () => {
     setEditingItem(null)
+    setDialogDefaultLoai(undefined)
+    setDialogTitle(undefined)
+    setDialogOpen(true)
+  }
+
+  const handleAddChungChi = (loai: string, title: string) => {
+    setEditingItem(null)
+    setDialogDefaultLoai(loai)
+    setDialogTitle(title)
     setDialogOpen(true)
   }
 
@@ -103,90 +111,84 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
   }
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <GraduationCap className="h-5 w-5 text-indigo-600" />
+    <div className="space-y-4 animate-detail-fade">
+      <div className="detail-section p-5 accent-border-indigo">
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-50">
+            <GraduationCap className="h-3.5 w-3.5 text-indigo-500" />
           </div>
-          <div>
-            <h3 className="font-semibold text-slate-900">Trình độ đào tạo</h3>
-            <p className="text-xs text-slate-500">Quá trình học tập và đào tạo</p>
-          </div>
+          <h3 className="text-sm font-semibold text-slate-800">Trình độ đào tạo</h3>
         </div>
 
         {trinhDoDaoTao ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Field label="Trình độ" value={<DegreeBadge degree={trinhDoDaoTao.loai} />} />
-            <Field label="Chuyên ngành" value={trinhDoDaoTao.chuyen_nganh || "—"} />
-            <Field label="Trường" value={trinhDoDaoTao.truong || "—"} />
-            <Field label="Năm tốt nghiệp" value={formatYear(trinhDoDaoTao.nam_tot_nghiep)} />
-            {trinhDoDaoTao.xep_loai && <Field label="Xếp loại" value={trinhDoDaoTao.xep_loai} />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
+            <DetailField label="Trình độ" value={<DegreeBadge degree={trinhDoDaoTao.loai} />} />
+            <DetailField label="Chuyên ngành" value={trinhDoDaoTao.chuyen_nganh || "—"} />
+            <DetailField label="Trường" value={trinhDoDaoTao.truong || "—"} />
+            <DetailField label="Năm tốt nghiệp" value={formatYear(trinhDoDaoTao.nam_tot_nghiep)} />
+            {trinhDoDaoTao.xep_loai && <DetailField label="Xếp loại" value={trinhDoDaoTao.xep_loai} />}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-8 text-slate-400">
-            <div className="text-center">
-              <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Chưa cập nhật trình độ đào tạo</p>
-            </div>
+          <div className="dot-grid-bg rounded-xl py-8 flex flex-col items-center">
+            <GraduationCap className="h-8 w-8 text-slate-300 mb-2" />
+            <p className="text-sm text-slate-400">Chưa cập nhật trình độ đào tạo</p>
           </div>
         )}
-      </Card>
+      </div>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-              <Award className="h-5 w-5 text-emerald-600" />
+      <div className="detail-section overflow-hidden">
+        <div className="p-5 pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50">
+                <Award className="h-3.5 w-3.5 text-emerald-500" />
+              </div>
+              <h3 className="text-sm font-semibold text-slate-800">Bằng cấp, chứng chỉ</h3>
+              <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-600">
+                {bangCaps.length}
+              </Badge>
             </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Bằng cấp, chứng chỉ</h3>
-              <p className="text-xs text-slate-500">Các văn bằng đã có</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-slate-100">
-              {bangCaps.length} văn bằng
-            </Badge>
-            <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
-              <Plus className="h-3.5 w-3.5" />
+            <Button size="sm" className="gap-1.5 cursor-pointer h-7 text-[11px]" onClick={handleAdd}>
+              <Plus className="h-3 w-3" />
               Thêm
             </Button>
           </div>
         </div>
 
         {bangCaps.length > 0 ? (
-          <div className="space-y-3">
+          <div className="px-5 pb-5 space-y-2">
             {bangCaps.map((bangCap, index) => (
-              <div key={bangCap.id || index} className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+              <div
+                key={bangCap.id || index}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all group animate-detail-slide"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100">
                     <BookOpen className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-slate-900">{bangCap.ten}</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium text-slate-900">{bangCap.ten}</span>
                       <DegreeBadge degree={bangCap.loai} />
                     </div>
-                    <p className="text-xs text-slate-500">
-                      {bangCap.chuyen_nganh && `Chuyên ngành: ${bangCap.chuyen_nganh}`}
-                      {bangCap.truong && ` • ${bangCap.truong}`}
-                      {bangCap.nam_tot_nghiep && ` • ${bangCap.nam_tot_nghiep}`}
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {[bangCap.chuyen_nganh, bangCap.truong, bangCap.nam_tot_nghiep].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   {bangCap.xep_loai && (
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
                       {bangCap.xep_loai}
                     </Badge>
                   )}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer" onClick={() => handleEdit(bangCap)}>
-                      <Pencil className="h-3.5 w-3.5" />
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 cursor-pointer" onClick={() => handleEdit(bangCap)}>
+                      <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 cursor-pointer" onClick={() => handleDelete(bangCap.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 cursor-pointer" onClick={() => handleDelete(bangCap.id)}>
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -194,104 +196,41 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-            <div className="text-center">
-              <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="mb-3">Chưa có bằng cấp nào được cập nhật</p>
-              <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
-                <Plus className="h-3.5 w-3.5" />
+          <div className="px-5 pb-5">
+            <div className="dot-grid-bg rounded-xl py-10 flex flex-col items-center">
+              <Award className="h-8 w-8 text-slate-300 mb-2" />
+              <p className="text-sm text-slate-400 mb-3">Chưa có bằng cấp nào</p>
+              <Button size="sm" variant="outline" className="gap-1.5 cursor-pointer h-8 text-[11px]" onClick={handleAdd}>
+                <Plus className="h-3 w-3" />
                 Thêm bằng cấp
               </Button>
             </div>
           </div>
         )}
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
-              <Languages className="h-5 w-5 text-violet-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Ngoại ngữ</h3>
-              <p className="text-xs text-slate-500">Chứng chỉ ngoại ngữ</p>
-            </div>
-          </div>
-          {ngoaiNgus.length > 0 ? (
-            <div className="space-y-3">
-              {ngoaiNgus.map((nn, index) => (
-                <div key={nn.id || index} className="flex items-center justify-between p-3 rounded-lg bg-violet-50/50 border border-violet-100">
-                  <div>
-                    <p className="font-medium text-slate-900">{nn.ten}</p>
-                    {nn.hang_cap && <p className="text-xs text-slate-500">Hạng: {nn.hang_cap}</p>}
-                  </div>
-                  <div className="text-right">
-                    {nn.nam_cap && <p className="text-xs font-medium text-violet-600">{nn.nam_cap}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400 text-center py-4">Chưa cập nhật</p>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-              <Laptop className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Tin học</h3>
-              <p className="text-xs text-slate-500">Chứng chỉ tin học</p>
-            </div>
-          </div>
-          {tinHocs.length > 0 ? (
-            <div className="space-y-3">
-              {tinHocs.map((th, index) => (
-                <div key={th.id || index} className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 border border-blue-100">
-                  <div>
-                    <p className="font-medium text-slate-900">{th.ten}</p>
-                    {th.hang_cap && <p className="text-xs text-slate-500">Hạng: {th.hang_cap}</p>}
-                  </div>
-                  <div className="text-right">
-                    {th.nam_cap && <p className="text-xs font-medium text-blue-600">{th.nam_cap}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400 text-center py-4">Chưa cập nhật</p>
-          )}
-        </Card>
       </div>
 
       {(nghiepVus.length > 0 || khacs.length > 0) && (
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-              <FileText className="h-5 w-5 text-amber-600" />
+        <div className="detail-section p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-50">
+              <FileText className="h-3.5 w-3.5 text-amber-500" />
             </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Chứng chỉ khác</h3>
-              <p className="text-xs text-slate-500">Chứng chỉ nghiệp vụ và các chứng chỉ khác</p>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-800">Chứng chỉ khác</h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[...nghiepVus, ...khacs].map((cc, index) => (
-              <div key={cc.id || index} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+              <div key={cc.id || index} className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 hover:border-slate-200 transition-colors">
                 <div className="flex items-center gap-3">
                   <CertificateBadge type={cc.loai} />
                   <div>
-                    <p className="font-medium text-slate-900">{cc.ten}</p>
-                    {cc.nam_cap && <p className="text-xs text-slate-500">Năm cấp: {cc.nam_cap}</p>}
+                    <p className="text-sm font-medium text-slate-800">{cc.ten}</p>
+                    {cc.nam_cap && <p className="text-[11px] text-slate-400">Năm cấp: {cc.nam_cap}</p>}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       )}
 
       <BangCapDialog
@@ -299,6 +238,8 @@ export function NhanVienTrainingTab({ nhanVien, bangCaps = [], chungChis = [] }:
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         editingItem={editingItem}
+        defaultLoai={dialogDefaultLoai}
+        title={dialogTitle}
       />
     </div>
   )

@@ -148,7 +148,7 @@ class UploadService:
 
         safe_original = sanitize_filename(original_filename)
         timestamp = get_utc_now().strftime("%Y%m%d_%H%M%S")
-        unique_id = uuid.uuid4().hex[:8]
+        unique_id = uuid.uuid4().hex[:8].upper()
         file_ext = Path(safe_original).suffix.lower()
         new_filename = f"{Path(safe_original).stem}_{timestamp}_{unique_id}{file_ext}"
 

@@ -91,8 +91,8 @@ export function ChucVuSidebarPanel({ onAdd }: ChucVuSidebarPanelProps) {
                 <TrendingUp className="h-3.5 w-3.5 text-amber-600" />
                 <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">Phụ cấp cao nhất</span>
               </div>
-              <div className="font-semibold text-slate-900">{highestPaid.ten_chuc_vu}</div>
-              <div className="text-xs text-muted-foreground">Hệ số: {highestPaid.he_so_phu_cap} • {LOAI_LABELS[highestPaid.loai]}</div>
+              <div className="font-semibold text-foreground truncate">{highestPaid.ten_chuc_vu}</div>
+              <div className="text-xs text-muted-foreground truncate">Hệ số: {highestPaid.he_so_phu_cap} • {LOAI_LABELS[highestPaid.loai]}</div>
             </div>
           </div>
           <Separator />
@@ -118,19 +118,19 @@ export function ChucVuSidebarPanel({ onAdd }: ChucVuSidebarPanelProps) {
                 className="group rounded-lg border border-transparent bg-sidebar p-2.5 transition-all hover:border-sidebar-accent-foreground/10 hover:bg-sidebar-accent"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
-                      cv.loai === "quan_ly" ? "bg-amber-100 text-amber-700" :
-                      cv.loai === "giao_vien" ? "bg-emerald-100 text-emerald-700" :
-                      "bg-blue-100 text-blue-700"
-                    }`}>
-                      <Award className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{cv.ten_chuc_vu}</p>
-                      <p className="text-[10px] text-muted-foreground">Cấp {cv.cap_bac}</p>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
+                  cv.loai === "quan_ly" ? "bg-amber-100 text-amber-700" :
+                  cv.loai === "giao_vien" ? "bg-emerald-100 text-emerald-700" :
+                  "bg-accent text-primary"
+                }`}>
+                  <Award className="h-3.5 w-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{cv.ten_chuc_vu}</p>
+                  <p className="text-[10px] text-muted-foreground">Cấp {cv.cap_bac}</p>
+                </div>
+              </div>
                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
                     {cv.count} NV
                   </Badge>
@@ -156,7 +156,7 @@ export function ChucVuSidebarPanel({ onAdd }: ChucVuSidebarPanelProps) {
                 <div className={`h-2 w-2 rounded-full ${
                   cv.loai === "quan_ly" ? "bg-amber-500" :
                   cv.loai === "giao_vien" ? "bg-emerald-500" :
-                  "bg-blue-500"
+                  "bg-primary"
                 }`} />
                 <span className="truncate">{cv.ten_chuc_vu}</span>
               </div>

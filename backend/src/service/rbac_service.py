@@ -83,6 +83,7 @@ PERMISSION_CODES = {
     # Chấm công - Nhân viên
     "cham_cong:view_own": "Xem chấm công cá nhân",
     "cham_cong:check_in": "Check-in/Check-out bằng QR",
+    "cham_cong:approve": "Duyệt đơn xin nghỉ (chấm công)",
     # Nghỉ phép - Quản lý
     "nghi_phep:read": "Xem đơn nghỉ phép",
     "nghi_phep:approve": "Duyệt đơn nghỉ phép",
@@ -90,6 +91,7 @@ PERMISSION_CODES = {
     # Nghỉ phép - Nhân viên
     "nghi_phep:create": "Tạo đơn nghỉ phép",
     "nghi_phep:view_own": "Xem đơn nghỉ phép cá nhân",
+    "nghi_phep:delete": "Xóa đơn nghỉ phép",
     # Dashboard
     "dashboard:view_admin": "Xem dashboard quản trị",
     "dashboard:view_employee": "Xem dashboard nhân viên",
@@ -129,9 +131,12 @@ ROLE_PERMISSIONS = {
         "cham_cong:read",
         "cham_cong:manage",
         "cham_cong:export",
+        "cham_cong:check_in",
+        "cham_cong:approve",
         "nghi_phep:read",
         "nghi_phep:approve",
         "nghi_phep:manage",
+        "nghi_phep:delete",
         "dashboard:view_admin",
         "dashboard:view_employee",
         "profile:read",

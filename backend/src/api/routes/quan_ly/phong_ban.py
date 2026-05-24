@@ -33,7 +33,7 @@ from src.app.usecases.phong_ban.get_phong_ban_uc import (
 
 from src.api.error import ClientError, ServerError
 
-router = APIRouter(tags=["Phong Ban"])
+router = APIRouter()
 
 
 @router.post(

@@ -2,14 +2,26 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Path, status
 from pydantic import BaseModel
 
+from libs.result import is_err
 from src.api.auth import UserContext, require_permission
 from src.api.depends import get_unit_of_work
 from src.service.unit_of_work import UnitOfWork
 from src.api.error import ClientError, ServerError
 from src.api.schemas.common import APIResponse
+from src.app.usecases.cau_hinh_nghi_phep import (
+    GetListCauHinhNghiPhepUseCase,
+    CreateCauHinhNghiPhepUseCase,
+    CreateCauHinhCommand,
+    UpdateCauHinhNghiPhepUseCase,
+    UpdateCauHinhCommand,
+    DeleteCauHinhNghiPhepUseCase,
+    DeleteCauHinhCommand,
+    InitAnnualLeaveUseCase,
+    InitAnnualLeaveCommand,
+)
 
 
-router = APIRouter(tags=["Cấu hình nghỉ phép"])
+router = APIRouter()
 
 
 class CauHinhNghiPhepRequest(BaseModel):
@@ -33,25 +45,13 @@ async def get_list(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Lấy danh sách cấu hình nghỉ phép."""
-    async with uow:
-        items = await uow.cau_hinh_nghi_phep_repository.find_all()
-        return {
-            "message": "Lấy danh sách thành công",
-            "data": [
-                {
-                    "id": item.id,
-                    "loai_nghi": item.loai_nghi,
-                    "ten_loai": item.ten_loai,
-                    "so_ngay_moi_nam": item.so_ngay_moi_nam,
-                    "so_ngay_toi_da_mot_lan": item.so_ngay_toi_da_mot_lan,
-                    "can_giay_to": item.can_giay_to,
-                    "bat_buoc_ghi_ly_do": item.bat_buoc_ghi_ly_do,
-                    "trang_thai": item.trang_thai,
-                    "ghi_chu": item.ghi_chu,
-                }
-                for item in items
-            ],
-        }
+    use_case = GetListCauHinhNghiPhepUseCase(uow)
+    result = await use_case.execute()
+
+    if is_err(result):
+        raise ServerError(base_error=result.value)
+
+    return APIResponse(message="Lấy danh sách thành công", data=result.value.items)
 
 
 @router.post("")
@@ -61,30 +61,27 @@ async def create(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Tạo cấu hình nghỉ phép."""
-    async with uow:
-        existing = await uow.cau_hinh_nghi_phep_repository.find_by_loai(body.loai_nghi)
-        if existing:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "exists", "message": "Loại nghỉ phép đã tồn tại"},
-                )(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    command = CreateCauHinhCommand(
+        loai_nghi=body.loai_nghi,
+        ten_loai=body.ten_loai,
+        so_ngay_moi_nam=body.so_ngay_moi_nam,
+        so_ngay_toi_da_mot_lan=body.so_ngay_toi_da_mot_lan,
+        can_giay_to=body.can_giay_to,
+        bat_buoc_ghi_ly_do=body.bat_buoc_ghi_ly_do,
+        trang_thai=body.trang_thai,
+        ghi_chu=body.ghi_chu,
+    )
 
-        item = await uow.cau_hinh_nghi_phep_repository.create(
-            loai_nghi=body.loai_nghi,
-            ten_loai=body.ten_loai,
-            so_ngay_moi_nam=body.so_ngay_moi_nam,
-            so_ngay_toi_da_mot_lan=body.so_ngay_toi_da_mot_lan,
-            can_giay_to=body.can_giay_to,
-            bat_buoc_ghi_ly_do=body.bat_buoc_ghi_ly_do,
-            trang_thai=body.trang_thai,
-            ghi_chu=body.ghi_chu,
-        )
+    use_case = CreateCauHinhNghiPhepUseCase(uow)
+    result = await use_case.execute(command)
 
-        return {"message": "Tạo cấu hình thành công", "data": {"id": item.id}}
+    if is_err(result):
+        error = result.value
+        if error.code == "exists":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        raise ServerError(base_error=error)
+
+    return APIResponse(message="Tạo cấu hình thành công", data={"id": result.value.id})
 
 
 @router.put("/{id}")
@@ -95,29 +92,27 @@ async def update(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Cập nhật cấu hình nghỉ phép."""
-    async with uow:
-        item = await uow.cau_hinh_nghi_phep_repository.update(
-            id=id,
-            ten_loai=body.ten_loai,
-            so_ngay_moi_nam=body.so_ngay_moi_nam,
-            so_ngay_toi_da_mot_lan=body.so_ngay_toi_da_mot_lan,
-            can_giay_to=body.can_giay_to,
-            bat_buoc_ghi_ly_do=body.bat_buoc_ghi_ly_do,
-            trang_thai=body.trang_thai,
-            ghi_chu=body.ghi_chu,
-        )
+    command = UpdateCauHinhCommand(
+        id=id,
+        ten_loai=body.ten_loai,
+        so_ngay_moi_nam=body.so_ngay_moi_nam,
+        so_ngay_toi_da_mot_lan=body.so_ngay_toi_da_mot_lan,
+        can_giay_to=body.can_giay_to,
+        bat_buoc_ghi_ly_do=body.bat_buoc_ghi_ly_do,
+        trang_thai=body.trang_thai,
+        ghi_chu=body.ghi_chu,
+    )
 
-        if not item:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy cấu hình"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    use_case = UpdateCauHinhNghiPhepUseCase(uow)
+    result = await use_case.execute(command)
 
-        return {"message": "Cập nhật thành công", "data": {"id": item.id}}
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        raise ServerError(base_error=error)
+
+    return APIResponse(message="Cập nhật thành công", data={"id": result.value.id})
 
 
 @router.delete("/{id}")
@@ -127,20 +122,18 @@ async def delete(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Xóa cấu hình nghỉ phép."""
-    async with uow:
-        success = await uow.cau_hinh_nghi_phep_repository.delete(id)
+    command = DeleteCauHinhCommand(id=id)
 
-        if not success:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy cấu hình"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    use_case = DeleteCauHinhNghiPhepUseCase(uow)
+    result = await use_case.execute(command)
 
-        return {"message": "Xóa cấu hình thành công"}
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        raise ServerError(base_error=error)
+
+    return APIResponse(message="Xóa cấu hình thành công")
 
 
 @router.post("/init-annual")
@@ -150,43 +143,15 @@ async def init_annual_leave(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Khởi tạo số ngày phép năm mới cho tất cả nhân viên."""
-    async with uow:
-        from src.repository.nhan_vien_repository import NhanVienRepository
-        from src.repository.so_ngay_phep_repository import SoNgayPhepRepository
-        from src.repository.cau_hinh_nghi_phep_repository import (
-            CauHinhNghiPhepRepository,
-        )
+    command = InitAnnualLeaveCommand(nam=body.nam)
 
-        nhan_vien_repo = NhanVienRepository(session=uow.session)
-        so_ngay_phep_repo = SoNgayPhepRepository(session=uow.session)
-        cau_hinh_repo = CauHinhNghiPhepRepository(session=uow.session)
+    use_case = InitAnnualLeaveUseCase(uow)
+    result = await use_case.execute(command)
 
-        phep_nam_config = await cau_hinh_repo.find_by_loai("phep_nam")
-        so_ngay = phep_nam_config.so_ngay_moi_nam if phep_nam_config else 12.0
+    if is_err(result):
+        raise ServerError(base_error=result.value)
 
-        nhan_viens = await nhan_vien_repo.find_by_trang_thai("dang_lam")
-
-        created = 0
-        skipped = 0
-
-        for nv in nhan_viens:
-            existing = await so_ngay_phep_repo.find_by_nhan_vien_and_year(
-                nv.id, body.nam
-            )
-            if existing:
-                skipped += 1
-                continue
-
-            await so_ngay_phep_repo.create(
-                nhan_vien_id=nv.id,
-                nam=body.nam,
-                phep_nam_duoc_phep=so_ngay,
-                phep_nam_da_su_dung=0.0,
-                phep_nam_con_lai=so_ngay,
-            )
-            created += 1
-
-        return {
-            "message": f"Khởi tạo thành công",
-            "data": {"created": created, "skipped": skipped},
-        }
+    return APIResponse(
+        message="Khởi tạo thành công",
+        data={"created": result.value.created, "skipped": result.value.skipped},
+    )

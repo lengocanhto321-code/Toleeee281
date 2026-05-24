@@ -8,6 +8,7 @@ from libs.result import Result, Error, Return
 from src.domain.models.nhan_vien import NhanVien
 from src.domain.models.cong_tac import CongTac
 from src.domain.models.hop_dong import HopDong
+from src.domain.models.luong import Luong
 from src.domain.models.tai_khoan import TaiKhoan
 from src.domain.models.audit_log import AuditLog
 from src.service.auth_service import AuthService
@@ -265,7 +266,9 @@ class CreateNhanVienUseCase:
                     is_primary=True,
                     trang_thai="dang_cong_tac",
                     he_so_luong=command.data.he_so_luong,
-                    bac_luong=command.data.bac_luong,
+                    bac_luong=str(command.data.bac_luong)
+                    if command.data.bac_luong is not None
+                    else None,
                 )
                 created_ct = await cong_tac_repo.create(cong_tac)
 
@@ -315,6 +318,32 @@ class CreateNhanVienUseCase:
                     ghi_chu=f"Tạo hợp đồng khi tạo nhân viên {created_nv.ma_nhan_vien}",
                 )
                 await audit_repo.create(audit_hd)
+
+            # Auto-create Luong record
+            luong_repo = uow.luong_repository
+            ngay_hieu_luc = command.data.ngay_vao_lam or get_utc_now().date()
+            new_luong = Luong(
+                nhan_vien_id=created_nv.id,
+                ma_ngach=command.data.ngach_luong,
+                bac=command.data.bac_luong,
+                he_so_luong=command.data.he_so_luong or 1.00,
+                so_nam_tham_nien=command.data.so_nam_tham_nien or 0,
+                ty_le_pc_uu_dai=30.00,
+                he_so_khu_vuc=0.00,
+                luong_co_ban=0,
+                phu_cap_chuc_vu=command.data.phu_cap_chuc_vu or 0,
+                phu_cap_tham_nien=0,
+                phu_cap_uu_dai=0,
+                phu_cap_khu_vuc=0,
+                phu_cap_tham_nien_vuot_khung=0,
+                phu_cap_khac=0,
+                bhxh=0,
+                bhyt=0,
+                thue_tncn=0,
+                khau_tru_khac=0,
+                hieu_luc_tu=ngay_hieu_luc,
+            )
+            await luong_repo.create(new_luong)
 
             # For response mapping
             resp = serialize_model_to_dict(created_nv)

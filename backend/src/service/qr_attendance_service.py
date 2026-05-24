@@ -8,11 +8,16 @@ import hashlib
 import base64
 import os
 import re
+import secrets
 from datetime import date, datetime, time
 from libs.datetime import get_utc_now
 from typing import Optional, Dict, Tuple
 
 SECRET_KEY = os.environ.get("QR_SECRET_KEY", "hr-management-qr-secret-key-2026")
+
+
+def generate_pin() -> str:
+    return f"{secrets.randbelow(1000000):06d}"
 
 
 def parse_dms(dms_str: str) -> Optional[float]:
@@ -187,6 +192,9 @@ class QRAttendanceService:
             (is_valid, error_message)
         """
         check_time = thoi_gian.time()
+
+        if check_time < gio_bat_dau:
+            return False, f"Chưa đến giờ check-in (trước {gio_bat_dau.strftime('%H:%M')})"
 
         if check_time < time(5, 0):
             return False, "Chưa đến giờ check-in"

@@ -23,7 +23,6 @@ interface CauHinhLuongDialogProps {
   onOpenChange: (open: boolean) => void
   isPending: boolean
   onSubmit: (data: {
-    ten_cau_hinh: string
     ngay_ap_dung: string
     luong_co_so: number
     he_so_dac_thu: number
@@ -32,6 +31,7 @@ interface CauHinhLuongDialogProps {
     ty_le_bhtn: number
     muc_giam_tru_ban_than: number
     muc_giam_tru_nguoi_phu_thuoc: number
+    ghi_chu?: string
   }) => void
 }
 
@@ -44,7 +44,7 @@ export function CauHinhLuongDialog({
   const today = format(new Date(), "yyyy-MM-dd")
   
   const [formData, setFormData] = useState({
-    ten_cau_hinh: "",
+    ghi_chu: "",
     ngay_ap_dung: today,
     luong_co_so: "1800000",
     he_so_dac_thu: "1.15",
@@ -61,7 +61,7 @@ export function CauHinhLuongDialog({
     e.preventDefault()
     
     const numericData = {
-      ten_cau_hinh: formData.ten_cau_hinh,
+      ghi_chu: formData.ghi_chu,
       ngay_ap_dung: formData.ngay_ap_dung,
       luong_co_so: parseFloat(formData.luong_co_so) || 0,
       he_so_dac_thu: parseFloat(formData.he_so_dac_thu) || 0,
@@ -99,7 +99,7 @@ export function CauHinhLuongDialog({
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-indigo-600" />
+            <Settings className="h-5 w-5 text-blue-600" />
             Cấu hình hệ thống lương
           </DialogTitle>
           <DialogDescription>
@@ -116,17 +116,13 @@ export function CauHinhLuongDialog({
             <Separator />
             
             <div className="space-y-1.5">
-              <Label htmlFor="ten_cau_hinh">Tên cấu hình</Label>
+              <Label htmlFor="ghi_chu">Ghi chú</Label>
               <Input
-                id="ten_cau_hinh"
-                value={formData.ten_cau_hinh}
-                onChange={(e) => update("ten_cau_hinh", e.target.value)}
+                id="ghi_chu"
+                value={formData.ghi_chu}
+                onChange={(e) => update("ghi_chu", e.target.value)}
                 placeholder="VD: Cấu hình 2026"
-                className={errors.ten_cau_hinh ? "border-red-500" : ""}
               />
-              {errors.ten_cau_hinh && (
-                <p className="text-xs text-red-500">{errors.ten_cau_hinh}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
@@ -282,7 +278,7 @@ export function CauHinhLuongDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button type="submit" disabled={isPending} className="bg-blue-600 hover:bg-blue-700">
               {isPending ? "Đang lưu..." : "Lưu cấu hình"}
             </Button>
           </DialogFooter>

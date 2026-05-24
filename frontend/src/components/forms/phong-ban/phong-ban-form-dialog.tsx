@@ -20,7 +20,6 @@ import { usePhongBanAll } from "@/hooks/phong-ban/use-phong-ban-query"
 import { Combobox } from "@/components/ui/combobox"
 
 const INITIAL_FORM: PhongBanFormData = {
-  ma_phong_ban: "",
   ten_phong_ban: "",
   loai: "chuyen_mon",
   trang_thai: true,
@@ -134,7 +133,7 @@ export function PhongBanFormDialog({
                     : "border-border hover:border-primary/50 hover:bg-muted/50"
                 )}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-indigo-100 text-indigo-700">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-100 text-blue-700">
                   <Building2 className="h-4 w-4" />
                 </div>
                 <div>
@@ -155,21 +154,21 @@ export function PhongBanFormDialog({
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
-                  Mã phòng ban <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    required
-                    value={formData.ma_phong_ban}
-                    onChange={(e) => setFormData({ ...formData, ma_phong_ban: e.target.value.toUpperCase() })}
-                    placeholder="PB001"
-                    className="pl-9 uppercase"
-                  />
+              {editingPhongBan && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Mã phòng ban
+                  </label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      value={formData.ma_phong_ban}
+                      className="pl-9 uppercase bg-muted"
+                      readOnly
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">
@@ -217,7 +216,7 @@ export function PhongBanFormDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="cursor-pointer">
               Hủy bỏ
             </Button>
-            <Button type="submit" disabled={isPending || !formData.ma_phong_ban || !formData.ten_phong_ban} className="cursor-pointer">
+            <Button type="submit" disabled={isPending || !formData.ten_phong_ban} className="cursor-pointer">
               {editingPhongBan ? "Cập nhật" : "Thêm mới"}
             </Button>
           </DialogFooter>

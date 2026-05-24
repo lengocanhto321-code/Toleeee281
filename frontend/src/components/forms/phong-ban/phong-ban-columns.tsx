@@ -67,7 +67,7 @@ export function createPhongBanColumns({ onEdit, onDelete }: ColumnActions): Colu
                         const loai = row.getValue("loai") as string
                         const isHanhChinh = loai === "hanh_chinh"
                         return (
-                              <Badge variant="outline" className={isHanhChinh ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-amber-50 text-amber-700 border-amber-200"}>
+                              <Badge variant="outline" className={isHanhChinh ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-amber-50 text-amber-700 border-amber-200"}>
                                     {isHanhChinh ? <Landmark className="mr-1.5 h-3 w-3" /> : <Building2 className="mr-1.5 h-3 w-3" />}
                                     {isHanhChinh ? "Hành chính" : "Chuyên môn"}
                               </Badge>

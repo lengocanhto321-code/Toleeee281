@@ -89,7 +89,7 @@ export function Combobox({
             className="border-0 h-9 focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
-        <div className="max-h-60 overflow-y-auto p-1">
+        <div className="max-h-60 overflow-y-auto p-1" onWheel={(e) => e.stopPropagation()}>
           {filteredOptions.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
               {emptyMessage}

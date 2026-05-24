@@ -15,7 +15,7 @@ export const LOAI_MAPPING = {
   nhan_vien: "nhan_vien" as ChucVuLoai,
 } as const;
 
-export function useChucVuList(loai?: ChucVuLoai) {
+export function useChucVuList(loai?: ChucVuLoai, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: chucVuQueryKeys.list(loai),
     queryFn: async () => {
@@ -23,6 +23,7 @@ export function useChucVuList(loai?: ChucVuLoai) {
       const result = await apiGateway.get<ChucVu[]>(ApiEndpoints.CHUC_VU_LIST, { params });
       return result ?? [];
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

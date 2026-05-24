@@ -57,7 +57,7 @@ class CauHinhNghiPhepRepository:
             updated_at=now,
         )
         self.session.add(item)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(item)
         return item
 
@@ -92,7 +92,7 @@ class CauHinhNghiPhepRepository:
         if ghi_chu is not None:
             item.ghi_chu = ghi_chu
 
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(item)
         return item
 
@@ -102,5 +102,5 @@ class CauHinhNghiPhepRepository:
             return False
         item.trang_thai = False
         item.updated_at = get_utc_now()
-        await self.session.commit()
+        await self.session.flush()
         return True

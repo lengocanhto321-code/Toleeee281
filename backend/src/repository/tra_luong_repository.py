@@ -76,10 +76,8 @@ class KyLuongRepository:
             ky_luong.trang_thai = trang_thai
             if "ngay_duyet" in kwargs:
                 ky_luong.ngay_duyet = kwargs["ngay_duyet"]
-            if "nguoi_duyet_id" in kwargs:
-                ky_luong.nguoi_duyet_id = kwargs["nguoi_duyet_id"]
-            if "ngay_chot" in kwargs:
-                ky_luong.ngay_chot = kwargs["ngay_chot"]
+            if "nguoi_duyet" in kwargs:
+                ky_luong.nguoi_duyet = kwargs["nguoi_duyet"]
             await self._session.flush()
             await self._session.refresh(ky_luong)
         return ky_luong
@@ -153,6 +151,39 @@ class TraLuongRepository:
             update(TraLuong)
             .where(TraLuong.ky_luong_id == ky_luong_id)
             .values(trang_thai=trang_thai)
+        )
+        await self._session.flush()
+        return result.rowcount
+
+    async def get_paginated_by_nhan_vien(
+        self,
+        nhan_vien_id: str,
+        page: int = 1,
+        page_size: int = 20,
+        nam: Optional[int] = None,
+    ) -> Tuple[int, List[TraLuong]]:
+        query = select(TraLuong).where(TraLuong.nhan_vien_id == nhan_vien_id)
+        if nam:
+            query = query.where(TraLuong.nam == nam)
+
+        count_query = select(func.count()).select_from(query.subquery())
+        total_result = await self._session.execute(count_query)
+        total = total_result.scalar() or 0
+
+        items_query = (
+            query.order_by(TraLuong.nam.desc(), TraLuong.thang.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        result = await self._session.execute(items_query)
+        items = list(result.scalars().all())
+
+        return total, items
+
+    async def delete_by_ky_luong_id(self, ky_luong_id: str) -> int:
+        """Delete all TraLuong records for a ky_luong."""
+        result = await self._session.execute(
+            TraLuong.__table__.delete().where(TraLuong.ky_luong_id == ky_luong_id)
         )
         await self._session.flush()
         return result.rowcount

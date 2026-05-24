@@ -14,7 +14,7 @@ class ChucVuRepository:
         self._session = session
 
     async def generate_ma_chuc_vu(self) -> str:
-        chars = string.ascii_lowercase + string.digits
+        chars = string.ascii_uppercase + string.digits
         suffix = "".join(secrets.choice(chars) for _ in range(6))
         return f"CV-{suffix}"
 

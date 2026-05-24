@@ -19,7 +19,7 @@ export function useEmployeeLuong(params?: { nam?: number }) {
       const searchParams = new URLSearchParams()
       if (params?.nam) searchParams.set("nam", params.nam.toString())
       const query = searchParams.toString() ? `?${searchParams.toString()}` : ""
-      return apiGateway.get<LuongResponse>(`/api/luong/me${query}`)
+      return apiGateway.get<LuongResponse>(`/api/v1/nhan-vien/luong/me${query}`)
     },
   })
 }

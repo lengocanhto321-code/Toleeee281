@@ -37,7 +37,7 @@ export const luongQueryKeys = {
 export function useCauHinhLuongList(params?: { page?: number; page_size?: number }) {
   return useQuery({
     queryKey: [...luongQueryKeys.cauHinh.list(), params],
-    queryFn: () => apiGateway.get<{ data: CauHinhLuong[]; metadata: { total: number; page: number; per_page: number; total_pages: number } }>(
+    queryFn: () => apiGateway.get<CauHinhLuong[]>(
       ApiEndpoints.LUONG_CAU_HINH_LIST,
       { params: params ? {
         page: params.page,
@@ -70,10 +70,24 @@ export function useLuongHienTai(nhanVienId: string) {
 export function useKyLuongList(params?: { page?: number; page_size?: number; thang?: number; nam?: number; trang_thai?: string }) {
   return useQuery({
     queryKey: [...luongQueryKeys.kyLuong.list(), params],
-    queryFn: () => apiGateway.get<{ data: KyLuong[]; metadata: { total: number; page: number; per_page: number; total_pages: number } }>(
+    queryFn: () => apiGateway.get<KyLuong[]>(
       ApiEndpoints.KY_LUONG_LIST,
       { params }
     ),
+  });
+}
+
+export function useKyLuongExists(thang: number, nam: number, enabled: boolean) {
+  return useQuery({
+    queryKey: [...luongQueryKeys.kyLuong.all(), "exists", thang, nam] as const,
+    queryFn: async () => {
+      const result = await apiGateway.get<KyLuong[]>(
+        ApiEndpoints.KY_LUONG_LIST,
+        { params: { thang, nam, page: 1, page_size: 1 } }
+      );
+      return (result as any)?.data?.[0] || (result as any)?.[0] || null;
+    },
+    enabled: enabled && !!thang && !!nam,
   });
 }
 
@@ -89,7 +103,7 @@ export function useKyLuongDetail(id: string) {
 export function useTraLuongByKyLuong(kyLuongId: string, params?: { page?: number; page_size?: number }) {
   return useQuery({
     queryKey: [...luongQueryKeys.traLuong.byKyLuong(kyLuongId), params],
-    queryFn: () => apiGateway.get<{ data: TraLuong[]; metadata: { total: number; page: number; per_page: number; total_pages: number } }>(
+    queryFn: () => apiGateway.get<TraLuong[]>(
       ApiEndpoints.TRA_LUONG_BY_KY(kyLuongId),
       { params: params ? {
         page: params.page,

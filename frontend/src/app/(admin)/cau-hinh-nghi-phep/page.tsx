@@ -45,7 +45,7 @@ const createColumns = (onEdit: (item: CauHinhNghiPhep) => void): ColumnDef<CauHi
     cell: ({ row }) => (
       <div>
         <p className="font-medium">{row.original.ten_loai}</p>
-        <p className="text-xs text-slate-500">{row.original.loai_nghi}</p>
+        <p className="text-xs text-muted-foreground">{row.original.loai_nghi}</p>
       </div>
     ),
   },
@@ -53,7 +53,7 @@ const createColumns = (onEdit: (item: CauHinhNghiPhep) => void): ColumnDef<CauHi
     accessorKey: "so_ngay_moi_nam",
     header: "Ngày/năm",
     cell: ({ row }) => (
-      <span className="font-semibold text-indigo-600">{row.original.so_ngay_moi_nam}</span>
+      <span className="font-semibold text-primary">{row.original.so_ngay_moi_nam}</span>
     ),
   },
   {
@@ -70,7 +70,7 @@ const createColumns = (onEdit: (item: CauHinhNghiPhep) => void): ColumnDef<CauHi
       row.original.can_giay_to ? (
         <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">Có</Badge>
       ) : (
-        <Badge variant="outline" className="bg-slate-100 text-slate-600">Không</Badge>
+        <Badge variant="outline" className="bg-muted text-muted-foreground">Không</Badge>
       )
     ),
   },
@@ -81,7 +81,7 @@ const createColumns = (onEdit: (item: CauHinhNghiPhep) => void): ColumnDef<CauHi
       row.original.bat_buoc_ghi_ly_do ? (
         <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200">Có</Badge>
       ) : (
-        <Badge variant="outline" className="bg-slate-100 text-slate-600">Không</Badge>
+        <Badge variant="outline" className="bg-muted text-muted-foreground">Không</Badge>
       )
     ),
   },
@@ -92,7 +92,7 @@ const createColumns = (onEdit: (item: CauHinhNghiPhep) => void): ColumnDef<CauHi
       row.original.trang_thai ? (
         <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">Hoạt động</Badge>
       ) : (
-        <Badge variant="outline" className="bg-slate-100 text-slate-600">Tắt</Badge>
+        <Badge variant="outline" className="bg-muted text-muted-foreground">Tắt</Badge>
       )
     ),
   },
@@ -221,15 +221,15 @@ export default function CauHinhNghiPhepPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Cấu hình nghỉ phép</h1>
-            <p className="text-slate-500">Quản lý số ngày phép theo loại nghỉ</p>
+            <h1 className="text-2xl font-bold text-foreground">Cấu hình nghỉ phép</h1>
+            <p className="text-muted-foreground">Quản lý số ngày phép theo loại nghỉ</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-1" />
               Làm mới
             </Button>
-            <Button size="sm" onClick={() => { resetForm(); setCreateOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button size="sm" onClick={() => { resetForm(); setCreateOpen(true); }} className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-1" />
               Thêm mới
             </Button>
@@ -347,7 +347,7 @@ export default function CauHinhNghiPhepPage() {
                     type="checkbox"
                     checked={form.can_giay_to}
                     onChange={(e) => setForm({ ...form, can_giay_to: e.target.checked })}
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Cần giấy tờ</span>
                 </label>
@@ -356,7 +356,7 @@ export default function CauHinhNghiPhepPage() {
                     type="checkbox"
                     checked={form.bat_buoc_ghi_ly_do}
                     onChange={(e) => setForm({ ...form, bat_buoc_ghi_ly_do: e.target.checked })}
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Bắt buộc lý do</span>
                 </label>
@@ -365,7 +365,7 @@ export default function CauHinhNghiPhepPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Hủy</Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-indigo-600">
+            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-primary">
               {createMutation.isPending ? "Đang tạo..." : "Tạo"}
             </Button>
           </DialogFooter>
@@ -382,7 +382,7 @@ export default function CauHinhNghiPhepPage() {
             <FieldGroup>
               <Field>
                 <FieldLabel>Loại nghỉ</FieldLabel>
-                <Input value={form.loai_nghi} disabled className="bg-slate-50" />
+                <Input value={form.loai_nghi} disabled className="bg-muted" />
               </Field>
               <Field>
                 <FieldLabel>Tên hiển thị</FieldLabel>
@@ -417,7 +417,7 @@ export default function CauHinhNghiPhepPage() {
                     type="checkbox"
                     checked={form.can_giay_to}
                     onChange={(e) => setForm({ ...form, can_giay_to: e.target.checked })}
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Cần giấy tờ</span>
                 </label>
@@ -426,7 +426,7 @@ export default function CauHinhNghiPhepPage() {
                     type="checkbox"
                     checked={form.bat_buoc_ghi_ly_do}
                     onChange={(e) => setForm({ ...form, bat_buoc_ghi_ly_do: e.target.checked })}
-                    className="rounded border-slate-300"
+                    className="rounded border-border"
                   />
                   <span className="text-sm">Bắt buộc lý do</span>
                 </label>
@@ -436,7 +436,7 @@ export default function CauHinhNghiPhepPage() {
                   type="checkbox"
                   checked={form.trang_thai}
                   onChange={(e) => setForm({ ...form, trang_thai: e.target.checked })}
-                  className="rounded border-slate-300"
+                  className="rounded border-border"
                 />
                 <span className="text-sm">Hoạt động</span>
               </label>
@@ -444,7 +444,7 @@ export default function CauHinhNghiPhepPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>Hủy</Button>
-            <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="bg-indigo-600">
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="bg-primary">
               {updateMutation.isPending ? "Đang lưu..." : "Lưu"}
             </Button>
           </DialogFooter>

@@ -2,17 +2,11 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { Badge } from "@/components/ui/badge"
 import { BentoCard } from "@/components/employee/bento-card"
 import { useEmployeeDashboard } from "@/hooks/employee/use-employee-dashboard"
 import {
   GraduationCap,
 } from "lucide-react"
-import {
-  LOAI_NGHI_LABELS,
-  TRANG_THAI_DON_LABELS,
-  TRANG_THAI_DON_COLORS,
-} from "@/types/employee.types"
 
 export default function EmployeeDashboardPage() {
   const router = useRouter()
@@ -94,37 +88,6 @@ export default function EmployeeDashboardPage() {
           />
         </div>
       </div>
-
-      {np?.don_gan_nhat && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-slate-900">Hoạt động gần đây</h2>
-            <button
-              onClick={() => router.push("/employee/nghi-phep")}
-              className="text-xs text-blue-600 font-medium hover:underline"
-            >
-              Xem tất cả →
-            </button>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-            <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-sm">📅</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">
-                {LOAI_NGHI_LABELS[np.don_gan_nhat.loai_nghi] || np.don_gan_nhat.loai_nghi}
-              </p>
-              <p className="text-xs text-slate-500">
-                {np.don_gan_nhat.tu_ngay} → {np.don_gan_nhat.den_ngay}
-              </p>
-            </div>
-            <Badge
-              variant="outline"
-              className={TRANG_THAI_DON_COLORS[np.don_gan_nhat.trang_thai] || ""}
-            >
-              {TRANG_THAI_DON_LABELS[np.don_gan_nhat.trang_thai] || np.don_gan_nhat.trang_thai}
-            </Badge>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-3 gap-3">
         <button

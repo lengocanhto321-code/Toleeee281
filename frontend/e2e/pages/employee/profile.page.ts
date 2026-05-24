@@ -10,9 +10,11 @@ export class EmployeeProfilePage {
 
   async editPhone(newPhone: string) {
     await this.page.getByRole('button', { name: 'Sửa' }).click()
-    await this.page.getByLabel('Số điện thoại').clear()
-    await this.page.getByLabel('Số điện thoại').fill(newPhone)
+    // "Số điện thoại" label is a <p> element, not a <label>, so use label filter pattern
+    const phoneInput = this.page.locator('p').filter({ hasText: 'Số điện thoại' }).locator('..').getByRole('textbox')
+    await phoneInput.clear()
+    await phoneInput.fill(newPhone)
     await this.page.getByRole('button', { name: 'Lưu' }).click()
-    await expect(this.page.getByText('thành công')).toBeVisible({ timeout: 10000 })
+    await expect(this.page.getByText('thành công').first()).toBeVisible({ timeout: 10000 })
   }
 }

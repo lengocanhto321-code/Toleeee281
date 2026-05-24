@@ -49,12 +49,12 @@ export function PhongBanGridView({ data, onEdit }: PhongBanGridViewProps) {
                 <div className="flex gap-4">
                   <div className={`
                     flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-lg font-bold
-                    ${isChuyenMon ? "bg-amber-100 text-amber-700" : "bg-indigo-100 text-indigo-700"}
+                    ${isChuyenMon ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}
                   `}>
                     <Building2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
+                    <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
                       {pb.ten_phong_ban}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
@@ -86,7 +86,7 @@ export function PhongBanGridView({ data, onEdit }: PhongBanGridViewProps) {
                   {isActive ? <CheckCircle2 className="mr-1 h-3 w-3" /> : <XCircle className="mr-1 h-3 w-3" />}
                   {isActive ? "Đang hoạt động" : "Không hoạt động"}
                 </Badge>
-                <Badge variant="outline" className={isChuyenMon ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}>
+                <Badge variant="outline" className={isChuyenMon ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-blue-50 text-blue-700 border-blue-200"}>
                   {isChuyenMon ? "Tổ chuyên môn" : "Phòng hành chính"}
                 </Badge>
               </div>

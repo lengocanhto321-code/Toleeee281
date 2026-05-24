@@ -31,15 +31,19 @@ export default function EmployeeLayout({
       router.push("/login")
       return
     }
-    if (user && ADMIN_ROLES.includes(user.role) && !EMPLOYEE_ROLES.includes(user.role)) {
+    if (user && !EMPLOYEE_ROLES.includes(user.role)) {
       router.push("/dashboard")
     }
   }, [mounted, isAuthenticated, user, router])
 
-  if (!mounted || !isAuthenticated) {
+  const isUnauthorized = mounted && isAuthenticated && user && !EMPLOYEE_ROLES.includes(user.role)
+
+  if (!mounted || !isAuthenticated || isUnauthorized) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-blue-50/30">
-        <div className="text-sm text-slate-400">Đang tải...</div>
+        <div className="text-sm text-slate-400">
+          {isUnauthorized ? "Không có quyền truy cập" : "Đang tải..."}
+        </div>
       </div>
     )
   }

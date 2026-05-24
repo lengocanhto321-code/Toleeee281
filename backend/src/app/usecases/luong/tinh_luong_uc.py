@@ -99,7 +99,7 @@ class PreviewLuongUseCase:
                     luong.phu_cap_tham_nien_vuot_khung or 0
                 ),
                 "so_nam_tham_nien": int(luong.so_nam_tham_nien or 0),
-                "ty_le_pc_uu_dai": float(luong.ty_le_pc_uu_dai or 30.0),
+                "ty_le_pc_uu_dai": float(luong.ty_le_pc_uu_dai) if luong.ty_le_pc_uu_dai is not None else 30.0,
                 "he_so_khu_vuc": float(luong.he_so_khu_vuc or 0),
                 "phu_cap_khac": int(luong.phu_cap_khac or 0),
                 "khau_tru_khac": int(luong.khau_tru_khac or 0),
@@ -215,30 +215,34 @@ class ChayLuongUseCase:
                 command.thang, command.nam
             )
             if ky_luong_hien_tai:
-                return Return.err(
-                    Error(
-                        code="da_co_ky_luong",
-                        message=f"Đã có kỳ lương tháng {command.thang}/{command.nam}",
-                        reason="KyLuong already exists",
+                if ky_luong_hien_tai.trang_thai == "da_chot":
+                    return Return.err(
+                        Error(
+                            code="ky_luong_da_chot",
+                            message=f"Kỳ lương tháng {command.thang}/{command.nam} đã chốt, không thể tính lại",
+                            reason="KyLuong is already finalized",
+                        )
                     )
+                await tra_luong_repo.delete_by_ky_luong_id(ky_luong_hien_tai.id)
+                ky_luong = ky_luong_hien_tai
+                ky_luong.ngay_chay = get_utc_now()
+            else:
+                ngay_bat_dau = date(command.nam, command.thang, 1)
+                ngay_ket_thuc = (
+                    date(command.nam, command.thang + 1, 1)
+                    if command.thang < 12
+                    else date(command.nam + 1, 1, 1)
                 )
 
-            ngay_bat_dau = date(command.nam, command.thang, 1)
-            ngay_ket_thuc = (
-                date(command.nam, command.thang + 1, 1)
-                if command.thang < 12
-                else date(command.nam + 1, 1, 1)
-            )
-
-            ky_luong = KyLuong(
-                id=generate_id(),
-                thang=command.thang,
-                nam=command.nam,
-                ngay_bat_dau=ngay_bat_dau,
-                ngay_ket_thuc=ngay_ket_thuc,
-                trang_thai="chua_duyet",
-            )
-            await ky_luong_repo.create(ky_luong)
+                ky_luong = KyLuong(
+                    id=generate_id(),
+                    thang=command.thang,
+                    nam=command.nam,
+                    ngay_bat_dau=ngay_bat_dau,
+                    ngay_ket_thuc=ngay_ket_thuc,
+                    trang_thai="chua_duyet",
+                )
+                await ky_luong_repo.create(ky_luong)
 
             nhan_viens = await nhan_vien_repo.find_dang_lam(
                 command.danh_sach_nhan_vien_ids
@@ -295,7 +299,7 @@ class ChayLuongUseCase:
                         luong.phu_cap_tham_nien_vuot_khung or 0
                     ),
                     "so_nam_tham_nien": int(luong.so_nam_tham_nien or 0),
-                    "ty_le_pc_uu_dai": float(luong.ty_le_pc_uu_dai or 30.0),
+                    "ty_le_pc_uu_dai": float(luong.ty_le_pc_uu_dai) if luong.ty_le_pc_uu_dai is not None else 30.0,
                     "he_so_khu_vuc": float(luong.he_so_khu_vuc or 0),
                     "phu_cap_khac": int(luong.phu_cap_khac or 0),
                     "khau_tru_khac": int(luong.khau_tru_khac or 0),
@@ -348,7 +352,7 @@ class ChayLuongUseCase:
                     id=generate_id(),
                     nhan_vien_id=nv.id,
                     luong_id=luong.id,
-                    cham_cong_id=cham_cong_thang.id if cham_cong_thang else None,
+                    cham_cong_id=None,
                     ky_luong_id=ky_luong.id,
                     thang=command.thang,
                     nam=command.nam,

@@ -22,8 +22,9 @@ router = APIRouter()
 
 
 class ViTriRequest(BaseModel):
-    lat: float
-    lng: float
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    dms: Optional[str] = None
     name: Optional[str] = None
     radius: int = 100
 
@@ -74,13 +75,35 @@ async def create_or_update_lich_cham_cong(
         gio_check_in = datetime.strptime(body.gio_check_in, "%H:%M").time()
         gio_check_out = datetime.strptime(body.gio_check_out, "%H:%M").time()
 
+        kinh_do = None
+        vi_do = None
+        if body.vi_tri:
+            from src.service.qr_attendance_service import (
+                parse_dms,
+                parse_coordinate_pair,
+            )
+
+            kinh_do = body.vi_tri.lat
+            vi_do = body.vi_tri.lng
+            if body.vi_tri.dms:
+                pair = parse_coordinate_pair(body.vi_tri.dms)
+                if pair:
+                    kinh_do, vi_do = pair
+                elif kinh_do is None or vi_do is None:
+                    parsed = parse_dms(body.vi_tri.dms)
+                    if parsed is not None:
+                        if kinh_do is None:
+                            kinh_do = parsed
+                        else:
+                            vi_do = parsed
+
         config = LichChamCong(
             gio_check_in=gio_check_in,
             gio_check_out=gio_check_out,
             ngay_lam_viec=body.ngay_lam_viec,
             bat_gps=body.bat_gps,
-            kinh_do=body.vi_tri.lat if body.vi_tri else None,
-            vi_do=body.vi_tri.lng if body.vi_tri else None,
+            kinh_do=kinh_do,
+            vi_do=vi_do,
             ten_vi_tri=body.vi_tri.name if body.vi_tri else None,
             ban_kinh_cho_phep=body.vi_tri.radius if body.vi_tri else 100,
             trang_thai="active",
@@ -88,6 +111,37 @@ async def create_or_update_lich_cham_cong(
         )
 
         created = await ctx.lich_cham_cong_repository.create(config)
+
+        # Sync immediately to today's active QR configs for easy testing
+        from datetime import date
+        today = date.today()
+        existing_qrs = await ctx.qr_config_repository.find_by_ngay(today)
+        for qr in existing_qrs:
+            qr.bat_gps = body.bat_gps
+            qr.kinh_do = kinh_do
+            qr.vi_do = vi_do
+            qr.vi_tri = body.vi_tri.name if body.vi_tri else None
+            qr.ban_kinh_cho_phep = body.vi_tri.radius if body.vi_tri else 100
+            
+            # Re-generate QR payload with the new coordinates (if any)
+            from src.service.qr_attendance_service import QRAttendanceService
+            vi_tri_dict = None
+            if body.bat_gps and kinh_do is not None and vi_do is not None:
+                vi_tri_dict = {
+                    "lat": kinh_do,
+                    "lng": vi_do,
+                    "name": body.vi_tri.name if body.vi_tri else None,
+                    "radius": body.vi_tri.radius if body.vi_tri else 100,
+                }
+            qr_payload = QRAttendanceService.generate_qr_payload(
+                ngay=today,
+                phong_ban_id=None,
+                vi_tri=vi_tri_dict,
+                loai=qr.loai,
+            )
+            qr.qr_data = qr_payload
+            qr.mac = qr_payload[:64] if len(qr_payload) >= 64 else qr_payload
+            await ctx.qr_config_repository.update(qr)
 
     await scheduler_service.reload_config()
 
