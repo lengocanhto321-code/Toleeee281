@@ -46,7 +46,7 @@ export function useEmployeeTodayAttendance() {
         { params: { page: 1, page_size: 1 } }
       )
       const today = getTodayVN()
-      const record = res.data?.data?.[0]
+      const record = res.data?.[0]
       if (record && record.check_in_time?.startsWith(today)) {
         return record
       }

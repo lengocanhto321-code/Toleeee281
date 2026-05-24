@@ -14,7 +14,7 @@ export class NhanVienListPage {
     await this.page.waitForTimeout(500)
   }
 
-  async create(data: ReturnType<typeof testData.nhanVien>, phongBanName: string, chucVuName: string) {
+  async create(data: typeof testData.nhanVien, phongBanName: string, chucVuName: string) {
     await this.page.getByRole('button', { name: 'Thêm nhân viên' }).click()
 
     const dialog = this.page.getByRole('dialog')

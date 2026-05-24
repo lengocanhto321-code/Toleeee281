@@ -5,7 +5,7 @@ export class NhanVienDetailPage {
   constructor(private page: Page) {}
 
   // ======= NGƯỜI THÂN =======
-  async addNguoiThan(data: ReturnType<typeof testData.nguoiThan>) {
+  async addNguoiThan(data: typeof testData.nguoiThan) {
     await this.page.getByRole('tab', { name: 'Gia đình' }).click()
     await this.page.getByRole('button', { name: 'Thêm người thân' }).click()
 
@@ -25,7 +25,7 @@ export class NhanVienDetailPage {
   }
 
   // ======= BẰNG CẤP =======
-  async addBangCap(data: ReturnType<typeof testData.bangCap>) {
+  async addBangCap(data: typeof testData.bangCap) {
     await this.page.getByRole('tab', { name: 'Đào tạo' }).click()
     await this.page.getByRole('button', { name: 'Thêm bằng cấp' }).click()
 
@@ -48,7 +48,7 @@ export class NhanVienDetailPage {
   }
 
   // ======= KHEN THƯỞNG =======
-  async addKhenThuong(data: ReturnType<typeof testData.khenThuong>) {
+  async addKhenThuong(data: typeof testData.khenThuong) {
     await this.page.getByRole('tab', { name: 'Khen thưởng' }).first().click()
     await this.page.getByRole('button', { name: 'Thêm khen thưởng' }).first().click()
 
@@ -62,7 +62,7 @@ export class NhanVienDetailPage {
   }
 
   // ======= KỶ LUẬT =======
-  async addKyLuat(data: ReturnType<typeof testData.kyLuat>) {
+  async addKyLuat(data: typeof testData.kyLuat) {
     await this.page.getByRole('tab', { name: 'Khen thưởng' }).first().click()
     await this.page.getByRole('tab', { name: 'Kỷ luật' }).click()
     await this.page.getByRole('button', { name: 'Thêm kỷ luật' }).click()
@@ -77,7 +77,7 @@ export class NhanVienDetailPage {
   }
 
   // ======= HỢP ĐỒNG =======
-  async addHopDong(data: ReturnType<typeof testData.hopDong>) {
+  async addHopDong(data: typeof testData.hopDong) {
     await this.page.getByRole('tab', { name: 'Hợp đồng' }).click()
     await this.page.getByRole('button', { name: 'Ký hợp đồng mới' }).click()
 
