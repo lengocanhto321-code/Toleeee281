@@ -23,6 +23,9 @@ export default defineConfig({
     {
       name: 'chromium',
       dependencies: ['setup'],
+      use: {
+        storageState: '.auth/admin.json',
+      },
     },
   ],
 })
