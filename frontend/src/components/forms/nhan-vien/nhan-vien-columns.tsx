@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { type ColumnDef } from "@tanstack/react-table"
-import { Pencil, MoreVertical, Eye, BookOpen, User, Shield, CheckCircle2, XCircle, Clock, Trash2, Banknote, Calendar, GraduationCap } from "lucide-react"
+import { Pencil, MoreVertical, Eye, BookOpen, User, Shield, CheckCircle2, XCircle, Clock, Trash2, Banknote, Calendar, GraduationCap, KeyRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "@/components/ui/data-table"
 import type { NhanVien, TrangThaiNhanVien } from "@/types/nhan-vien.types"
 import { TRANG_THAI_LABELS, TRANG_THAI_COLORS, LOAI_NHAN_VIEN_LABELS, CAP_HOC_LABELS } from "@/types/nhan-vien.types"
+import { formatDateVN } from "@/lib/date-utils"
 
 function formatCurrency(amount: number): string {
   if (!amount) return "—"
@@ -34,18 +35,13 @@ function formatCurrency(amount: number): string {
 
 interface ColumnActions {
   onEdit: (nv: NhanVien) => void
+  onResetPassword?: (nv: NhanVien) => void
 }
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/)
   if (parts.length === 1) return parts[0][0].toUpperCase()
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "-"
-  const d = new Date(dateStr)
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`
 }
 
 function getTenure(startDateStr?: string) {
@@ -75,7 +71,7 @@ function getTenureDays(startDateStr?: string): number {
 }
 
 const LOAI_BADGE: Record<string, string> = {
-  giao_vien: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  giao_vien: "bg-blue-50 text-blue-700 border-blue-200",
   nhan_vien: "bg-slate-100 text-slate-600 border-slate-200",
   can_bo: "bg-amber-50 text-amber-700 border-amber-200",
 }
@@ -102,7 +98,7 @@ function getChucVuColor(chucVu: string) {
   return "bg-slate-50 text-slate-700 border-slate-200"
 }
 
-export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<NhanVien>[] {
+export function createNhanVienColumns({ onEdit, onResetPassword }: ColumnActions): ColumnDef<NhanVien>[] {
   return [
     // Checkbox
     {
@@ -145,7 +141,7 @@ export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<Nhan
               {getInitials(nv.ho_ten)}
             </div>
             <div className="min-w-0">
-              <div className="truncate font-medium text-slate-900 group-hover:text-indigo-600 transition-colors">
+              <div className="truncate font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
                 {nv.ho_ten}
               </div>
               <div className="text-xs text-slate-400 font-mono">
@@ -237,7 +233,7 @@ export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<Nhan
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="text-sm text-slate-600 whitespace-nowrap cursor-help">
-                  {formatDate(ngayVao)}
+                  {formatDateVN(ngayVao)}
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top">
@@ -272,7 +268,7 @@ export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<Nhan
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Từ {formatDate(nv.ngay_vao_lam)}</p>
+                <p>Từ {formatDateVN(nv.ngay_vao_lam)}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -377,6 +373,15 @@ export function createNhanVienColumns({ onEdit }: ColumnActions): ColumnDef<Nhan
               <Pencil className="mr-2 h-3.5 w-3.5" />
               Chỉnh sửa
             </DropdownMenuItem>
+            {onResetPassword && (
+              <DropdownMenuItem
+                onClick={() => onResetPassword(row.original)}
+                className="cursor-pointer text-amber-600 focus:text-amber-700 focus:bg-amber-50"
+              >
+                <KeyRound className="mr-2 h-3.5 w-3.5" />
+                Đặt lại mật khẩu
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

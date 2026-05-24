@@ -43,12 +43,11 @@ import {
   Image,
   FileIcon,
 } from "lucide-react"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
 import { useTaiLieuByNhanVien, useUploadTaiLieu } from "@/hooks/upload"
 import { LOAI_TAI_LIEU_LABELS, LOAI_TAI_LIEU_OPTIONS } from "@/types/nhan-vien.types"
 import type { NhanVien, TaiLieuNhanVien } from "@/types/nhan-vien.types"
 import { cn } from "@/lib/utils"
+import { formatDateVN } from "@/lib/date-utils"
 
 interface NhanVienTaiLieuTabProps {
   nhanVien: NhanVien
@@ -70,12 +69,6 @@ function getFileIcon(dinhDang?: string) {
 
 function isImage(dinhDang?: string) {
   return dinhDang?.startsWith("image/") || false
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—"
-  const d = new Date(dateStr)
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
 interface UploadDialogProps {
@@ -260,7 +253,7 @@ function UploadTaiLieuDialog({ open, onOpenChange, nhanVien, onSuccess }: Upload
                 <div className="space-y-2">
                   <Upload className="h-10 w-10 mx-auto text-slate-400" />
                   <p className="text-sm text-slate-600">
-                    Kéo thả file hoặc <span className="text-indigo-600 font-medium">bấm để chọn</span>
+                    Kéo thả file hoặc <span className="text-blue-600 font-medium">bấm để chọn</span>
                   </p>
                   <p className="text-xs text-slate-400">
                     JPG, PNG, PDF, DOC, XLS (tối đa 10MB)
@@ -387,7 +380,7 @@ export function NhanVienTaiLieuTab({ nhanVien }: NhanVienTaiLieuTabProps) {
                         {formatFileSize(tl.kich_thuoc)}
                       </TableCell>
                       <TableCell className="text-slate-500">
-                        {formatDate(tl.created_at)}
+                        {formatDateVN(tl.created_at)}
                       </TableCell>
                       <TableCell className="text-center">
                         {tl.la_ban_chinh ? (

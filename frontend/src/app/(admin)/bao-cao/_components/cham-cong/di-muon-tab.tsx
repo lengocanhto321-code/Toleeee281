@@ -15,9 +15,9 @@ export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: B
     if (!data) return { title: "Chấm công - Đi muộn", headers: [], rows: [] }
     return {
       title: "Báo cáo Chấm công - Đi muộn",
-      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      subtitle: `${filters.start_date} — ${filters.end_date}`,
       headers: ["Nhân viên", "Phòng ban", "Số lần muộn", "Số lần về sớm"],
-      rows: data.chi_tiet.map(item => [item.ho_ten, item.phong_ban, item.so_lan_muon, item.so_lan_ve_som]),
+      rows: data.chi_tiet?.map(item => [item.ho_ten, item.phong_ban, item.so_lan_muon, item.so_lan_ve_som]) || [],
       stats: [
         { label: "Tổng đi muộn", value: data.tong_muon },
         { label: "Tổng về sớm", value: data.tong_ve_som },
@@ -28,7 +28,7 @@ export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: B
   }, [data, filters])
 
   const heatmapOption = React.useMemo(() => {
-    if (!data || !data.theo_ngay.length) return {}
+    if (!data?.theo_ngay?.length) return {}
     const days = data.theo_ngay.map(item => item.ngay)
     const heatData: [number, number, number][] = []
     data.theo_ngay.forEach((item, dayIdx) => {
@@ -86,7 +86,7 @@ export const DiMuonTab = React.memo(function DiMuonTab({ filters }: { filters: B
               <div className="text-xs text-muted-foreground">Tổng về sớm</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-emerald-600">{data.ty_le_dung_gio}%</div>
+              <div className="text-2xl font-bold text-chart-2">{data.ty_le_dung_gio}%</div>
               <div className="text-xs text-muted-foreground">Tỷ lệ đúng giờ</div>
             </div>
             <div>

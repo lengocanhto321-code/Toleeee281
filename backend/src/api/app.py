@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse
@@ -13,13 +14,20 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_unexpected_error(request: Request, exc: Exception):
+    import traceback
+
+    logger.exception(
+        f"Unexpected error on {request.method} {request.url}: {exc}\n{traceback.format_exc()}"
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"error": "Internal server error"},
+        content={"error": {"code": 500, "message": str(exc)}},
     )
 
 
 async def handle_client_error(request, exc: ClientError) -> JSONResponse:
+    logger.warning(f"Client error detail: base_error={exc.base_error}, type={type(exc.base_error)}, hasattr_code={hasattr(exc.base_error, 'code')}")
+    logger.warning(f"Client error: {exc.to_dict()}")
     return JSONResponse(
         status_code=exc.get_status_code(),
         content={"error": exc.to_dict()},
@@ -27,6 +35,11 @@ async def handle_client_error(request, exc: ClientError) -> JSONResponse:
 
 
 async def handle_server_error(request, exc: ServerError) -> JSONResponse:
+    import traceback
+
+    logger.error(
+        f"Server error on {request.method} {request.url}: {exc.to_dict()}\n{traceback.format_exc()}"
+    )
     return JSONResponse(
         status_code=exc.get_status_code(),
         content={"error": exc.to_dict()},
@@ -36,12 +49,23 @@ async def handle_server_error(request, exc: ServerError) -> JSONResponse:
 def create_app(config_app: ApplicationConfig) -> FastAPI:
     config = config_app
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        from src.service.scheduler_service import scheduler_service
+
+        await scheduler_service.start()
+        logger.info("Application startup complete")
+        yield
+        await scheduler_service.stop()
+        logger.info("Application shutdown complete")
+
     app = FastAPI(
         title="HR Management API",
         version="0.1.0",
         description="API for HR management system",
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     @app.get("/")

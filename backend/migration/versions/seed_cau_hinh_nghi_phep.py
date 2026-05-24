@@ -31,26 +31,25 @@ def upgrade() -> None:
         ("thai_san", "Nghỉ thai sản", 180.0, 180.0, True, True),
     ]
 
-    for loai_nghi, ten_loai, so_ngay, max_lan, can_giay, bat_lydo in seed_data:
-        import uuid
+    import uuid
 
+    for loai_nghi, ten_loai, so_ngay, max_lan, can_giay, bat_lydo in seed_data:
         op.execute(
             sa.text("""
                 INSERT INTO cau_hinh_nghi_phep 
                 (id, loai_nghi, ten_loai, so_ngay_moi_nam, so_ngay_toi_da_mot_lan, 
                  can_giay_to, bat_buoc_ghi_ly_do, trang_thai, created_at, updated_at)
                 VALUES (:id, :loai, :ten, :so_ngay, :max, :can_giay, :bat_lydo, true, :now, :now)
-            """),
-            {
-                "id": str(uuid.uuid4())[:32],
-                "loai": loai_nghi,
-                "ten": ten_loai,
-                "so_ngay": so_ngay,
-                "max": max_lan,
-                "can_giay": can_giay,
-                "bat_lydo": bat_lydo,
-                "now": now,
-            },
+            """).bindparams(
+                id=str(uuid.uuid4())[:32],
+                loai=loai_nghi,
+                ten=ten_loai,
+                so_ngay=so_ngay,
+                max=max_lan,
+                can_giay=can_giay,
+                bat_lydo=bat_lydo,
+                now=now,
+            )
         )
 
 

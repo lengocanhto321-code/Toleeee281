@@ -2,7 +2,8 @@ import logging
 from dataclasses import dataclass
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
-from datetime import datetime
+
+from libs.datetime import get_utc_now
 
 from libs.result import Result, Error, Return
 from src.domain.models.nhan_vien import NhanVien
@@ -126,10 +127,59 @@ class UpdateNhanVienUseCase:
             for field, value in update_data.items():
                 setattr(existing_nv, field, value)
 
+            # Sync he_so_luong / bac_luong / ngach_luong to Luong table
+            salary_fields = {"he_so_luong", "bac_luong", "ngach_luong"}
+            if salary_fields & set(update_data.keys()):
+                from datetime import date as date_type
+
+                luong = await uow.luong_repository.find_hien_tai(
+                    command.id, date_type.today()
+                )
+                if luong:
+                    if (
+                        "he_so_luong" in update_data
+                        and update_data["he_so_luong"] is not None
+                    ):
+                        luong.he_so_luong = update_data["he_so_luong"]
+                    if (
+                        "bac_luong" in update_data
+                        and update_data["bac_luong"] is not None
+                    ):
+                        luong.bac = update_data["bac_luong"]
+                    if (
+                        "ngach_luong" in update_data
+                        and update_data["ngach_luong"] is not None
+                    ):
+                        luong.ma_ngach = update_data["ngach_luong"]
+
             # Check if phong_ban_id or chuc_vu_id changed - trigger CongTac workflow
             new_phong_ban_id = (
-                update_data.get("phong_ban_id") or existing_nv.phong_ban_id
+                update_data.get("phong_ban_id")
+                if "phong_ban_id" in update_data
+                else existing_nv.phong_ban_id
             )
+            new_chuc_vu_id = (
+                update_data.get("chuc_vu_id")
+                if "chuc_vu_id" in update_data
+                else existing_nv.chuc_vu_id
+            )
+            old_phong_ban_id = old_data.get("phong_ban_id")
+            old_chuc_vu_id = old_data.get("chuc_vu_id")
+
+            pb_or_cv_changed = (
+                "phong_ban_id" in update_data
+                and update_data["phong_ban_id"] != old_phong_ban_id
+            ) or (
+                "chuc_vu_id" in update_data
+                and update_data["chuc_vu_id"] != old_chuc_vu_id
+            )
+
+            if pb_or_cv_changed and new_phong_ban_id and new_chuc_vu_id:
+                logger.info(
+                    f"Detected assignment change for NhanVien {command.id}: "
+                    f"PB {old_phong_ban_id}->{new_phong_ban_id}, "
+                    f"CV {old_chuc_vu_id}->{new_chuc_vu_id}"
+                )
             new_chuc_vu_id = update_data.get("chuc_vu_id") or existing_nv.chuc_vu_id
             old_phong_ban_id = old_data.get("phong_ban_id")
             old_chuc_vu_id = old_data.get("chuc_vu_id")
@@ -159,7 +209,7 @@ class UpdateNhanVienUseCase:
                 if current_cong_tac:
                     await uow.cong_tac_repository.end_assignment(current_cong_tac)
                     old_ct_data = serialize_model_to_dict(current_cong_tac)
-                    old_ct_data["ngay_ket_thuc"] = datetime.utcnow()
+                    old_ct_data["ngay_ket_thuc"] = get_utc_now()
                     old_ct_data["trang_thai"] = "da_chuyen"
 
                     # Audit log for ending old assignment
@@ -179,7 +229,7 @@ class UpdateNhanVienUseCase:
                     nhan_vien_id=command.id,
                     phong_ban_id=new_phong_ban_id,
                     chuc_vu_id=new_chuc_vu_id,
-                    ngay_bat_dau=datetime.utcnow(),
+                    ngay_bat_dau=get_utc_now(),
                     is_primary=True,
                     he_so_luong=existing_nv.he_so_luong,
                     bac_luong=existing_nv.bac_luong,

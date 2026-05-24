@@ -82,3 +82,29 @@ export function useNhanVienDetail(id: string) {
     enabled: !!id,
   });
 }
+
+export function useDieuChuyenTuyChon(id: string) {
+  return useQuery({
+    queryKey: [...nhanVienQueryKeys.detail(id), "dieu-chuyen-tuy-chon"],
+    queryFn: async () => {
+      const response = await apiGateway.get<{
+        data: import("./use-nhan-vien-mutations").TransferOptions;
+      }>(ApiEndpoints.NHAN_VIEN_DIEU_CHUYEN_TUY_CHON(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useDieuChuyenLichSu(id: string) {
+  return useQuery({
+    queryKey: [...nhanVienQueryKeys.detail(id), "dieu-chuyen-lich-su"],
+    queryFn: async () => {
+      const response = await apiGateway.get<{
+        data: { items: unknown[] };
+      }>(ApiEndpoints.NHAN_VIEN_DIEU_CHUYEN_LICH_SU(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}

@@ -28,17 +28,23 @@ class CreatePhongBanUseCase:
     def __init__(self, unit_of_work):
         self.unit_of_work = unit_of_work
 
-    async def execute(self, command: CreatePhongBanCommand) -> Result[CreatePhongBanResult, Error]:
+    async def execute(
+        self, command: CreatePhongBanCommand
+    ) -> Result[CreatePhongBanResult, Error]:
         """Execute create phong ban use case."""
-        logger.info(f"User {command.actor_id} is creating PhongBan {command.data.ma_phong_ban}")
 
         async with self.unit_of_work as uow:
             phong_ban_repo = uow.phong_ban_repository
             audit_repo = uow.audit_log_repository
 
-            # Create new PhongBan
+            ma_phong_ban = (
+                command.data.ma_phong_ban
+                or await phong_ban_repo.generate_ma_phong_ban()
+            )
+            logger.info(f"User {command.actor_id} is creating PhongBan {ma_phong_ban}")
+
             new_pb = PhongBan(
-                ma_phong_ban=command.data.ma_phong_ban,
+                ma_phong_ban=ma_phong_ban,
                 ten_phong_ban=command.data.ten_phong_ban,
                 loai=command.data.loai,
                 mo_ta=command.data.mo_ta,
@@ -47,7 +53,7 @@ class CreatePhongBanUseCase:
                 email=command.data.email,
                 trang_thai=command.data.trang_thai,
             )
-            
+
             try:
                 created_pb = await phong_ban_repo.create(new_pb)
             except IntegrityError as e:
@@ -56,7 +62,7 @@ class CreatePhongBanUseCase:
                     Error(
                         code="code_already_exists",
                         message="Mã phòng ban đã tồn tại.",
-                        reason="Conflict"
+                        reason="Conflict",
                     )
                 )
 
@@ -68,7 +74,7 @@ class CreatePhongBanUseCase:
                 ban_ghi_id=created_pb.id,
                 du_lieu_cu=None,
                 du_lieu_moi=command.data.model_dump(mode="json"),
-                ghi_chu="Tạo mới phòng ban"
+                ghi_chu="Tạo mới phòng ban",
             )
             await audit_repo.create(audit_log)
 
@@ -76,7 +82,7 @@ class CreatePhongBanUseCase:
             resp = serialize_model_to_dict(created_pb)
             resp["so_luong_nhan_vien"] = 0
             resp["so_luong_dang_lam"] = 0
-            
+
             response_data = PhongBanDataResponse(**resp)
 
             return Return.ok(CreatePhongBanResult(phong_ban=response_data))

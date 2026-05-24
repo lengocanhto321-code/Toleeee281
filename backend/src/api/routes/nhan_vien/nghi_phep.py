@@ -1,9 +1,9 @@
 from dataclasses import asdict
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Path, status
 
+from libs.datetime import get_utc_now
 from libs.result import is_err
 from src.api.auth import (
     UserContext,
@@ -158,7 +158,7 @@ async def nv_get_my_cham_cong(
     user_context: UserContext = Depends(require_permission("nghi_phep:view_own")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    now = datetime.now()
+    now = get_utc_now()
     thang = thang or now.month
     nam = nam or now.year
 

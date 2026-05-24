@@ -13,7 +13,7 @@ import {
   useHuyDonNghi,
 } from "@/hooks/employee/use-employee-nghi-phep"
 import { CreateEmployeeDonNghiDialog } from "./_components/create-don-nghi-dialog"
-import { format } from "date-fns"
+import { formatDateVN } from "@/lib/date-utils"
 import type { LoaiNghi } from "@/types/nghi-phep.types"
 import {
   LOAI_NGHI_LABELS,
@@ -21,19 +21,15 @@ import {
   TRANG_THAI_DON_COLORS,
 } from "@/types/employee.types"
 
-const TRANG_THAI_2LEVEL_LABELS: Record<string, string> = {
-  cho_duyet_cap_1: "Chờ duyệt",
-  cho_duyet_cap_2: "Chờ duyệt cấp 2",
-  da_duyet_cap_2: "Đã duyệt",
+const TRANG_THAI_LABELS_MAP: Record<string, string> = {
+  cho_duyet: "Chờ duyệt",
   da_duyet: "Đã duyệt",
   tu_choi: "Từ chối",
   huy: "Đã hủy",
 }
 
-const TRANG_THAI_2LEVEL_COLORS: Record<string, string> = {
-  cho_duyet_cap_1: "bg-amber-100 text-amber-700 border-amber-200",
-  cho_duyet_cap_2: "bg-blue-100 text-blue-700 border-blue-200",
-  da_duyet_cap_2: "bg-emerald-100 text-emerald-700 border-emerald-200",
+const TRANG_THAI_COLORS_MAP: Record<string, string> = {
+  cho_duyet: "bg-amber-100 text-amber-700 border-amber-200",
   da_duyet: "bg-emerald-100 text-emerald-700 border-emerald-200",
   tu_choi: "bg-red-100 text-red-700 border-red-200",
   huy: "bg-slate-100 text-slate-500 border-slate-200",
@@ -81,10 +77,10 @@ export default function EmployeeNghiPhepPage() {
   }
 
   const getStatusLabel = (status: string) =>
-    TRANG_THAI_2LEVEL_LABELS[status] || TRANG_THAI_DON_LABELS[status] || status
+    TRANG_THAI_LABELS_MAP[status] || TRANG_THAI_DON_LABELS[status] || status
 
   const getStatusColor = (status: string) =>
-    TRANG_THAI_2LEVEL_COLORS[status] || TRANG_THAI_DON_COLORS[status] || ""
+    TRANG_THAI_COLORS_MAP[status] || TRANG_THAI_DON_COLORS[status] || ""
 
   return (
     <div className="space-y-3 max-w-2xl mx-auto">
@@ -150,7 +146,7 @@ export default function EmployeeNghiPhepPage() {
                     )}
                   </div>
                   <p className="text-xs text-slate-500">
-                    {format(new Date(don.tu_ngay), "dd/MM")} — {format(new Date(don.den_ngay), "dd/MM")} · {don.so_ngay} ngày
+                    {formatDateVN(don.tu_ngay)} — {formatDateVN(don.den_ngay)} · {don.so_ngay} ngày
                   </p>
                   {don.ghi_chu_duyet && don.trang_thai === "tu_choi" && (
                     <p className="text-[10px] text-red-500 mt-0.5">Lý do: {don.ghi_chu_duyet}</p>
@@ -160,7 +156,7 @@ export default function EmployeeNghiPhepPage() {
                   <Badge variant="outline" className={`text-[10px] px-2 ${getStatusColor(don.trang_thai)}`}>
                     {getStatusLabel(don.trang_thai)}
                   </Badge>
-                  {(don.trang_thai === "cho_duyet_cap_1" || don.trang_thai === "cho_duyet_cap_2") && (
+                  {don.trang_thai === "cho_duyet" && (
                     <Button
                       variant="ghost"
                       size="sm"

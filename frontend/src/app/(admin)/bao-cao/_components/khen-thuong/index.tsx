@@ -15,7 +15,7 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
     if (!data) return { title: "Khen thưởng", headers: [], rows: [] }
     return {
       title: "Báo cáo Khen thưởng",
-      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      subtitle: `${filters.start_date} — ${filters.end_date}`,
       headers: ["Nhân viên", "Loại", "Hình thức", "Số tiền", "Ngày"],
       rows: data.chi_tiet.map(item => [item.ho_ten, item.loai, item.hinh_thuc, item.so_tien, item.ngay]),
       stats: [
@@ -31,7 +31,17 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
     if (!data) return {}
     return {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['Khen thưởng', 'Kỷ luật'] },
+      legend: {
+        data: ['Khen thưởng', 'Kỷ luật'],
+        top: 5,
+        left: 'center',
+        textStyle: { fontSize: 11, color: '#475569' },
+        icon: 'roundRect',
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 16,
+        padding: [5, 10],
+      },
       xAxis: { type: 'category', data: data.theo_thang.map(item => item.thang) },
       yAxis: { type: 'value' },
       series: [
@@ -56,28 +66,32 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
     return {
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
       legend: {
-        orient: 'vertical',
-        right: 10,
-        top: 'center',
-        textStyle: { fontSize: 12, color: '#475569' },
+        orient: 'horizontal',
+        bottom: 0,
+        left: 'center',
+        textStyle: { fontSize: 11, color: '#475569' },
         icon: 'roundRect',
-        itemWidth: 12,
-        itemHeight: 12,
-      },
-      grid: {
-        left: '3%',
-        right: '20%',
-        top: '5%',
-        bottom: '3%',
-        containLabel: true,
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 12,
       },
       series: [{
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: ['35%', '60%'],
+        center: ['50%', '42%'],
         data: data.ty_le_chart.map(item => ({
           value: item.value,
           name: item.name,
         })),
+        emphasis: {
+          itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 3,
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.2)',
+          },
+        },
       }],
     }
   }, [data])
@@ -114,7 +128,7 @@ export const KhenThuongTab = React.memo(function KhenThuongTab({ filters }: { fi
               <div className="text-xs text-muted-foreground">Tỷ lệ khen/kỷ</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-600">{data.tong_tien.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-amber-600">{data.tong_tien >= 1_000_000_000 ? `${(data.tong_tien / 1_000_000_000).toFixed(1)}B` : data.tong_tien >= 1_000_000 ? `${(data.tong_tien / 1_000_000).toFixed(0)}M` : data.tong_tien.toLocaleString()} đ</div>
               <div className="text-xs text-muted-foreground">Tổng tiền</div>
             </div>
           </div>

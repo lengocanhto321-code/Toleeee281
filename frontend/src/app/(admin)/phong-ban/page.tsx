@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo, useState, useEffect, useCallback } from "react"
-import { Plus, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { Button } from "@/components/ui/button"
 import { Combobox } from "@/components/ui/combobox"
@@ -44,11 +44,14 @@ export default function PhongBanPage() {
   useEffect(() => {
     const handleCoCau = () => setCoCauDialogOpen(true)
     const handlePhanBo = () => setPhanBoDialogOpen(true)
+    const handleAddFromSidebar = () => handleAdd()
     window.addEventListener("sidebar:phong-ban:co-cau", handleCoCau)
     window.addEventListener("sidebar:phong-ban:phan-bo", handlePhanBo)
+    window.addEventListener("sidebar:phong-ban:add", handleAddFromSidebar)
     return () => {
       window.removeEventListener("sidebar:phong-ban:co-cau", handleCoCau)
       window.removeEventListener("sidebar:phong-ban:phan-bo", handlePhanBo)
+      window.removeEventListener("sidebar:phong-ban:add", handleAddFromSidebar)
     }
   }, [])
 
@@ -148,7 +151,7 @@ export default function PhongBanPage() {
           searchPlaceholder="Chọn số lượng..."
           className="h-8 text-xs w-32"
         />
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-muted-foreground">
           {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)} / {total}
         </span>
       </div>
@@ -160,7 +163,7 @@ export default function PhongBanPage() {
           <Button variant="outline" size="icon" className="h-8 w-8 cursor-pointer" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-slate-600 px-2">{currentPage} / {totalPages}</span>
+          <span className="text-sm text-muted-foreground px-2">{currentPage} / {totalPages}</span>
           <Button variant="outline" size="icon" className="h-8 w-8 cursor-pointer" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -174,12 +177,8 @@ export default function PhongBanPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="flex items-center justify-between mb-4">
-        <Button size="sm" className="gap-1.5 cursor-pointer" onClick={handleAdd}>
-          <Plus className="h-3.5 w-3.5" />
-          Thêm phòng ban
-        </Button>
-        <p className="text-sm text-slate-500">
+      <div className="flex items-center justify-end mb-4">
+        <p className="text-sm text-muted-foreground">
           {total} phòng ban
         </p>
       </div>

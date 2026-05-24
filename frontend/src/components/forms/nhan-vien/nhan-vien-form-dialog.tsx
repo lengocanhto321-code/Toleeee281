@@ -64,11 +64,24 @@ import {
   ShieldCheckIcon,
   LandmarkIcon,
 } from "lucide-react"
+import { z } from "zod"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { formatDateVN } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { NhanVien } from "@/types/nhan-vien.types"
 import {
+  nhanVienPersonalSchema,
+  nhanVienIdentitySchema,
+  nhanVienWorkSchema,
+  nhanVienContractSchema,
+  nhanVienPartySchema,
   nhanVienFullSchema,
   type NhanVienFullInput,
 } from "@/schemas/employee.schema"
@@ -81,7 +94,7 @@ export interface NhanVienFormDialogProps {
   onOpenChange: (open: boolean) => void
   editingNhanVien?: NhanVien | null
   isPending: boolean
-  onSubmit: (data: NhanVienFullInput, editId?: string, pendingFiles?: { cccd_front?: File; cccd_back?: File }) => void
+  onSubmit: (data: NhanVienFullInput, editId?: string) => void
 }
 
 const LOAI_NHAN_VIEN = [
@@ -101,6 +114,37 @@ const TINH_TRANG_HON_NHAN = [
   { value: "da_ket_hon", label: "Đã kết hôn" },
   { value: "ly_di", label: "Ly dị" },
   { value: "goa_vo", label: "Góa vợ/chồng" },
+] as const
+
+const MON_DAY = [
+  { value: "Toán", label: "Toán" },
+  { value: "Ngữ văn", label: "Ngữ văn" },
+  { value: "Vật lý", label: "Vật lý" },
+  { value: "Hóa học", label: "Hóa học" },
+  { value: "Sinh học", label: "Sinh học" },
+  { value: "Lịch sử", label: "Lịch sử" },
+  { value: "Địa lý", label: "Địa lý" },
+  { value: "Tiếng Anh", label: "Tiếng Anh" },
+  { value: "Tiếng Pháp", label: "Tiếng Pháp" },
+  { value: "Tiếng Trung", label: "Tiếng Trung" },
+  { value: "Tiếng Nga", label: "Tiếng Nga" },
+  { value: "Tiếng Hàn", label: "Tiếng Hàn" },
+  { value: "Tiếng Nhật", label: "Tiếng Nhật" },
+  { value: "Thể dục", label: "Thể dục" },
+  { value: "Âm nhạc", label: "Âm nhạc" },
+  { value: "Mỹ thuật", label: "Mỹ thuật" },
+  { value: "Tin học", label: "Tin học" },
+  { value: "GDCD", label: "Giáo dục công dân" },
+  { value: "Công nghệ", label: "Công nghệ" },
+  { value: "GDQP", label: "Giáo dục quốc phòng" },
+  { value: "Khoa học tự nhiên", label: "Khoa học tự nhiên" },
+  { value: "Khoa học xã hội", label: "Khoa học xã hội" },
+  { value: "Lịch sử - Địa lý", label: "Lịch sử - Địa lý" },
+  { value: "Hoạt động trải nghiệm", label: "Hoạt động trải nghiệm" },
+  { value: "Tin học ứng dụng", label: "Tin học ứng dụng" },
+  { value: "Công nghệ thông tin", label: "Công nghệ thông tin" },
+  { value: "Giáo dục địa phương", label: "Giáo dục địa phương" },
+  { value: "Kỹ thuật", label: "Kỹ thuật" },
 ] as const
 
 const CAP_HOC = [
@@ -140,10 +184,10 @@ const TAB_ITEMS = [
 ] as const
 
 const TAB_FIELDS: Record<string, (keyof NhanVienFullInput)[]> = {
-  personal: ["ho_ten", "gioi_tinh", "ngay_sinh", "que_quan", "dia_chi_thuong_tru", "so_dien_thoai", "email"],
-  identity: ["so_cccd"],
-  work: ["loai_nhan_vien", "trang_thai"],
-  contract: ["loai_hop_dong"],
+  personal: ["ho_ten", "gioi_tinh", "ngay_sinh", "que_quan", "dia_chi_thuong_tru", "so_dien_thoai", "email", "dan_toc", "noi_sinh", "tinh_trang_hon_nhan"],
+  identity: ["so_cccd", "ngay_cap_cccd", "noi_cap_cccd"],
+  work: ["loai_nhan_vien", "trang_thai", "cap_hoc", "phong_ban_id", "chuc_vu_id"],
+  contract: ["loai_hop_dong", "ngay_vao_lam"],
   party: ["la_dang_vien", "la_doan_vien"],
   other: [],
 }
@@ -152,10 +196,30 @@ function getFieldsForTab(tab: string): (keyof NhanVienFullInput)[] {
   return TAB_FIELDS[tab] || []
 }
 
+const TAB_SCHEMAS: Record<string, z.ZodTypeAny> = {
+  personal: nhanVienPersonalSchema,
+  identity: nhanVienIdentitySchema,
+  work: nhanVienWorkSchema,
+  contract: nhanVienContractSchema,
+  party: nhanVienPartySchema,
+  other: z.object({}),
+}
+
 async function validateTabFields(form: ReturnType<typeof useForm<NhanVienFullInput>>, tab: string): Promise<boolean> {
-  const fields = getFieldsForTab(tab)
-  if (fields.length === 0) return true
-  return await form.trigger(fields)
+  const schema = TAB_SCHEMAS[tab]
+  if (!schema || schema === z.object({})) return true
+  const values = form.getValues()
+  const result = schema.safeParse(values)
+  if (!result.success) {
+    const fieldErrors = result.error.flatten().fieldErrors as Record<string, string[]>
+    for (const [field, messages] of Object.entries(fieldErrors)) {
+      if (messages?.[0]) {
+        form.setError(field as keyof NhanVienFullInput, { type: "manual", message: messages[0] })
+      }
+    }
+    return false
+  }
+  return true
 }
 
 const DEFAULT_VALUES: NhanVienFullInput = {
@@ -171,7 +235,7 @@ const DEFAULT_VALUES: NhanVienFullInput = {
   dan_toc: "",
   ton_giao: "",
   noi_sinh: "",
-  tinh_trang_hon_nhan: undefined,
+  tinh_trang_hon_nhan: "doc_than" as typeof DEFAULT_VALUES.tinh_trang_hon_nhan,
   so_bao_hiem: "",
   ngay_tham_gia_bhxh: "",
   so_tai_khoan_ngan_hang: "",
@@ -202,8 +266,6 @@ const DEFAULT_VALUES: NhanVienFullInput = {
   ngay_vao_doan: "",
   ghi_chu: "",
   anh_dai_dien: "",
-  cccd_front: "",
-  cccd_back: "",
 }
 
 function DatePickerField({
@@ -229,7 +291,7 @@ function DatePickerField({
           )}
         >
           <CalendarDaysIcon className="mr-2 h-4 w-4 shrink-0" />
-          {value ? format(new Date(value), "dd/MM/yyyy") : <span>{placeholder}</span>}
+          {value ? formatDateVN(value) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -262,19 +324,29 @@ export function NhanVienFormDialog({
    })
 
    const [activeTab, setActiveTab] = useState("personal")
-   const [pendingFiles, setPendingFiles] = useState<{ cccd_front?: File; cccd_back?: File }>({})
+
    const [isCurrentTabValid, setIsCurrentTabValid] = useState(false)
 
+   const { watch, setValue, reset, trigger } = form
+   const loaiNhanVien = watch("loai_nhan_vien")
+   const watchedValues = watch()
+
    useEffect(() => {
-     validateTabFields(form, activeTab).then(setIsCurrentTabValid)
-   }, [form, activeTab])
+    const schema = TAB_SCHEMAS[activeTab]
+    if (!schema || schema === z.object({})) {
+      setIsCurrentTabValid(true)
+      return
+    }
+    const result = schema.safeParse(watchedValues)
+    if (!result.success) {
+      console.log(`[Tab ${activeTab}] Validation errors:`, JSON.stringify(result.error.flatten().fieldErrors))
+    }
+    setIsCurrentTabValid(result.success)
+  }, [watchedValues, activeTab])
 
-  const { watch, setValue, reset, trigger } = form
-  const loaiNhanVien = watch("loai_nhan_vien")
-
-  const { data: phongBanList } = usePhongBanAll()
-  const filteredLoai = loaiNhanVien ? LOAI_MAPPING[loaiNhanVien as keyof typeof LOAI_MAPPING] : undefined
-  const { data: chucVuList } = useChucVuList(filteredLoai)
+   const { data: phongBanList } = usePhongBanAll({ enabled: !!open })
+   const filteredLoai = loaiNhanVien ? LOAI_MAPPING[loaiNhanVien as keyof typeof LOAI_MAPPING] : undefined
+   const { data: chucVuList } = useChucVuList(filteredLoai, { enabled: !!open })
 
   const isGiaoVien = loaiNhanVien === "giao_vien"
   const isCanBo = loaiNhanVien === "can_bo"
@@ -333,10 +405,8 @@ export function NhanVienFormDialog({
         la_doan_vien: editingNhanVien.la_doan_vien || false,
         ngay_vao_doan: editingNhanVien.ngay_vao_doan || "",
         ghi_chu: editingNhanVien.ghi_chu || "",
-        anh_dai_dien: editingNhanVien.anh_dai_dien || "",
-        cccd_front: editingNhanVien.cccd_front || "",
-        cccd_back: editingNhanVien.cccd_back || "",
-      })
+         anh_dai_dien: editingNhanVien.anh_dai_dien || "",
+       })
     } else {
       reset(DEFAULT_VALUES)
     }
@@ -347,6 +417,7 @@ export function NhanVienFormDialog({
     "ngay_cap_cccd", "ngay_vao_lam", "ngay_het_hop_dong",
     "ngay_vao_dang", "ngay_vao_doan", "ngay_tham_gia_bhxh",
     "ngay_bo_nhiem_chuc_vu", "email", "email_ca_nhan",
+    "phong_ban_id", "chuc_vu_id",
   ] as const
 
   const handleSubmit = (data: NhanVienFullInput) => {
@@ -356,9 +427,7 @@ export function NhanVienFormDialog({
         (cleaned as Record<string, unknown>)[field] = undefined
       }
     }
-    const files = pendingFiles
-    setPendingFiles({})
-    onSubmit(cleaned as NhanVienFullInput, editingNhanVien?.id, files)
+    onSubmit(cleaned as NhanVienFullInput, editingNhanVien?.id)
   }
 
   const goToNextTab = useCallback(() => {
@@ -395,42 +464,50 @@ export function NhanVienFormDialog({
            </div>
          </DialogHeader>
     <Form {...(form as any)}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="flex-1 overflow-hidden flex flex-col">
+      <form onSubmit={(e) => e.preventDefault()} onKeyDown={(e) => { if (e.key === 'Enter' && !isLastTab) e.preventDefault() }} className="flex-1 overflow-hidden flex flex-col">
         <div className="px-4 pt-3 shrink-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-             <TabsList className="w-full justify-start bg-slate-100/50 p-1 rounded-xl flex-wrap h-auto">
-               {visibleTabs.map((tab, index) => {
-                  const Icon = tab.icon
-                  const currentIndex = visibleTabs.findIndex((t) => t.value === activeTab)
-                  let isDisabled = false
-                     if (index < currentIndex) {
-                       // Going back to previous tab: always allowed
-                       isDisabled = false
-                     } else if (index === currentIndex) {
-                       // Current tab: allowed if valid (to stay and fix) but we don't prevent staying if invalid?
-                       // Actually, we want to allow staying on current tab even if invalid so user can fix.
-                       // So we don't disable the current tab trigger.
-                       isDisabled = false
-                     } else {
-                       // Trying to jump forward: only allow if it's exactly the next tab and current tab is valid
-                       isDisabled = !(index === currentIndex + 1 && isCurrentTabValid)
-                     }
-                     return (
-                       <TabsTrigger
-                         key={tab.value}
-                         value={tab.value}
-                         disabled={isDisabled}
-                         className={cn(
-                           "cursor-pointer rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm",
-                           isDisabled && "opacity-50 cursor-not-allowed"
-                         )}
-                       >
-                         <Icon className="h-4 w-4 mr-1.5" />
-                         {tab.label}
-                       </TabsTrigger>
-                     )
-                   })}
-                 </TabsList>
+           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full justify-start bg-slate-100/50 p-1 rounded-xl flex-wrap h-auto">
+                <TooltipProvider>
+                {visibleTabs.map((tab, index) => {
+                   const Icon = tab.icon
+                   const currentIndex = visibleTabs.findIndex((t) => t.value === activeTab)
+                   let isDisabled = false
+                      if (index < currentIndex) {
+                        isDisabled = false
+                      } else if (index === currentIndex) {
+                        isDisabled = false
+                      } else {
+                        isDisabled = !(index === currentIndex + 1 && isCurrentTabValid)
+                      }
+                      const trigger = (
+                        <TabsTrigger
+                          key={tab.value}
+                          value={tab.value}
+                          disabled={isDisabled}
+                          className={cn(
+                            "cursor-pointer rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm",
+                            isDisabled && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          <Icon className="h-4 w-4 mr-1.5" />
+                          {tab.label}
+                        </TabsTrigger>
+                      )
+                      if (isDisabled) {
+                        return (
+                          <Tooltip key={tab.value}>
+                            <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+                            <TooltipContent side="bottom" className="text-xs">
+                              Hoàn thành tab hiện tại để tiếp tục
+                            </TooltipContent>
+                          </Tooltip>
+                        )
+                      }
+                      return trigger
+                    })}
+                  </TooltipProvider>
+                </TabsList>
 
                 {/* Tab Description */}
                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
@@ -554,7 +631,7 @@ export function NhanVienFormDialog({
                           name="noi_sinh"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nơi sinh</FormLabel>
+                              <FormLabel>Nơi sinh <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input placeholder="TP. Hồ Chí Minh" {...field} />
                               </FormControl>
@@ -568,7 +645,7 @@ export function NhanVienFormDialog({
                           name="dan_toc"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Dân tộc</FormLabel>
+                              <FormLabel>Dân tộc <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input placeholder="Kinh" {...field} />
                               </FormControl>
@@ -608,7 +685,7 @@ export function NhanVienFormDialog({
                           name="so_dien_thoai"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Số điện thoại</FormLabel>
+                              <FormLabel>Số điện thoại <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input placeholder="0912 345 678" {...field} />
                               </FormControl>
@@ -622,7 +699,7 @@ export function NhanVienFormDialog({
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Email trường</FormLabel>
+                              <FormLabel>Email trường <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input placeholder="ten@thanglong.edu.vn" {...field} />
                               </FormControl>
@@ -650,7 +727,7 @@ export function NhanVienFormDialog({
                           name="tinh_trang_hon_nhan"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Tình trạng hôn nhân</FormLabel>
+                              <FormLabel>Tình trạng hôn nhân <span className="text-red-500">*</span></FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
@@ -686,7 +763,7 @@ export function NhanVienFormDialog({
                         name="que_quan"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Quê quán</FormLabel>
+                            <FormLabel>Quê quán <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Textarea placeholder="Quận 1, TP. Hồ Chí Minh" {...field} rows={2} />
                             </FormControl>
@@ -701,7 +778,7 @@ export function NhanVienFormDialog({
                           name="dia_chi_thuong_tru"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Địa chỉ thường trú</FormLabel>
+                              <FormLabel>Địa chỉ thường trú <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Input placeholder="123 Đường ABC, Quận 1" {...field} />
                               </FormControl>
@@ -745,7 +822,7 @@ export function NhanVienFormDialog({
                         name="so_cccd"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Số CCCD/CMND</FormLabel>
+                            <FormLabel>Số CCCD/CMND <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Input placeholder="012345678901" {...field} maxLength={12} />
                             </FormControl>
@@ -762,7 +839,7 @@ export function NhanVienFormDialog({
                         name="ngay_cap_cccd"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>Ngày cấp</FormLabel>
+                            <FormLabel>Ngày cấp <span className="text-red-500">*</span></FormLabel>
                             <DatePickerField
                               value={field.value}
                               onChange={field.onChange}
@@ -778,7 +855,7 @@ export function NhanVienFormDialog({
                         name="noi_cap_cccd"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
-                            <FormLabel>Nơi cấp</FormLabel>
+                            <FormLabel>Nơi cấp <span className="text-red-500">*</span></FormLabel>
                             <FormControl>
                               <Input placeholder="Công an TP. Hồ Chí Minh" {...field} />
                             </FormControl>
@@ -788,82 +865,7 @@ export function NhanVienFormDialog({
                       />
                     </div>
 
-                    <Separator />
 
-                    <h4 className="text-sm font-semibold flex items-center gap-2">
-                      <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
-                      Ảnh CCCD
-                    </h4>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="cccd_front"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mặt trước</FormLabel>
-                            <FormControl>
-                              <div className="space-y-2">
-                                {field.value ? (
-                                  <div className="relative group">
-                                    <img src={field.value} alt="CCCD Front" className="w-full h-32 object-cover rounded-lg border" />
-                                    <Button type="button" variant="destructive" size="sm" className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                                      field.onChange("")
-                                      setPendingFiles((prev) => { const { cccd_front, ...rest } = prev; return rest })
-                                    }}>×</Button>
-                                  </div>
-                                ) : (
-                                  <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 cursor-pointer hover:border-primary/50 transition-colors">
-                                    <CreditCardIcon className="h-6 w-6 text-slate-400 mb-1" />
-                                    <span className="text-xs text-slate-500">Mặt trước CCCD</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                      const file = e.target.files?.[0]
-                                      if (!file) return
-                                      setPendingFiles((prev) => ({ ...prev, cccd_front: file }))
-                                      field.onChange(URL.createObjectURL(file))
-                                    }} />
-                                  </label>
-                                )}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="cccd_back"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mặt sau</FormLabel>
-                            <FormControl>
-                              <div className="space-y-2">
-                                {field.value ? (
-                                  <div className="relative group">
-                                    <img src={field.value} alt="CCCD Back" className="w-full h-32 object-cover rounded-lg border" />
-                                    <Button type="button" variant="destructive" size="sm" className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => {
-                                      field.onChange("")
-                                      setPendingFiles((prev) => { const { cccd_back, ...rest } = prev; return rest })
-                                    }}>×</Button>
-                                  </div>
-                                ) : (
-                                  <label className="flex flex-col items-center justify-center h-32 rounded-lg border-2 border-dashed border-slate-300 cursor-pointer hover:border-primary/50 transition-colors">
-                                    <CreditCardIcon className="h-6 w-6 text-slate-400 mb-1" />
-                                    <span className="text-xs text-slate-500">Mặt sau CCCD</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-                                      const file = e.target.files?.[0]
-                                      if (!file) return
-                                      setPendingFiles((prev) => ({ ...prev, cccd_back: file }))
-                                      field.onChange(URL.createObjectURL(file))
-                                    }} />
-                                  </label>
-                                )}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
                   </div>
                 )}
 
@@ -917,7 +919,14 @@ export function NhanVienFormDialog({
                                 <FormItem>
                                   <FormLabel>Môn dạy</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Toán, Lý, Hóa..." {...field} />
+                                    <Combobox
+                                      options={MON_DAY.map((m) => ({ value: m.value, label: m.label }))}
+                                      value={field.value || ""}
+                                      onChange={field.onChange}
+                                      placeholder="Chọn môn dạy..."
+                                      emptyMessage="Không tìm thấy môn"
+                                      searchPlaceholder="Tìm môn dạy..."
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -929,7 +938,7 @@ export function NhanVienFormDialog({
                               name="cap_hoc"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Cấp học</FormLabel>
+                                  <FormLabel>Cấp học <span className="text-red-500">*</span></FormLabel>
                                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                       <SelectTrigger>
@@ -967,7 +976,7 @@ export function NhanVienFormDialog({
                             name="cap_hoc"
                             render={({ field }) => (
                               <FormItem className="md:w-1/2">
-                                <FormLabel>Cấp học quản lý</FormLabel>
+                                 <FormLabel>Cấp học quản lý <span className="text-red-500">*</span></FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -1004,7 +1013,7 @@ export function NhanVienFormDialog({
                           name="phong_ban_id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Phòng ban/Tổ bộ môn</FormLabel>
+                              <FormLabel>Phòng ban/Tổ bộ môn <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Combobox
                                   options={phongBanList?.map((pb) => ({
@@ -1028,7 +1037,7 @@ export function NhanVienFormDialog({
                           name="chuc_vu_id"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Chức vụ</FormLabel>
+                              <FormLabel>Chức vụ <span className="text-red-500">*</span></FormLabel>
                               <FormControl>
                                 <Combobox
                                   options={chucVuList?.map((cv) => ({
@@ -1100,7 +1109,7 @@ export function NhanVienFormDialog({
                         name="ngay_vao_lam"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>Ngày vào làm</FormLabel>
+                             <FormLabel>Ngày vào làm <span className="text-red-500">*</span></FormLabel>
                             <DatePickerField
                               value={field.value}
                               onChange={field.onChange}
@@ -1250,7 +1259,7 @@ export function NhanVienFormDialog({
                             <FormItem>
                               <FormLabel>Số năm thâm niên</FormLabel>
                               <FormControl>
-                                <Input type="number" placeholder="5" {...field} />
+                                <Input type="number" placeholder="5" {...field} value={field.value ?? ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1485,9 +1494,10 @@ export function NhanVienFormDialog({
                   </Button>
                   {isLastTab ? (
                     <Button
-                      type="submit"
+                      type="button"
                       disabled={isPending}
                       className="gap-2"
+                      onClick={form.handleSubmit(handleSubmit)}
                     >
                       {isPending ? (
                         <>Đang lưu...</>
@@ -1499,27 +1509,38 @@ export function NhanVienFormDialog({
                       )}
                     </Button>
                    ) : (
-                     <Button
-                       type="button"
-                       onClick={async () => {
-                         const isValid = await validateTabFields(form, activeTab)
-                         if (isValid) {
-                           const currentIndex = visibleTabs.findIndex((t) => t.value === activeTab)
-                           if (currentIndex < visibleTabs.length - 1) {
-                             setActiveTab(visibleTabs[currentIndex + 1].value)
-                           }
-                         }
-                       }}
-                       disabled={!isCurrentTabValid}
-                       className={cn(
-                         "gap-2",
-                         !isCurrentTabValid && "opacity-50 cursor-not-allowed"
-                       )}
-                     >
-                       Tiếp tục
-                       <ChevronRightIcon className="h-4 w-4" />
-                     </Button>
-                   )}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              onClick={async () => {
+                                const isValid = await validateTabFields(form, activeTab)
+                                if (isValid) {
+                                  const currentIndex = visibleTabs.findIndex((t) => t.value === activeTab)
+                                  if (currentIndex < visibleTabs.length - 1) {
+                                    setActiveTab(visibleTabs[currentIndex + 1].value)
+                                  }
+                                }
+                              }}
+                              disabled={!isCurrentTabValid}
+                              className={cn(
+                                "gap-2",
+                                !isCurrentTabValid && "opacity-50 cursor-not-allowed"
+                              )}
+                            >
+                              Tiếp tục
+                              <ChevronRightIcon className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          {!isCurrentTabValid && (
+                            <TooltipContent side="top" className="text-xs">
+                              Vui lòng điền đầy đủ thông tin bắt buộc
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                  </div>
                </div>
              </DialogFooter>

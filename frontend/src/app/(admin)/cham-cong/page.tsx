@@ -1,18 +1,19 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
 import { DataTable } from "@/components/ui/data-table"
+import { StatCard } from "@/components/ui/stat-card"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RefreshCw, Plus, User, CheckCircle2, Clock, XCircle, CalendarDays, FileText } from "lucide-react"
-import { ChamCongEditDialog, GenerateChamCongDialog } from "@/components/forms/nghi-phep"
+import { RefreshCw, User, CheckCircle2, Clock, XCircle, CalendarDays, FileText } from "lucide-react"
+import { ChamCongEditDialog } from "@/components/forms/nghi-phep"
+import { LichChamCongConfig } from "@/components/forms/lich-cham-cong"
 import {
   useChamCongThangList,
-  useMockGenerateChamCong,
   useChamCongUpdate,
   useChamCongXacNhan,
   useChamCongDuyet,
@@ -21,6 +22,8 @@ import {
 import { useNhanVienList } from "@/hooks/nhan-vien"
 import type { ChamCongThang } from "@/types/nghi-phep.types"
 import { toastSuccess, toastError } from "@/lib/utils"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { VangMatTab } from "./_components/vang-mat-tab"
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEARS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - 2 + i)
@@ -28,10 +31,10 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 const TRANG_THAI_COLORS: Record<string, string> = {
   chua_chot: "bg-amber-100 text-amber-700 border-amber-200",
-  da_xac_nhan: "bg-blue-100 text-blue-700 border-blue-200",
+  da_xac_nhan: "bg-accent/50 text-primary border-primary/20",
   da_duyet: "bg-emerald-100 text-emerald-700 border-emerald-200",
   da_chot: "bg-purple-100 text-purple-700 border-purple-200",
-  da_mock: "bg-slate-100 text-slate-700 border-slate-200",
+  da_mock: "bg-muted text-muted-foreground border-border",
 }
 
 const TRANG_THAI_LABELS: Record<string, string> = {
@@ -55,7 +58,7 @@ export const createChamCongColumns = (options: {
         </div>
         <div>
           <p className="font-medium">{row.original.nhan_vien_ho_ten || "N/A"}</p>
-          <p className="text-xs text-slate-500">{row.original.nhan_vien_id}</p>
+          <p className="text-xs text-muted-foreground">{row.original.nhan_vien_id}</p>
         </div>
       </div>
     ),
@@ -71,7 +74,7 @@ export const createChamCongColumns = (options: {
     accessorKey: "so_ngay_co_mat",
     header: "Có mặt",
     cell: ({ row }) => (
-      <span className="font-medium text-emerald-600">{row.original.so_ngay_co_mat}</span>
+      <span className="font-medium text-chart-2">{row.original.so_ngay_co_mat}</span>
     ),
   },
   {
@@ -99,7 +102,7 @@ export const createChamCongColumns = (options: {
     accessorKey: "so_ngay_cong_tac",
     header: "Công tác",
     cell: ({ row }) => (
-      <span className="text-blue-600">{row.original.so_ngay_cong_tac}</span>
+        <span className="text-primary">{row.original.so_ngay_cong_tac}</span>
     ),
   },
   {
@@ -141,7 +144,6 @@ export default function ChamCongPage() {
   const [nam, setNam] = useState(currentDate.getFullYear())
   const [selectedChamCong, setSelectedChamCong] = useState<ChamCongThang | null>(null)
   const [editOpen, setEditOpen] = useState(false)
-  const [generateOpen, setGenerateOpen] = useState(false)
 
   const { data: chamCongData, isLoading, refetch } = useChamCongThangList({
     page: 1,
@@ -150,7 +152,12 @@ export default function ChamCongPage() {
     nam,
   })
 
-  const generateMutation = useMockGenerateChamCong()
+  useEffect(() => {
+    const handler = () => refetch()
+    window.addEventListener("sidebar:cham-cong:refresh", handler)
+    return () => window.removeEventListener("sidebar:cham-cong:refresh", handler)
+  }, [refetch])
+
   const updateMutation = useChamCongUpdate()
   const xacNhanMutation = useChamCongXacNhan()
   const duyetMutation = useChamCongDuyet()
@@ -206,145 +213,90 @@ export default function ChamCongPage() {
     return { total, coMat, vangCp, vangKp, leTet, congTac }
   }, [chamCongItems])
 
-  const handleGenerate = (data: { thang: number; nam: number }) => {
-    generateMutation.mutate(data, {
-      onSuccess: (result) => {
-        toastSuccess("Thành công", `Đã tạo chấm công cho ${result.count} nhân viên`)
-        setGenerateOpen(false)
-        refetch()
-      },
-      onError: (error) => {
-        toastError("Lỗi", (error as { message?: string })?.message || "Tạo chấm công thất bại")
-      },
-    })
-  }
-
   return (
     <AuthenticatedLayout>
-      <div className="grid grid-cols-6 gap-4 mb-6">
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <User className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
-            <p className="text-xs text-slate-500">Tổng NV</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-emerald-700">{stats.coMat}</p>
-            <p className="text-xs text-emerald-600">Có mặt</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-            <Clock className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-amber-700">{stats.vangCp}</p>
-            <p className="text-xs text-amber-600">Vắng CP</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100">
-            <XCircle className="h-5 w-5 text-red-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-red-700">{stats.vangKp}</p>
-            <p className="text-xs text-red-600">Vắng KP</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-            <CalendarDays className="h-5 w-5 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-purple-700">{stats.leTet}</p>
-            <p className="text-xs text-purple-600">Lễ Tết</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-            <FileText className="h-5 w-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-blue-700">{stats.congTac}</p>
-            <p className="text-xs text-blue-600">Công tác</p>
-          </div>
-        </div>
-      </div>
+      <Tabs defaultValue="cham-cong" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="cham-cong">Chấm công tháng</TabsTrigger>
+          <TabsTrigger value="vang-mat">Vắng mặt</TabsTrigger>
+        </TabsList>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-slate-500" />
-          <Select value={thang.toString()} onValueChange={(v) => setThang(parseInt(v))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m) => (
-                <SelectItem key={m} value={m.toString()}>
-                  Tháng {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={nam.toString()} onValueChange={(v) => setNam(parseInt(v))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {YEARS.map((y) => (
-                <SelectItem key={y} value={y.toString()}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TabsContent value="cham-cong" className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <StatCard icon={User} label="Tổng NV" value={stats.total} accent="primary" />
+            <StatCard icon={CheckCircle2} label="Có mặt" value={stats.coMat} accent="success" />
+            <StatCard icon={Clock} label="Vắng CP" value={stats.vangCp} accent="warning" />
+            <StatCard icon={XCircle} label="Vắng KP" value={stats.vangKp} accent="danger" />
+            <StatCard icon={CalendarDays} label="Lễ Tết" value={stats.leTet} accent="info" />
+            <StatCard icon={FileText} label="Công tác" value={stats.congTac} accent="info" />
+          </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
-            <RefreshCw className="h-4 w-4" />
-            Làm mới
-          </Button>
-          <Button size="sm" onClick={() => setGenerateOpen(true)} className="gap-1.5 bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="h-4 w-4" data-icon="inline-start" />
-            Tạo chấm công
-          </Button>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <Select value={thang.toString()} onValueChange={(v) => setThang(parseInt(v))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((m) => (
+                    <SelectItem key={m} value={m.toString()}>
+                      Tháng {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={nam.toString()} onValueChange={(v) => setNam(parseInt(v))}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((y) => (
+                    <SelectItem key={y} value={y.toString()}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="mt-4">
-        <DataTable
-          columns={columns}
-          data={chamCongItems}
-          loading={isLoading}
-          emptyMessage="Chưa có dữ liệu chấm công"
-        />
-      </div>
+            <div className="ml-auto flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-1.5">
+                <RefreshCw className="h-4 w-4" />
+                Làm mới
+              </Button>
+            </div>
+          </div>
 
-      <ChamCongEditDialog
-        chamCong={selectedChamCong}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onUpdate={handleUpdate}
-        onXacNhan={handleXacNhan}
-        onDuyet={handleDuyet}
-        onChot={handleChot}
-        isPending={updateMutation.isPending}
-      />
+          <div className="mt-4">
+            <LichChamCongConfig />
+          </div>
 
-      <GenerateChamCongDialog
-        open={generateOpen}
-        onOpenChange={setGenerateOpen}
-        onSubmit={handleGenerate}
-        isPending={generateMutation.isPending}
-      />
+          <div className="mt-4">
+            <DataTable
+              columns={columns}
+              data={chamCongItems}
+              loading={isLoading}
+              emptyMessage="Chưa có dữ liệu chấm công"
+            />
+          </div>
+
+          <ChamCongEditDialog
+            chamCong={selectedChamCong}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onUpdate={handleUpdate}
+            onXacNhan={handleXacNhan}
+            onDuyet={handleDuyet}
+            onChot={handleChot}
+            isPending={updateMutation.isPending}
+          />
+        </TabsContent>
+
+        <TabsContent value="vang-mat">
+          <VangMatTab />
+        </TabsContent>
+      </Tabs>
     </AuthenticatedLayout>
   )
 }

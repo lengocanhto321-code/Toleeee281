@@ -1,10 +1,10 @@
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy import select, func, extract
 
+from libs.datetime import get_utc_now
 from libs.result import Result, Error, Return
 from src.api.schemas.nhan_vien import NhanVienDataResponse
 from src.api.schemas.nhan_vien_detail import NhanVienDetailResponse
@@ -84,7 +84,7 @@ class GetNhanVienUseCase:
             # Convert to response objects
             response_items = [NhanVienDataResponse(**item) for item in items]
 
-            now = datetime.utcnow()
+            now = get_utc_now()
             current_month = now.month
             current_year = now.year
 

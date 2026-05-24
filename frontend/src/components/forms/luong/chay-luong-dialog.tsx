@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Play } from "lucide-react"
+import { Play, AlertTriangle, RefreshCw } from "lucide-react"
 import { chayLuongSchema } from "@/schemas/luong.schema"
+import { useKyLuongExists } from "@/hooks/luong/use-luong-query"
 
 interface ChayLuongDialogProps {
   open: boolean
@@ -39,12 +40,26 @@ export function ChayLuongDialog({
   const [thang, setThang] = useState(currentDate.getMonth() + 1)
   const [nam, setNam] = useState(currentDate.getFullYear())
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [confirmRecalculate, setConfirmRecalculate] = useState(false)
+
+  const { data: existingKyLuong } = useKyLuongExists(thang, nam, open)
+  const isRecalculate = !!existingKyLuong && existingKyLuong.trang_thai !== "da_chot"
+  const isLocked = !!existingKyLuong && existingKyLuong.trang_thai === "da_chot"
+
+  useEffect(() => {
+    setConfirmRecalculate(false)
+  }, [thang, nam])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    if (isRecalculate && !confirmRecalculate) {
+      setConfirmRecalculate(true)
+      return
+    }
+
     const result = chayLuongSchema.safeParse({ thang, nam })
-    
+
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
       result.error.issues.forEach((issue) => {
@@ -55,7 +70,7 @@ export function ChayLuongDialog({
       setErrors(fieldErrors)
       return
     }
-    
+
     setErrors({})
     onSubmit({ thang, nam })
   }
@@ -69,26 +84,56 @@ export function ChayLuongDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Play className="h-5 w-5 text-indigo-600" />
-            Chạy lương tháng
+            {isRecalculate ? (
+              <RefreshCw className="h-5 w-5 text-amber-600" />
+            ) : (
+              <Play className="h-5 w-5 text-blue-600" />
+            )}
+            {isRecalculate ? "Tính lại lương" : "Chạy lương tháng"}
           </DialogTitle>
           <DialogDescription>
-            Tính toán và tạo phiếu lương cho tất cả nhân viên trong tháng.
+            {isRecalculate
+              ? "Kỳ lương này đã được chạy. Dữ liệu cũ sẽ bị ghi đè."
+              : "Tính toán và tạo phiếu lương cho tất cả nhân viên trong tháng."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Alert variant="warning" className="bg-amber-50 border-amber-200">
-            <AlertDescription className="text-amber-800 text-sm">
-              Đảm bảo đã cập nhật chấm công và cấu hình lương trước khi chạy.
-            </AlertDescription>
-          </Alert>
+          {isLocked && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                Kỳ lương tháng {thang}/{nam} đã chốt. Không thể tính lại.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isRecalculate && !isLocked && (
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800 text-sm">
+                Kỳ lương tháng {thang}/{nam} đã chạy lúc{" "}
+                {existingKyLuong?.ngay_chay
+                  ? new Date(existingKyLuong.ngay_chay).toLocaleString("vi-VN")
+                  : "trước đó"}
+                . Tính lại sẽ ghi đè toàn bộ dữ liệu cũ.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!isLocked && (
+            <Alert variant="warning" className="bg-amber-50 border-amber-200">
+              <AlertDescription className="text-amber-800 text-sm">
+                Đảm bảo đã cập nhật chấm công và cấu hình lương trước khi chạy.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="thang">Tháng</Label>
-              <Select 
-                value={String(thang)} 
+              <Select
+                value={String(thang)}
                 onValueChange={(v) => {
                   setThang(parseInt(v))
                   setErrors((prev) => ({ ...prev, thang: "" }))
@@ -111,8 +156,8 @@ export function ChayLuongDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="nam">Năm</Label>
-              <Select 
-                value={String(nam)} 
+              <Select
+                value={String(nam)}
                 onValueChange={(v) => {
                   setNam(parseInt(v))
                   setErrors((prev) => ({ ...prev, nam: "" }))
@@ -145,9 +190,31 @@ export function ChayLuongDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700">
-              {isPending ? "Đang chạy..." : "Chạy lương"}
-            </Button>
+            {isLocked ? (
+              <Button type="button" disabled className="opacity-50 cursor-not-allowed">
+                Đã chốt
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isPending}
+                className={
+                  isRecalculate
+                    ? "bg-amber-600 hover:bg-amber-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }
+              >
+                {isPending ? (
+                  "Đang chạy..."
+                ) : confirmRecalculate ? (
+                  "Xác nhận tính lại"
+                ) : isRecalculate ? (
+                  "Tính lại"
+                ) : (
+                  "Chạy lương"
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

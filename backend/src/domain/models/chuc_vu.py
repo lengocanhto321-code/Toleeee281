@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Boolean, Text, Numeric, DateTime, Integer
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -21,12 +21,18 @@ class ChucVu(Base):
     # Cấp bậc (1-10, 1 lowest, 10 highest)
     cap_bac = Column(Integer, nullable=False, default=1)
 
-    # Soft-delete
-    deleted_at = Column(DateTime, nullable=True)
+    # Loại chức vụ: quan_ly (quản lý) / giao_vien / nhan_vien
+    loai = Column(String(20), nullable=False, default="nhan_vien")
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    # Soft-delete
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
 
     # Relationships
@@ -35,5 +41,5 @@ class ChucVu(Base):
         "CongTac",
         back_populates="chuc_vu",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )

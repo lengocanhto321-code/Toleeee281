@@ -18,15 +18,20 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useUser } from "@/hooks";
+import type { UserRole } from "@/types/auth.types";
+
+const ADMIN_ROLES: UserRole[] = ["ADMIN", "HIEU_TRUONG", "HIEU_PHO", "TO_TRUONG"];
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
   breadcrumbLabel?: string;
+  allowedRoles?: UserRole[];
 }
 
 export function AuthenticatedLayout({
   children,
   breadcrumbLabel,
+  allowedRoles = ADMIN_ROLES,
 }: AuthenticatedLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -39,7 +44,6 @@ export function AuthenticatedLayout({
     "phong-ban": "Phòng ban",
     "chuc-vu": "Chức vụ",
     luong: "Lương",
-    "gioi-thieu": "Giới thiệu",
   };
 
   const segments = pathname.split("/").filter(Boolean);
@@ -93,7 +97,10 @@ export function AuthenticatedLayout({
     if (isClient && !isAuthenticated && !isAuthLoading) {
       router.push("/login");
     }
-  }, [isClient, isAuthenticated, isAuthLoading, router]);
+    if (isClient && isAuthenticated && user && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      router.push("/employee");
+    }
+  }, [isClient, isAuthenticated, isAuthLoading, user, allowedRoles, router]);
 
   // Loading state (wait for client + auth resolution)
   if (!isClient || (isClient && !isAuthenticated)) {
@@ -114,7 +121,7 @@ export function AuthenticatedLayout({
     >
       <AppSidebar />
       <SidebarInset className="flex flex-col min-h-0">
-        <header className="sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b bg-white p-4">
+        <header className="sticky top-0 z-20 flex shrink-0 items-center gap-2 border-b border-border bg-card p-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
           <Breadcrumb>
@@ -134,7 +141,7 @@ export function AuthenticatedLayout({
             </BreadcrumbList>
           </Breadcrumb>
           {now && (
-            <span className="ml-auto font-mono text-xs text-slate-400">
+            <span className="ml-auto font-mono text-xs text-muted-foreground">
               {formatTime(now)}
             </span>
           )}

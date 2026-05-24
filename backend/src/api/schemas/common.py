@@ -1,4 +1,4 @@
-from typing import TypeVar, Optional, Generic
+from typing import TypeVar, Optional, Generic, Any
 
 from pydantic import BaseModel
 
@@ -10,6 +10,8 @@ class Metadata(BaseModel):
     per_page: int
     total: int
     total_pages: int
+    thong_ke: Optional[Any] = None
+    phong_ban_list: Optional[Any] = None
 
 
 class APIResponseWithMetadata(BaseModel, Generic[T]):

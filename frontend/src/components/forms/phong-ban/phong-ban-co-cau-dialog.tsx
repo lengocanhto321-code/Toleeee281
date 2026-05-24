@@ -84,7 +84,7 @@ function TreeNode({ node, level = 0, expanded, onToggle }: {
             isInactive
               ? "bg-slate-200 text-slate-500"
               : node.loai === "hanh_chinh"
-              ? "bg-indigo-100 text-indigo-600"
+              ? "bg-blue-100 text-blue-600"
               : "bg-amber-100 text-amber-600"
           }`}
         >
@@ -132,16 +132,16 @@ function TypeGroupView({ phongBans }: { phongBans: PhongBanNode[] }) {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <div className="h-4 w-4 rounded bg-indigo-400" />
+          <div className="h-4 w-4 rounded bg-blue-400" />
           <h4 className="font-semibold text-sm">Hành chính ({hanhChinh.length})</h4>
         </div>
         <div className="space-y-1">
           {hanhChinh.map((pb) => (
             <div
               key={pb.id}
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-indigo-50 transition-colors"
+              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-blue-50 transition-colors"
             >
-              <Landmark className="h-5 w-5 text-indigo-600 shrink-0" />
+              <Landmark className="h-5 w-5 text-blue-600 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900">{pb.ten_phong_ban}</p>
                 <p className="text-[11px] text-muted-foreground">{pb.ma_phong_ban}</p>
@@ -195,7 +195,7 @@ function ListView({ phongBans }: { phongBans: PhongBanNode[] }) {
         >
           <div
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-              pb.loai === "hanh_chinh" ? "bg-indigo-100 text-indigo-600" : "bg-amber-100 text-amber-600"
+              pb.loai === "hanh_chinh" ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600"
             }`}
           >
             {pb.loai === "hanh_chinh" ? (
@@ -286,7 +286,7 @@ export function PhongBanCoCauDialog({ open, onOpenChange }: PhongBanCoCauDialogP
   if (phongBansData.length === 0) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col">
+<DialogContent size="full" className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Network className="h-5 w-5" />
@@ -305,7 +305,7 @@ export function PhongBanCoCauDialog({ open, onOpenChange }: PhongBanCoCauDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent size="4xl" style={{ maxHeight: '85vh' }} className="flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between pr-8">
             <DialogTitle className="flex items-center gap-2">
@@ -323,7 +323,7 @@ export function PhongBanCoCauDialog({ open, onOpenChange }: PhongBanCoCauDialogP
         <div className="flex items-center justify-between py-3 border-b">
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1.5">
-              <div className="h-3 w-3 rounded bg-indigo-400" />
+              <div className="h-3 w-3 rounded bg-blue-400" />
               <span className="text-muted-foreground">Hành chính ({stats.hanhChinh})</span>
             </div>
             <div className="flex items-center gap-1.5">

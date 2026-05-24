@@ -6,16 +6,11 @@ import { Separator } from "@/components/ui/separator"
 import { FileText, Calendar, Building, Clock, CheckCircle2, AlertCircle, XCircle } from "lucide-react"
 import type { NhanVien, HopDong } from "@/types/nhan-vien.types"
 import { LOAI_HOP_DONG_LABELS } from "@/types/nhan-vien.types"
+import { formatDateVN } from "@/lib/date-utils"
 
 interface NhanVienContractTabProps {
   nhanVien: NhanVien
   hopDongs?: HopDong[]
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return "—"
-  const d = new Date(dateStr)
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -54,8 +49,8 @@ export function NhanVienContractTab({ nhanVien, hopDongs = [] }: NhanVienContrac
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-              <FileText className="h-5 w-5 text-indigo-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+              <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <h3 className="font-semibold text-slate-900">Hợp đồng hiện tại</h3>
@@ -69,17 +64,17 @@ export function NhanVienContractTab({ nhanVien, hopDongs = [] }: NhanVienContrac
           <Field 
             label="Loại hợp đồng" 
             value={
-              <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                 {LOAI_HOP_DONG_LABELS[nhanVien.loai_hop_dong] || nhanVien.loai_hop_dong}
               </Badge>
             } 
           />
           <Field label="Số hợp đồng" value={currentHopDong?.so_hop_dong || nhanVien.so_hop_dong || "—"} />
-          <Field label="Ngày ký" value={formatDate(currentHopDong?.ngay_ky)} />
+          <Field label="Ngày ký" value={formatDateVN(currentHopDong?.ngay_ky)} />
           <Field label="Hình thức tuyển dụng" value={nhanVien.hinh_thuc_tuyen_dung || "—"} />
           
-          <Field label="Ngày bắt đầu" value={formatDate(currentHopDong?.ngay_bat_dau || nhanVien.ngay_vao_lam)} />
-          <Field label="Ngày kết thúc" value={formatDate(currentHopDong?.ngay_ket_thuc || nhanVien.ngay_het_hop_dong)} />
+          <Field label="Ngày bắt đầu" value={formatDateVN(currentHopDong?.ngay_bat_dau || nhanVien.ngay_vao_lam)} />
+          <Field label="Ngày kết thúc" value={formatDateVN(currentHopDong?.ngay_ket_thuc || nhanVien.ngay_het_hop_dong)} />
           <Field label="Nơi ký hợp đồng" value={nhanVien.noi_ky_hop_dong || "—"} />
         </div>
 
@@ -122,8 +117,8 @@ export function NhanVienContractTab({ nhanVien, hopDongs = [] }: NhanVienContrac
                       <StatusBadge status={hopDong.trang_thai} />
                     </div>
                     <p className="text-xs text-slate-500">
-                      {formatDate(hopDong.ngay_bat_dau)} 
-                      {hopDong.ngay_ket_thuc && ` → ${formatDate(hopDong.ngay_ket_thuc)}`}
+                      {formatDateVN(hopDong.ngay_bat_dau)} 
+                      {hopDong.ngay_ket_thuc && ` → ${formatDateVN(hopDong.ngay_ket_thuc)}`}
                       {!hopDong.ngay_ket_thuc && " → Hiện tại"}
                     </p>
                   </div>
@@ -151,8 +146,8 @@ export function NhanVienContractTab({ nhanVien, hopDongs = [] }: NhanVienContrac
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100">
-            <FileText className="h-5 w-5 text-indigo-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <FileText className="h-5 w-5 text-blue-600" />
           </div>
           <div>
             <p className="text-xs text-slate-500">HĐ hiệu lực</p>

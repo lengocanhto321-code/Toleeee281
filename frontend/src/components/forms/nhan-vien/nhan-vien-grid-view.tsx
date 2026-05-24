@@ -22,8 +22,6 @@ import {
       DropdownMenuItem,
       DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
 import Link from "next/link"
 
 function getInitials(name: string) {
@@ -57,11 +55,11 @@ export function NhanVienGridView({ data, onEdit }: NhanVienGridViewProps) {
                                           {/* Header: Avatar + Info */}
                                           <div className="flex items-start justify-between">
                                                 <div className="flex gap-4">
-                                                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-lg font-bold text-indigo-700">
+                                                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700">
                                                             {getInitials(nv.ho_ten)}
                                                       </div>
                                                       <div>
-                                                            <h3 className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                                            <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                                                                   {nv.ho_ten}
                                                             </h3>
                                                             <div className="flex items-center gap-2 mt-1">
@@ -105,7 +103,7 @@ export function NhanVienGridView({ data, onEdit }: NhanVienGridViewProps) {
                                                       {isActive ? "Đang làm" : nv.trang_thai === "nghi_huu" ? "Nghỉ hưu" : "Nghỉ việc"}
                                                 </Badge>
                                                 {nv.chuc_vu && (
-                                                      <Badge variant="outline" className="bg-indigo-50/50 text-indigo-700 border-indigo-200" title={nv.chuc_vu.ten_chuc_vu}>
+                                                      <Badge variant="outline" className="bg-blue-50/50 text-blue-700 border-blue-200" title={nv.chuc_vu.ten_chuc_vu}>
                                                             <Briefcase className="mr-1 h-3 w-3" />
                                                             <span className="max-w-[120px] truncate">{nv.chuc_vu.ten_chuc_vu}</span>
                                                       </Badge>

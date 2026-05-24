@@ -3,14 +3,13 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Calendar, Clock, Wallet, User } from "lucide-react"
+import { LayoutDashboard, Calendar, Clock, QrCode } from "lucide-react"
 
 const tabs = [
   { href: "/employee", icon: LayoutDashboard, label: "Trang chủ" },
   { href: "/employee/cham-cong", icon: Clock, label: "Chấm công" },
+  { href: "/employee/my-qr", icon: QrCode, label: "Quét QR" },
   { href: "/employee/nghi-phep", icon: Calendar, label: "Nghỉ phép" },
-  { href: "/employee/luong", icon: Wallet, label: "Lương" },
-  { href: "/employee/profile", icon: User, label: "Hồ sơ" },
 ]
 
 function isTabActive(pathname: string, href: string) {

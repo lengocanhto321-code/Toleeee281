@@ -15,7 +15,7 @@ export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters:
     if (!data) return { title: "Xu hướng", headers: [], rows: [] }
     return {
       title: "Báo cáo Xu hướng",
-      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      subtitle: `${filters.start_date} — ${filters.end_date}`,
       headers: ["Tháng", "Nhân sự", "Lương (triệu)", "Nghỉ phép (ngày)"],
       rows: data.xu_huong_nhan_su.map((item, i) => [
         item.thang,
@@ -35,12 +35,23 @@ export const XuHuongTab = React.memo(function XuHuongTab({ filters }: { filters:
     const months = data.xu_huong_nhan_su.map(item => item.thang)
     return {
       tooltip: { trigger: 'axis' },
-      legend: { data: ['Nhân sự', 'Lương (triệu)', 'Nghỉ phép (ngày)'] },
+      legend: {
+        data: ['Nhân sự', 'Lương (triệu)', 'Nghỉ phép (ngày)'],
+        top: 5,
+        left: 'center',
+        textStyle: { fontSize: 11, color: '#475569' },
+        icon: 'roundRect',
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 14,
+        padding: [5, 10],
+      },
+      grid: { left: '3%', right: '6%', bottom: '3%', top: '22%', containLabel: true },
       xAxis: { type: 'category', data: months },
       yAxis: [
-        { type: 'value', name: 'Nhân sự' },
-        { type: 'value', name: 'Lương' },
-        { type: 'value', name: 'Nghỉ phép' },
+        { type: 'value', name: 'NV', nameTextStyle: { fontSize: 10, color: '#64748b' } },
+        { type: 'value', name: 'Tr.đ', nameTextStyle: { fontSize: 10, color: '#64748b' } },
+        { type: 'value', name: 'Ngày', nameTextStyle: { fontSize: 10, color: '#64748b' }, offset: 40 },
       ],
       series: [
         {

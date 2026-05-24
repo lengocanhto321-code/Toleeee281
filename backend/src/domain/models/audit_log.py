@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Text, BigInteger, ForeignKey, DateTime, JSON
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -18,4 +18,4 @@ class AuditLog(Base):
     du_lieu_moi = Column(JSON)
     dia_chi_ip = Column(String(45))
     ghi_chu = Column(Text)
-    thoi_gian = Column(DateTime, nullable=False, default=datetime.utcnow)
+    thoi_gian = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)

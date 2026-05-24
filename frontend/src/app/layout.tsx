@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HR Management System - THPT Thăng Long",
+  title: "THPT Thăng Long",
   description: "Hệ thống quản lý nhân sự trường THPT Thăng Long",
 };
 

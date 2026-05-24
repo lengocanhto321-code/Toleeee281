@@ -82,7 +82,7 @@ export type LoaiNghi =
   | "thai_san" 
   | "cong_tac";
 
-export type TrangThaiDon = "cho_duyet_cap_1" | "cho_duyet_cap_2" | "da_duyet_cap_2" | "tu_choi" | "huy";
+export type TrangThaiDon = "cho_duyet" | "da_duyet" | "tu_choi" | "huy";
 
 // Query params types
 export interface DonXinNghiParams {

@@ -1,6 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
 import {
   Dialog,
   DialogContent,
@@ -23,19 +25,21 @@ import { usePhongBanAll } from "@/hooks/phong-ban/use-phong-ban-query"
 import { useChucVuList, LOAI_MAPPING } from "@/hooks/chuc-vu/use-chuc-vu-query"
 import type { NhanVien } from "@/types/nhan-vien.types"
 
+const transferSchema = z.object({
+  phong_ban_id: z.string().min(1, "Vui lòng chọn phòng ban"),
+  chuc_vu_id: z.string().min(1, "Vui lòng chọn chức vụ"),
+  ngay_chuyen: z.string().min(1, "Vui lòng chọn ngày điều chuyển"),
+  ly_do: z.string().max(500, "Lý do tối đa 500 ký tự").optional(),
+})
+
+type TransferFormData = z.infer<typeof transferSchema>
+
 interface TransferDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   nhanVien: NhanVien
-  onTransfer: (data: TransferData) => void
+  onTransfer: (data: { phong_ban_id: string; chuc_vu_id: string; ngay_chuyen: string; ly_do: string }) => void
   isPending?: boolean
-}
-
-interface TransferData {
-  phong_ban_id: string
-  chuc_vu_id: string
-  ngay_chuyen: string
-  ly_do: string
 }
 
 export function NhanVienTransferDialog({
@@ -45,11 +49,6 @@ export function NhanVienTransferDialog({
   onTransfer,
   isPending,
 }: TransferDialogProps) {
-  const [phongBanId, setPhongBanId] = useState(nhanVien.phong_ban_id || "")
-  const [chucVuId, setChucVuId] = useState(nhanVien.chuc_vu_id || "")
-  const [ngayChuyen, setNgayChuyen] = useState(new Date().toISOString().split("T")[0])
-  const [lyDo, setLyDo] = useState("")
-
   const { data: allPhongBans } = usePhongBanAll()
   const { data: allChucVus } = useChucVuList()
 
@@ -58,13 +57,43 @@ export function NhanVienTransferDialog({
     return allowedLoai?.includes(cv.loai)
   }) || []
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<TransferFormData>({
+    mode: "onChange",
+    defaultValues: {
+      phong_ban_id: nhanVien.phong_ban_id || "",
+      chuc_vu_id: nhanVien.chuc_vu_id || "",
+      ngay_chuyen: new Date().toISOString().split("T")[0],
+      ly_do: "",
+    },
+  })
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        phong_ban_id: nhanVien.phong_ban_id || "",
+        chuc_vu_id: nhanVien.chuc_vu_id || "",
+        ngay_chuyen: new Date().toISOString().split("T")[0],
+        ly_do: "",
+      })
+    }
+  }, [open, nhanVien, reset])
+
+  const phongBanId = watch("phong_ban_id")
+  const chucVuId = watch("chuc_vu_id")
+
+  const onSubmitForm = (data: TransferFormData) => {
     onTransfer({
-      phong_ban_id: phongBanId,
-      chuc_vu_id: chucVuId,
-      ngay_chuyen: ngayChuyen,
-      ly_do: lyDo,
+      phong_ban_id: data.phong_ban_id,
+      chuc_vu_id: data.chuc_vu_id,
+      ngay_chuyen: data.ngay_chuyen,
+      ly_do: data.ly_do || "",
     })
   }
 
@@ -77,67 +106,68 @@ export function NhanVienTransferDialog({
             Điều chuyển {nhanVien.ho_ten} ({nhanVien.ma_nhan_vien}) sang phòng ban/chức vụ mới
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmitForm)}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="phong_ban_id">Phòng ban mới <span className="text-red-500">*</span></Label>
-              <Select value={phongBanId} onValueChange={setPhongBanId}>
-                <SelectTrigger>
+              <Label>Phòng ban mới <span className="text-red-500">*</span></Label>
+              <Select value={phongBanId} onValueChange={(v) => setValue("phong_ban_id", v, { shouldValidate: true })}>
+                <SelectTrigger className="cursor-pointer">
                   <SelectValue placeholder="Chọn phòng ban" />
                 </SelectTrigger>
                 <SelectContent>
                   {allPhongBans
                     ?.filter((pb) => pb.trang_thai)
                     .map((pb) => (
-                      <SelectItem key={pb.id} value={pb.id}>
+                      <SelectItem key={pb.id} value={pb.id} className="cursor-pointer">
                         {pb.ten_phong_ban}
                       </SelectItem>
                     ))}
                 </SelectContent>
               </Select>
+              {errors.phong_ban_id && <p className="text-xs text-red-500">{errors.phong_ban_id.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="chuc_vu_id">Chức vụ mới <span className="text-red-500">*</span></Label>
-              <Select value={chucVuId} onValueChange={setChucVuId}>
-                <SelectTrigger>
+              <Label>Chức vụ mới <span className="text-red-500">*</span></Label>
+              <Select value={chucVuId} onValueChange={(v) => setValue("chuc_vu_id", v, { shouldValidate: true })}>
+                <SelectTrigger className="cursor-pointer">
                   <SelectValue placeholder="Chọn chức vụ" />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredChucVus
                     ?.filter((cv) => cv.trang_thai)
                     .map((cv) => (
-                      <SelectItem key={cv.id} value={cv.id}>
+                      <SelectItem key={cv.id} value={cv.id} className="cursor-pointer">
                         {cv.ten_chuc_vu}
                       </SelectItem>
                     ))}
                 </SelectContent>
               </Select>
+              {errors.chuc_vu_id && <p className="text-xs text-red-500">{errors.chuc_vu_id.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="ngay_chuyen">Ngày điều chuyển <span className="text-red-500">*</span></Label>
               <Input
                 id="ngay_chuyen"
                 type="date"
-                required
-                value={ngayChuyen}
-                onChange={(e) => setNgayChuyen(e.target.value)}
+                {...register("ngay_chuyen")}
               />
+              {errors.ngay_chuyen && <p className="text-xs text-red-500">{errors.ngay_chuyen.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="ly_do">Lý do điều chuyển</Label>
               <Input
                 id="ly_do"
-                value={lyDo}
-                onChange={(e) => setLyDo(e.target.value)}
+                {...register("ly_do")}
                 placeholder="VD: Theo nhu cầu công tác"
               />
+              {errors.ly_do && <p className="text-xs text-red-500">{errors.ly_do.message}</p>}
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="cursor-pointer">
               Hủy
             </Button>
-            <Button type="submit" disabled={isPending || !phongBanId || !chucVuId}>
+            <Button type="submit" disabled={isPending || !isValid} className="cursor-pointer">
               {isPending ? "Đang xử lý..." : "Điều chuyển"}
             </Button>
           </DialogFooter>

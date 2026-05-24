@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, timedelta
-from datetime import timezone
 from typing import Dict, Any, List, Optional, Tuple
 
+from libs.datetime import get_utc_now
 import bcrypt
 import jwt
 
@@ -43,25 +43,30 @@ class AuthService:
         user_id: str,
         email: Optional[str] = None,
         username: Optional[str] = None,
+        roles: Optional[List[str]] = None,
+        permissions: Optional[List[str]] = None,
+        nhan_vien_id: Optional[str] = None,
         expires_delta: Optional[timedelta] = None,
     ) -> Tuple[str, datetime]:
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = get_utc_now() + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
-                minutes=self.jwt_expiration_minutes
-            )
+            expire = get_utc_now() + timedelta(minutes=self.jwt_expiration_minutes)
 
         logger.debug(f"Creating token for user {user_id}")
 
-        # Basic payload with user ID and expiration
         payload = {"sub": str(user_id), "exp": expire}
 
-        # Include user identity data when available
         if email:
             payload["email"] = email
         if username:
             payload["username"] = username
+        if roles:
+            payload["roles"] = roles
+        if permissions:
+            payload["permissions"] = permissions
+        if nhan_vien_id:
+            payload["nhan_vien_id"] = nhan_vien_id
 
         return (
             jwt.encode(payload, self.jwt_secret, algorithm=self.jwt_algorithm),
@@ -72,9 +77,9 @@ class AuthService:
         self, user_id: str, expires_delta: Optional[timedelta] = None
     ) -> Tuple[str, datetime]:
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = get_utc_now() + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
+            expire = get_utc_now() + timedelta(
                 seconds=self.refresh_token_expiration_seconds
             )
 

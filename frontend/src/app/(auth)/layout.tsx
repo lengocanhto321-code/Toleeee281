@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Sign In - HR Management System",
-  description: "Sign in to your HR Management System account",
+  title: "Đăng nhập - THPT Thăng Long",
+  description: "Hệ thống thông tin THPT Thăng Long",
 }
 
 export default function AuthLayout({

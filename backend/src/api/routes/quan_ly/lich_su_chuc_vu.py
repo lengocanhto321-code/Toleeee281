@@ -28,7 +28,7 @@ from src.app.usecases.lich_su_chuc_vu import (
 
 from src.api.error import ClientError, ServerError
 
-router = APIRouter(tags=["LichSuChucVu"])
+router = APIRouter()
 
 
 @router.get(

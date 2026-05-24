@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from libs.result import Result, Error, Return
+from libs.result import Result, Error, Return, is_err
 from src.domain.models.audit_log import AuditLog
 from src.api.schemas.phong_ban import PhongBanUpdateRequest, PhongBanDataResponse
 from src.app.usecases.phong_ban.helpers import serialize_model_to_dict
@@ -86,5 +86,7 @@ class UpdatePhongBanUseCase:
             await uow.commit()
 
             resp = await phong_ban_repo.get_detail_with_stats(command.id)
-            response_data = PhongBanDataResponse(**resp)
+            if is_err(resp):
+                return Return.err(resp.value)
+            response_data = PhongBanDataResponse(**resp.value)
             return Return.ok(UpdatePhongBanResult(phong_ban=response_data))

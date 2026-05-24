@@ -10,6 +10,6 @@ export const employeeQueryKeys = {
 export function useEmployeeDashboard() {
   return useQuery({
     queryKey: employeeQueryKeys.dashboard(),
-    queryFn: () => apiGateway.get<EmployeeDashboard>("/api/employee/dashboard"),
+    queryFn: () => apiGateway.get<EmployeeDashboard>("/api/v1/nhan-vien/dashboard"),
   })
 }

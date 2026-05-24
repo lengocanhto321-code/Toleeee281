@@ -48,9 +48,12 @@ from src.app.usecases.luong import (
     GetTraLuongByKyLuongQuery,
     GetTraLuongDetailUseCase,
     GetTraLuongDetailQuery,
+    ActivateCauHinhLuongUseCase,
+    UpdateLuongUseCase,
+    UpdateLuongCommand,
 )
 
-router = APIRouter(tags=["Luong"])
+router = APIRouter()
 
 
 @router.post(
@@ -65,7 +68,6 @@ async def create_cau_hinh_luong(
 ):
     """Tạo cấu hình hệ thống lương mới."""
     command = CreateCauHinhLuongCommand(
-        ten_cau_hinh=body.get("ten_cau_hinh"),
         ngay_ap_dung=body.get("ngay_ap_dung"),
         luong_co_so=body.get("luong_co_so", 1800000),
         he_so_dac_thu=body.get("he_so_dac_thu", 1.0),
@@ -74,6 +76,7 @@ async def create_cau_hinh_luong(
         ty_le_bhtn=body.get("ty_le_bhtn", 1.0),
         muc_giam_tru_ban_than=body.get("muc_giam_tru_ban_than", 11000000),
         muc_giam_tru_nguoi_phu_thuoc=body.get("muc_giam_tru_nguoi_phu_thuoc", 4400000),
+        ghi_chu=body.get("ghi_chu"),
     )
 
     use_case = CreateCauHinhLuongUseCase(uow)
@@ -123,6 +126,34 @@ async def get_list_cau_hinh_luong(
     )
 
 
+@router.put(
+    "/cau-hinh/{cau_hinh_id}/activate",
+    response_model=APIResponse[CauHinhLuongResponse],
+)
+async def activate_cau_hinh_luong(
+    cau_hinh_id: str = Path(..., description="ID cấu hình lương"),
+    user_context: UserContext = Depends(require_permission("luong:manage")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    """Kích hoạt một cấu hình lương làm cấu hình đang áp dụng."""
+    use_case = ActivateCauHinhLuongUseCase(uow)
+    result = await use_case.execute(cau_hinh_id)
+
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        raise ServerError(base_error=error)
+
+    from src.app.usecases.nhan_vien.helpers import serialize_model_to_dict
+
+    resp = serialize_model_to_dict(result.value)
+    return APIResponse(
+        message="Đã kích hoạt cấu hình lương",
+        data=CauHinhLuongResponse(**resp),
+    )
+
+
 @router.post(
     "",
     response_model=APIResponse[LuongDataResponse],
@@ -163,6 +194,45 @@ async def create_luong(
     return APIResponse(message="Tạo bảng lương thành công", data=result.value.luong)
 
 
+@router.put(
+    "/{luong_id}",
+    response_model=APIResponse[LuongDataResponse],
+)
+async def update_luong(
+    luong_id: str = Path(..., description="ID bảng lương"),
+    body: dict = None,
+    user_context: UserContext = Depends(require_permission("luong:manage")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    """Cập nhật bảng lương."""
+    body = body or {}
+    command = UpdateLuongCommand(
+        luong_id=luong_id,
+        ma_ngach=body.get("ma_ngach"),
+        bac=body.get("bac"),
+        he_so_luong=body.get("he_so_luong", 1.0),
+        so_nam_tham_nien=body.get("so_nam_tham_nien", 0),
+        ty_le_pc_uu_dai=body.get("ty_le_pc_uu_dai", 30.0),
+        he_so_khu_vuc=body.get("he_so_khu_vuc", 0.0),
+        phu_cap_chuc_vu=body.get("phu_cap_chuc_vu", 0),
+        phu_cap_tham_nien_vuot_khung=body.get("phu_cap_tham_nien_vuot_khung", 0),
+        phu_cap_khac=body.get("phu_cap_khac", 0),
+        khau_tru_khac=body.get("khau_tru_khac", 0),
+        ghi_chu=body.get("ghi_chu"),
+    )
+
+    use_case = UpdateLuongUseCase(uow)
+    result = await use_case.execute(command)
+
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        raise ServerError(base_error=error)
+
+    return APIResponse(message="Cập nhật bảng lương thành công", data=result.value)
+
+
 @router.get("", response_model=APIResponseWithMetadata[list[LuongDataResponse]])
 async def get_list_luong(
     page: int = Query(1, ge=1),
@@ -188,80 +258,6 @@ async def get_list_luong(
     return APIResponseWithMetadata(
         message="Lấy danh sách lương thành công",
         data=result.value.items,
-        metadata={
-            "total": result.value.total,
-            "page": page,
-            "per_page": page_size,
-            "total_pages": (result.value.total + page_size - 1) // page_size,
-        },
-    )
-
-
-@router.get("/me", response_model=APIResponseWithMetadata[list[dict]])
-async def get_my_luong(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-    nam: Optional[int] = Query(None, ge=2000, le=2100),
-    user_context: UserContext = Depends(require_permission("luong:manage")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """
-    Lấy danh sách lương của user hiện tại.
-    Dành cho nhân viên xem lương của chính mình.
-    """
-    from src.repository.rbac_repository import RBACRepository
-
-    rbac_repo = RBACRepository(uow.session)
-
-    tai_khoan = await rbac_repo.get_tai_khoan_by_id(user_context.user_id)
-    if not tai_khoan or not tai_khoan.nhan_vien_id:
-        raise ClientError(
-            base_error=libs.result.Error(
-                code="not_found", message="Không tìm thấy thông tin nhân viên"
-            ),
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-
-    query = GetListLuongQuery(
-        page=page,
-        page_size=page_size,
-        nhan_vien_id=tai_khoan.nhan_vien_id,
-        hieu_luc=None,
-    )
-
-    use_case = GetListLuongUseCase(uow)
-    result = await use_case.execute(query)
-
-    if is_err(result):
-        raise ServerError(base_error=result.value)
-
-    items = []
-    for luong in result.value.items:
-        items.append(
-            {
-                "id": luong.id,
-                "thang": luong.thang,
-                "nam": luong.nam,
-                "nhan_vien_id": luong.nhan_vien_id,
-                "nhan_vien_ho_ten": luong.nhan_vien.ho_ten if luong.nhan_vien else None,
-                "tong_thu_nhap": luong.tong_thu_nhap,
-                "tong_khau_tru": luong.tong_khau_tru,
-                "luong_thuc_nhan": luong.luong_thuc_nhan,
-                "ngay_thanh_toan": luong.ngay_thanh_toan,
-                "chi_tiet": {
-                    "luong_co_ban": luong.luong_co_ban,
-                    "phu_cap": luong.phu_cap_chuc_vu + luong.phu_cap_khac,
-                    "thuong": luong.thuong,
-                    "bao_hiem": luong.bhxh + luong.bhyt + luong.bhtn,
-                    "thue": luong.thue_tncn,
-                    "khac": luong.khau_tru_khac,
-                },
-            }
-        )
-
-    return APIResponseWithMetadata(
-        message="Lấy danh sách lương thành công",
-        data=items,
         metadata={
             "total": result.value.total,
             "page": page,
@@ -345,6 +341,8 @@ async def chay_luong(
     if is_err(result):
         error = result.value
         if error.code == "da_co_ky_luong":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        if error.code == "ky_luong_da_chot":
             raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
         if error.code == "cau_hinh_not_found":
             raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)

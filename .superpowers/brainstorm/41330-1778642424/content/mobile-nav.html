@@ -1,0 +1,137 @@
+<h2>Navigation cho mobile?</h2>
+<p class="subtitle">Giao diện employee sẽ chủ yếu được dùng trên điện thoại. Chọn pattern phù hợp nhất.</p>
+
+<div class="cards">
+  <div class="card" data-choice="bottom-tabs" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #fafaf8;">
+      <div style="max-width: 280px; margin: 0 auto; border: 2px solid #e5e7eb; border-radius: 24px; overflow: hidden; background: white;">
+        <div style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5); padding: 12px 16px; border-bottom: 1px solid #d1fae5;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 28px; height: 28px; background: #059669; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">🎓</div>
+            <span style="font-weight: 600; color: #065f46; font-size: 14px;">THPT Thăng Long</span>
+          </div>
+        </div>
+        <div style="padding: 16px; min-height: 180px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; color: #6b7280;">Xin chào,</div>
+          <div style="font-size: 18px; font-weight: 700; color: #1f2937;">Cô Lan 🌸</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <div style="background: #f0fdf4; border-radius: 12px; padding: 12px; text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #059669;">12</div>
+              <div style="font-size: 10px; color: #6b7280;">Ngày phép</div>
+            </div>
+            <div style="background: #eff6ff; border-radius: 12px; padding: 12px; text-align: center;">
+              <div style="font-size: 20px; font-weight: 700; color: #2563eb;">22</div>
+              <div style="font-size: 10px; color: #6b7280;">Ngày làm</div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-around; padding: 8px 0 12px; border-top: 1px solid #f3f4f6; background: white;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px;">
+            <div style="width: 32px; height: 32px; background: #059669; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <span style="color: white; font-size: 14px;">🏠</span>
+            </div>
+            <span style="font-size: 9px; color: #059669; font-weight: 600;">Trang chủ</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px;">
+            <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 14px;">📋</span>
+            </div>
+            <span style="font-size: 9px; color: #9ca3af;">Chấm công</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px;">
+            <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 14px;">📅</span>
+            </div>
+            <span style="font-size: 9px; color: #9ca3af;">Nghỉ phép</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px;">
+            <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 14px;">💰</span>
+            </div>
+            <span style="font-size: 9px; color: #9ca3af;">Lương</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 48px;">
+            <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 14px;">👤</span>
+            </div>
+            <span style="font-size: 9px; color: #9ca3af;">Hồ sơ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Bottom Tab Bar</h3>
+      <p>5 tab cố định ở dưới cùng. Truy cập nhanh 1 chạm, quen thuộc với mọi người. Desktop tự ẩn đi, dùng sidebar như cũ.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="hamburger" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #fafaf8;">
+      <div style="max-width: 280px; margin: 0 auto; border: 2px solid #e5e7eb; border-radius: 24px; overflow: hidden; background: white;">
+        <div style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5); padding: 12px 16px; border-bottom: 1px solid #d1fae5; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 28px; height: 28px; background: #059669; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">☰</div>
+            <span style="font-weight: 600; color: #065f46; font-size: 14px;">THPT Thăng Long</span>
+          </div>
+          <div style="width: 28px; height: 28px; background: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">TL</div>
+        </div>
+        <div style="padding: 16px; min-height: 180px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; color: #6b7280;">Xin chào,</div>
+          <div style="font-size: 18px; font-weight: 700; color: #1f2937;">Cô Lan 🌸</div>
+          <div style="background: #f0fdf4; border-radius: 12px; padding: 12px; margin-top: 8px;">
+            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">Hành động nhanh</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div style="background: white; border-radius: 8px; padding: 6px 10px; font-size: 11px; color: #059669; border: 1px solid #d1fae5;">+ Xin nghỉ</div>
+              <div style="background: white; border-radius: 8px; padding: 6px 10px; font-size: 11px; color: #059669; border: 1px solid #d1fae5;">QR của tôi</div>
+              <div style="background: white; border-radius: 8px; padding: 6px 10px; font-size: 11px; color: #059669; border: 1px solid #d1fae5;">Xem lương</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 12px 16px; border-top: 1px solid #f3f4f6; background: #f9fafb; text-align: center;">
+          <span style="font-size: 10px; color: #9ca3af;">Nhấn ☞ để mở menu</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Hamburger Menu</h3>
+      <p>Menu ẩn bên trái, mở khi nhấn icon. Tiết kiệm không gian, chứa nhiều mục hơn. Desktop vẫn dùng sidebar.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="swipe-drawer" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #fafaf8;">
+      <div style="max-width: 280px; margin: 0 auto; border: 2px solid #e5e7eb; border-radius: 24px; overflow: hidden; background: white;">
+        <div style="background: linear-gradient(135deg, #f0fdf4, #ecfdf5); padding: 12px 16px; border-bottom: 1px solid #d1fae5; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 600; color: #065f46; font-size: 14px;">THPT Thăng Long 🎓</span>
+          <div style="width: 28px; height: 28px; background: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;">TL</div>
+        </div>
+        <div style="padding: 16px; min-height: 180px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 13px; color: #6b7280;">Xin chào,</div>
+          <div style="font-size: 18px; font-weight: 700; color: #1f2937;">Cô Lan 🌸</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;">
+            <div style="background: #f0fdf4; border-radius: 14px; padding: 10px 6px; text-align: center;">
+              <div style="font-size: 20px;">📋</div>
+              <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Chấm công</div>
+            </div>
+            <div style="background: #fef3c7; border-radius: 14px; padding: 10px 6px; text-align: center;">
+              <div style="font-size: 20px;">📅</div>
+              <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Nghỉ phép</div>
+            </div>
+            <div style="background: #eff6ff; border-radius: 14px; padding: 10px 6px; text-align: center;">
+              <div style="font-size: 20px;">💰</div>
+              <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Lương</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 8px 16px 12px; border-top: 1px solid #f3f4f6; background: #f9fafb; text-align: center;">
+          <div style="width: 36px; height: 4px; background: #d1d5db; border-radius: 2px; margin: 0 auto;"></div>
+          <span style="font-size: 10px; color: #9ca3af; display: block; margin-top: 4px;">Vuốt lên để mở menu</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Swipe-up Drawer</h3>
+      <p>Home dashboard là màn hình chính, vuốt lên từ dưới để mở navigation drawer. Hiện đại, tối đa diện tích nội dung. Kết hợp FAB cho hành động nhanh.</p>
+    </div>
+  </div>
+</div>

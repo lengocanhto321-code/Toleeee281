@@ -1,3 +1,5 @@
 export * from "./nghi-phep-columns"
 export * from "./nghi-phep-toolbar"
 export * from "./nghi-phep-dialogs"
+export { NghiPhepSidebarPanel } from "./nghi-phep-sidebar-panel"
+export { ChamCongSidebarPanel } from "./cham-cong-sidebar-panel"

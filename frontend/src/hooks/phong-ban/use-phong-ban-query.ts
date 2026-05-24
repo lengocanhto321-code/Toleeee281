@@ -61,7 +61,7 @@ export function usePhongBanList(
   });
 }
 
-export function usePhongBanAll() {
+export function usePhongBanAll(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: phongBanQueryKeys.allList(),
     queryFn: async () => {
@@ -73,6 +73,7 @@ export function usePhongBanAll() {
 
       return response.data.data;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

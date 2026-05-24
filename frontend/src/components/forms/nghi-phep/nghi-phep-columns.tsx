@@ -4,8 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Eye, Check, X } from "lucide-react"
-import { format } from "date-fns"
-import { vi } from "date-fns/locale"
+import { formatDateVN, formatDateTimeVN } from "@/lib/date-utils"
 import type { DonXinNghi, LoaiNghi, TrangThaiDon } from "@/types/nghi-phep.types"
 
 const LOAI_NGHI_CONFIG: Record<LoaiNghi, { label: string; color: string }> = {
@@ -19,9 +18,8 @@ const LOAI_NGHI_CONFIG: Record<LoaiNghi, { label: string; color: string }> = {
 }
 
 const TRANG_THAI_CONFIG: Record<TrangThaiDon, { label: string; color: string; icon: React.ReactNode }> = {
-  cho_duyet_cap_1: { label: "Chờ cấp 1", color: "bg-amber-100 text-amber-700 border-amber-200", icon: null },
-  cho_duyet_cap_2: { label: "Chờ cấp 2", color: "bg-blue-100 text-blue-700 border-blue-200", icon: null },
-  da_duyet_cap_2: { label: "Đã duyệt", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: null },
+  cho_duyet: { label: "Chờ duyệt", color: "bg-amber-100 text-amber-700 border-amber-200", icon: null },
+  da_duyet: { label: "Đã duyệt", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: null },
   tu_choi: { label: "Từ chối", color: "bg-red-100 text-red-700 border-red-200", icon: null },
   huy: { label: "Đã hủy", color: "bg-slate-100 text-slate-700 border-slate-200", icon: null },
 }
@@ -58,8 +56,8 @@ export const createDonNghiColumns = (options: {
     header: "Thời gian",
     cell: ({ row }) => (
       <div className="text-sm">
-        <p>{format(new Date(row.original.tu_ngay), "dd/MM/yyyy")}</p>
-        <p className="text-slate-500">→ {format(new Date(row.original.den_ngay), "dd/MM/yyyy")}</p>
+        <p>{formatDateVN(row.original.tu_ngay)}</p>
+        <p className="text-slate-500">→ {formatDateVN(row.original.den_ngay)}</p>
       </div>
     ),
   },
@@ -87,7 +85,7 @@ export const createDonNghiColumns = (options: {
     header: "Ngày tạo",
     cell: ({ row }) => (
       <span className="text-sm text-slate-500">
-        {format(new Date(row.original.created_at), "dd/MM/yyyy HH:mm", { locale: vi })}
+        {formatDateTimeVN(row.original.created_at)}
       </span>
     ),
   },
@@ -95,9 +93,7 @@ export const createDonNghiColumns = (options: {
     id: "actions",
     cell: ({ row }) => {
       const don = row.original
-      const isChoCap1 = don.trang_thai === "cho_duyet_cap_1"
-      const isChoCap2 = don.trang_thai === "cho_duyet_cap_2"
-      const canAction = isChoCap1 || isChoCap2
+      const canAction = don.trang_thai === "cho_duyet"
       return (
         <div className="flex items-center gap-1">
           <Button
@@ -113,7 +109,7 @@ export const createDonNghiColumns = (options: {
               <Button
                 variant="ghost"
                 size="icon"
-                className={isChoCap1 ? "h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50" : "h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"}
+                className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                 onClick={() => options.onDuyet(don)}
               >
                 <Check className="h-4 w-4" />

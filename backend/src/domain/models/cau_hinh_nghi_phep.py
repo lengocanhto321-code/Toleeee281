@@ -1,4 +1,4 @@
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from sqlalchemy import Column, String, Float, Boolean, Text, DateTime
 
@@ -20,7 +20,10 @@ class CauHinhNghiPhep(Base):
     trang_thai = Column(Boolean, default=True)
     ghi_chu = Column(Text)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )

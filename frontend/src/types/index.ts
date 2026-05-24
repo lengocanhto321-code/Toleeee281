@@ -6,3 +6,4 @@ export * from "./chuc-vu.types";
 export * from "./luong.types";
 export * from "./nghi-phep.types";
 export * from "./employee.types";
+export * from "./lich-cham-cong.types";

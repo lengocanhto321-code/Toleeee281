@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   BarChart3, Users, Clock, Wallet, ChevronRight,
   PieChart, Activity, BarChart3Icon, GraduationCap, FileText,
   CalendarCheck, CalendarOff, Timer, Receipt, ShieldCheck, GitCompareArrows,
-  Trophy, TrendingUp,
+  Trophy, TrendingUp, Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -16,7 +16,9 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
+import { ExportAllDialog } from "@/app/(admin)/bao-cao/_components/export-all-dialog"
 
 const REPORT_CATEGORIES = [
   {
@@ -58,6 +60,7 @@ const REPORT_CATEGORIES = [
 export function BaoCaoSidebarPanel() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [exportAllOpen, setExportAllOpen] = useState(false)
 
   const currentType = searchParams.get("type") || "nhan-su"
   const currentSub = searchParams.get("sub") || ""
@@ -91,8 +94,8 @@ export function BaoCaoSidebarPanel() {
     <>
       <SidebarHeader className="gap-3.5 border-b p-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <BarChart3 className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <BarChart3 className="w-4 h-4 text-primary-foreground" />
           </div>
           <div className="text-base font-medium text-foreground">Báo cáo</div>
         </div>
@@ -113,12 +116,12 @@ export function BaoCaoSidebarPanel() {
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200",
                         isActive
-                          ? "bg-blue-50 text-blue-700 font-medium"
+                          ? "bg-accent text-primary font-medium"
                           : "hover:bg-muted/70 text-muted-foreground"
                       )}
                     >
                       <div className="flex items-center gap-2.5">
-                        <cat.icon className={cn("w-4 h-4", isActive && "text-blue-600")} />
+                        <cat.icon className={cn("w-4 h-4", isActive && "text-primary")} />
                         <span className="flex-1">{cat.label}</span>
                         {hasSubs && (
                           <ChevronRight className={cn(
@@ -147,7 +150,7 @@ export function BaoCaoSidebarPanel() {
                                 className={cn(
                                   "w-full text-left px-2.5 py-1.5 text-xs rounded-md transition-all duration-150 flex items-center gap-2",
                                   subActive
-                                    ? "bg-blue-100/70 text-blue-700 font-medium"
+                                    ? "bg-accent/70 text-primary font-medium"
                                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 )}
                               >
@@ -166,6 +169,16 @@ export function BaoCaoSidebarPanel() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t p-3">
+        <button
+          onClick={() => setExportAllOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Xuất toàn bộ báo cáo
+        </button>
+      </SidebarFooter>
+      <ExportAllDialog open={exportAllOpen} onOpenChange={setExportAllOpen} />
     </>
   )
 }

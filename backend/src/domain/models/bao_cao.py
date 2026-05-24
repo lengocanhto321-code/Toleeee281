@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Text, ForeignKey, DateTime, JSON
-from datetime import datetime
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -16,7 +16,10 @@ class BaoCao(Base):
     tham_so = Column(JSON)
     duong_dan_file = Column(String(500))
     nguoi_xuat_id = Column(String(32), ForeignKey("tai_khoan.id", ondelete="SET NULL"))
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )

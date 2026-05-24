@@ -8,7 +8,6 @@ import {
   Building2,
   Award,
   GraduationCap,
-  Info,
   Wallet,
   Calendar,
   Clock,
@@ -21,6 +20,7 @@ import { LuongSidebarPanel } from "@/components/forms/luong"
 import { PhongBanSidebarPanel } from "@/components/forms/phong-ban"
 import { ChucVuSidebarPanel } from "@/components/forms/chuc-vu"
 import { BaoCaoSidebarPanel } from "@/components/forms/bao-cao"
+import { NghiPhepSidebarPanel, ChamCongSidebarPanel } from "@/components/forms/nghi-phep"
 import {
   Sidebar,
   SidebarContent,
@@ -73,11 +73,6 @@ const navItems = [
     title: "Báo cáo",
     url: "/bao-cao",
     icon: BarChart3,
-  },
-  {
-    title: "Giới thiệu",
-    url: "/gioi-thieu",
-    icon: Info,
   },
 ]
 
@@ -132,6 +127,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     window.dispatchEvent(new CustomEvent("sidebar:chuc-vu:add"))
   }
 
+  const handleCreateDonNghi = () => {
+    window.dispatchEvent(new CustomEvent("sidebar:nghi-phep:create"))
+  }
+
+  const handleRefreshChamCong = () => {
+    window.dispatchEvent(new CustomEvent("sidebar:cham-cong:refresh"))
+  }
+
   const nhanVienDetailMatch = pathname.match(/^\/nhan-vien\/([^/]+)$/)
 
   const renderPanel = () => {
@@ -139,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return <NhanVienDetailSidebarPanel nhanVienId={nhanVienDetailMatch[1]} />
     }
     switch (activeItem?.url) {
-      case "/nhan-vien":
+    case "/nhan-vien":
         return <NhanVienSidebarPanel onAdd={handleAddNhanVien} />
       case "/luong":
         return <LuongSidebarPanel onAdd={handleAddLuong} />
@@ -149,6 +152,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return <ChucVuSidebarPanel onAdd={handleAddChucVu} />
       case "/bao-cao":
         return <BaoCaoSidebarPanel />
+      case "/nghi-phep":
+        return <NghiPhepSidebarPanel onCreate={handleCreateDonNghi} />
+      case "/cham-cong":
+        return <ChamCongSidebarPanel onRefresh={handleRefreshChamCong} />
       default:
         return <DefaultPanel title={activeItem?.title || ""} icon={activeItem?.icon || LayoutDashboard} />
     }
@@ -215,8 +222,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </Sidebar>
 
       {/* Detail panel */}
-      <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-        {renderPanel()}
+      <Sidebar collapsible="none" className="hidden flex-1 md:flex min-w-0">
+        <div className="w-full overflow-x-hidden">
+          {renderPanel()}
+        </div>
       </Sidebar>
     </Sidebar>
   )

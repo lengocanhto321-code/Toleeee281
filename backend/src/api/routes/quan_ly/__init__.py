@@ -11,6 +11,7 @@ from .cong_tac import router as cong_tac_router
 from .hop_dong import router as hop_dong_router
 from .cham_cong import router as cham_cong_router
 from .cau_hinh_nghi_phep import router as cau_hinh_nghi_phep_router
+from .lich_cham_cong import router as lich_cham_cong_router
 
 __all__ = [
     "nhan_vien_router",
@@ -26,4 +27,5 @@ __all__ = [
     "hop_dong_router",
     "cham_cong_router",
     "cau_hinh_nghi_phep_router",
+    "lich_cham_cong_router",
 ]

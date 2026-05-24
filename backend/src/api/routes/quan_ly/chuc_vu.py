@@ -27,7 +27,7 @@ from src.app.usecases.chuc_vu import (
 
 from src.api.error import ClientError, ServerError
 
-router = APIRouter(tags=["ChucVu"])
+router = APIRouter()
 
 
 @router.post(

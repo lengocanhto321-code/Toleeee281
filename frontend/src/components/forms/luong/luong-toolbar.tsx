@@ -50,7 +50,7 @@ export function LuongToolbar({
           onClick={() => onTabChange("ky-luong")}
           className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
             activeTab === "ky-luong"
-              ? "bg-indigo-50 text-indigo-700 border border-indigo-200 border-b-white"
+              ? "bg-blue-50 text-blue-700 border border-blue-200 border-b-white"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -60,7 +60,7 @@ export function LuongToolbar({
           onClick={() => onTabChange("tra-luong")}
           className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
             activeTab === "tra-luong"
-              ? "bg-indigo-50 text-indigo-700 border border-indigo-200 border-b-white"
+              ? "bg-blue-50 text-blue-700 border border-blue-200 border-b-white"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -70,7 +70,7 @@ export function LuongToolbar({
           onClick={() => onTabChange("cau-hinh")}
           className={`px-4 py-2 text-sm font-medium transition-colors rounded-t-md ${
             activeTab === "cau-hinh"
-              ? "bg-indigo-50 text-indigo-700 border border-indigo-200 border-b-white"
+              ? "bg-blue-50 text-blue-700 border border-blue-200 border-b-white"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -143,7 +143,7 @@ export function LuongToolbar({
             size="sm"
             onClick={onChayLuong}
             disabled={isChayLuongPending}
-            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+            className="gap-1.5 bg-blue-600 hover:bg-blue-700"
           >
             <Play className="h-4 w-4" data-icon="inline-start" />
             {isChayLuongPending ? "Đang chạy..." : "Chạy lương"}

@@ -4,7 +4,6 @@
 
 export interface CauHinhLuong {
   id: string;
-  ten_cau_hinh: string;
   ngay_ap_dung: string;
   luong_co_so: number;
   he_so_dac_thu: number;
@@ -14,6 +13,7 @@ export interface CauHinhLuong {
   muc_giam_tru_ban_than: number;
   muc_giam_tru_nguoi_phu_thuoc: number;
   trang_thai: "dang_ap_dung" | "sap_hieu_luc" | "da_het_hieu_luc";
+  ghi_chu?: string;
   created_at: string;
 }
 

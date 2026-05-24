@@ -6,16 +6,16 @@ export const nhanVienPersonalSchema = z.object({
   ho_ten: z.string().min(2, "Họ tên phải có ít nhất 2 ký tự").max(100),
   gioi_tinh: z.enum(["Nam", "Nữ", "Khác"]),
   ngay_sinh: z.string().min(1, "Vui lòng chọn ngày sinh"),
-  que_quan: z.string().optional(),
-  dia_chi_thuong_tru: z.string().optional(),
+  que_quan: z.string().min(1, "Vui lòng nhập quê quán"),
+  dia_chi_thuong_tru: z.string().min(1, "Vui lòng nhập địa chỉ thường trú"),
   dia_chi_tam_tru: z.string().optional(),
-  so_dien_thoai: z.string().regex(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ").optional().or(z.literal("")),
-  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  so_dien_thoai: z.string().regex(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ"),
+  email: z.string().email("Email không hợp lệ"),
   email_ca_nhan: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
-  dan_toc: z.string().optional(),
+  dan_toc: z.string().min(1, "Vui lòng nhập dân tộc"),
   ton_giao: z.string().optional(),
-  noi_sinh: z.string().optional(),
-  tinh_trang_hon_nhan: z.enum(["doc_than", "da_ket_hon", "ly_di", "goa_vo"]).optional(),
+  noi_sinh: z.string().min(1, "Vui lòng nhập nơi sinh"),
+  tinh_trang_hon_nhan: z.enum(["doc_than", "da_ket_hon", "ly_di", "goa_vo"]),
   so_bao_hiem: z.string().optional(),
   ngay_tham_gia_bhxh: z.string().optional(),
   so_tai_khoan_ngan_hang: z.string().optional(),
@@ -23,24 +23,24 @@ export const nhanVienPersonalSchema = z.object({
 })
 
 export const nhanVienIdentitySchema = z.object({
-  so_cccd: z.string().regex(/^[0-9]{9,12}$/, "Số CCCD phải có 9 hoặc 12 số").optional().or(z.literal("")),
-  ngay_cap_cccd: z.string().optional(),
-  noi_cap_cccd: z.string().optional(),
+  so_cccd: z.string().regex(/^[0-9]{9,12}$/, "Số CCCD phải có 9 hoặc 12 số"),
+  ngay_cap_cccd: z.string().min(1, "Vui lòng chọn ngày cấp"),
+  noi_cap_cccd: z.string().min(1, "Vui lòng nhập nơi cấp"),
 })
 
 export const nhanVienWorkSchema = z.object({
   loai_nhan_vien: z.enum(["giao_vien", "nhan_vien", "can_bo"]),
   trang_thai: z.enum(["dang_lam", "nghi_viec", "nghi_huu"]),
   mon_day: z.string().optional(),
-  cap_hoc: z.enum(["mam_non", "tieu_hoc", "thcs", "thpt", "gdtx"]).optional(),
-  phong_ban_id: z.string().optional(),
-  chuc_vu_id: z.string().optional(),
+  cap_hoc: z.enum(["mam_non", "tieu_hoc", "thcs", "thpt", "gdtx"]),
+  phong_ban_id: z.string().min(1, "Vui lòng chọn phòng ban"),
+  chuc_vu_id: z.string().min(1, "Vui lòng chọn chức vụ"),
 })
 
 export const nhanVienContractSchema = z.object({
   loai_hop_dong: z.enum(["vien_chuc", "hop_dong", "thu_viec"]),
   so_hop_dong: z.string().optional(),
-  ngay_vao_lam: z.string().optional(),
+  ngay_vao_lam: z.string().min(1, "Vui lòng chọn ngày vào làm"),
   ngay_het_hop_dong: z.string().optional(),
   hinh_thuc_tuyen_dung: z.string().optional(),
   noi_ky_hop_dong: z.string().optional(),
@@ -61,8 +61,6 @@ export const nhanVienPartySchema = z.object({
 export const nhanVienOtherSchema = z.object({
   ghi_chu: z.string().optional(),
   anh_dai_dien: z.string().optional(),
-  cccd_front: z.string().optional(),
-  cccd_back: z.string().optional(),
   ngay_bo_nhiem_chuc_vu: z.string().optional(),
 })
 

@@ -15,7 +15,7 @@ class GetEmployeeDashboardUseCase:
     async def execute(
         self, query: GetEmployeeDashboardQuery
     ) -> Result[GetEmployeeDashboardResult, Error]:
-        from datetime import datetime
+        from libs.datetime import get_utc_now
 
         logger.info(f"Getting dashboard for user_id={query.user_id}")
 
@@ -51,18 +51,18 @@ class GetEmployeeDashboardUseCase:
                 )
 
             so_ngay_phep = await uow.so_ngay_phep_repository.find_by_nhan_vien_nam(
-                nhan_vien_id, datetime.now().year
+                nhan_vien_id, get_utc_now().year
             )
 
             don_cho_duyet = 0
             da_duyet_thang_nay = 0
             don_gan_nhat = None
-            now = datetime.now()
+            now = get_utc_now()
             all_dons = await uow.don_xin_nghi_repository.find_by_nhan_vien(nhan_vien_id)
             for don in all_dons:
-                if don.trang_thai in ("cho_duyet_cap_1", "cho_duyet_cap_2"):
+                if don.trang_thai == "cho_duyet":
                     don_cho_duyet += 1
-                if don.trang_thai in ("da_duyet", "da_duyet_cap_2") and don.tu_ngay:
+                if don.trang_thai == "da_duyet" and don.tu_ngay:
                     if don.tu_ngay.month == now.month and don.tu_ngay.year == now.year:
                         da_duyet_thang_nay += don.so_ngay or 0
                 if not don_gan_nhat:

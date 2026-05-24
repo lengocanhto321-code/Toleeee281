@@ -26,7 +26,9 @@ class DeleteNhanVienUseCase:
     def __init__(self, unit_of_work):
         self.unit_of_work = unit_of_work
 
-    async def execute(self, command: DeleteNhanVienCommand) -> Result[DeleteNhanVienResult, Error]:
+    async def execute(
+        self, command: DeleteNhanVienCommand
+    ) -> Result[DeleteNhanVienResult, Error]:
         """Execute delete nhan vien use case."""
         logger.info(f"User {command.actor_id} is deleting NhanVien {command.id}")
 
@@ -34,14 +36,16 @@ class DeleteNhanVienUseCase:
             nhan_vien_repo = uow.nhan_vien_repository
             audit_repo = uow.audit_log_repository
 
-            # Find existing NhanVien
-            existing_nv = await nhan_vien_repo.find_by_id(command.id)
+            # Find existing NhanVien (try ma_nhan_vien first, then id)
+            existing_nv = await nhan_vien_repo.find_by_ma(command.id)
+            if not existing_nv:
+                existing_nv = await nhan_vien_repo.find_by_id(command.id)
             if not existing_nv:
                 return Return.err(
                     Error(
                         code="not_found",
                         message="Nhân viên không tồn tại",
-                        reason="NotFound"
+                        reason="NotFound",
                     )
                 )
 
@@ -54,7 +58,7 @@ class DeleteNhanVienUseCase:
                     Error(
                         code="cannot_delete_active_employee",
                         message="Không thể xóa nhân viên đang làm việc",
-                        reason="BusinessRuleViolation"
+                        reason="BusinessRuleViolation",
                     )
                 )
 
@@ -69,9 +73,11 @@ class DeleteNhanVienUseCase:
                 ban_ghi_id=deleted_nv.id,
                 du_lieu_cu=old_data,
                 du_lieu_moi=serialize_model_to_dict(deleted_nv),
-                ghi_chu="Xóa mềm nhân viên"
+                ghi_chu="Xóa mềm nhân viên",
             )
             await audit_repo.create(audit_log)
 
             logger.info(f"NhanVien {deleted_nv.ma_nhan_vien} deleted successfully")
-            return Return.ok(DeleteNhanVienResult(nhan_vien=serialize_model_to_dict(deleted_nv)))
+            return Return.ok(
+                DeleteNhanVienResult(nhan_vien=serialize_model_to_dict(deleted_nv))
+            )

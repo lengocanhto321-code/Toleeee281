@@ -12,12 +12,12 @@ export const HopDongTab = React.memo(function HopDongTab({ filters }: { filters:
 
   const exportData = React.useMemo((): ReportExportData => {
     if (!data) return { title: "Nhân sự - Hợp đồng", headers: [], rows: [] }
-    const con_han = data.tong - data.sap_het_han - data.da_het_han - data.can_gia_han
+    const con_han = (data.tong ?? 0) - (data.sap_het_han ?? 0) - (data.da_het_han ?? 0) - (data.can_gia_han ?? 0)
     return {
       title: "Báo cáo Nhân sự - Hợp đồng",
-      subtitle: `Tháng ${filters.thang}/${filters.nam}`,
+      subtitle: `${filters.start_date} — ${filters.end_date}`,
       headers: ["Nhân viên", "Loại HĐ", "Ngày hết hạn", "Phòng ban"],
-      rows: data.items.map(item => [item.ho_ten, item.loai_hop_dong, item.ngay_het_han, item.phong_ban]),
+      rows: data.items?.map(item => [item.ho_ten, item.loai_hop_dong, item.ngay_het_han, item.phong_ban]) || [],
       stats: [
         { label: "Tổng hợp đồng", value: data.tong },
         { label: "Sắp hết hạn", value: data.sap_het_han },
@@ -33,29 +33,32 @@ export const HopDongTab = React.memo(function HopDongTab({ filters }: { filters:
     return {
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
       legend: {
-        orient: 'vertical',
-        right: 10,
-        top: 'center',
-        textStyle: { fontSize: 12, color: '#475569' },
+        orient: 'horizontal',
+        bottom: 0,
+        left: 'center',
+        textStyle: { fontSize: 11, color: '#475569' },
         icon: 'roundRect',
-        itemWidth: 12,
-        itemHeight: 12,
-      },
-      grid: {
-        left: '3%',
-        right: '20%',
-        top: '5%',
-        bottom: '3%',
-        containLabel: true,
+        itemWidth: 10,
+        itemHeight: 10,
+        itemGap: 12,
       },
       series: [{
-        type: 'pie', radius: ['30%', '60%'],
+        type: 'pie', radius: ['30%', '55%'], center: ['50%', '42%'],
         data: [
           { value: data.sap_het_han, name: 'Sắp hết hạn', itemStyle: { color: '#d97706' } },
           { value: data.da_het_han, name: 'Đã hết hạn', itemStyle: { color: '#dc2626' } },
           { value: data.can_gia_han, name: 'Cần gia hạn', itemStyle: { color: '#7c3aed' } },
           { value: data.tong - data.sap_het_han - data.da_het_han - data.can_gia_han, name: 'Còn hạn', itemStyle: { color: '#059669' } },
         ].filter(d => d.value > 0),
+        emphasis: {
+          itemStyle: {
+            borderColor: '#fff',
+            borderWidth: 3,
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.2)',
+          },
+        },
       }],
     }
   }, [data])

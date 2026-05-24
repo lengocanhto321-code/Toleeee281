@@ -41,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   footer?: React.ReactNode
   disablePagination?: boolean
   scrollHeight?: string
+  onSelectionChange?: (selectedRows: TData[]) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -52,11 +53,20 @@ export function DataTable<TData, TValue>({
   footer,
   disablePagination = false,
   scrollHeight = "calc(100vh - 220px)",
+  onSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+
+  React.useEffect(() => {
+    if (onSelectionChange) {
+      const selectedIndices = Object.keys(rowSelection).filter((k) => rowSelection[k as keyof typeof rowSelection])
+      const selectedData = selectedIndices.map((i) => data[Number(i)])
+      onSelectionChange(selectedData)
+    }
+  }, [rowSelection, data, onSelectionChange])
 
   const table = useReactTable({
     data,

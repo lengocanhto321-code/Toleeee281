@@ -3,8 +3,16 @@
 import { useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { AuthenticatedLayout } from "@/components/layouts/authenticated-layout"
+import { TongHopTab } from "./_components/nhan-su/tong-hop-tab"
+import { BienDongTab } from "./_components/nhan-su/bien-dong-tab"
+import { DemoGraphicsTab } from "./_components/nhan-su/demo-graphics-tab"
+import { TrinhDoTab } from "./_components/nhan-su/trinh-do-tab"
 import { HopDongTab } from "./_components/nhan-su/hop-dong-tab"
+import { ChamCongTongHopTab } from "./_components/cham-cong/tong-hop-tab"
+import { NghiPhepTab } from "./_components/cham-cong/nghi-phep-tab"
 import { DiMuonTab } from "./_components/cham-cong/di-muon-tab"
+import { ChiPhiTab } from "./_components/luong/chi-phi-tab"
+import { ThueBHXHTab } from "./_components/luong/thue-bhxh-tab"
 import { LuongSoSanhTab } from "./_components/luong/so-sanh-tab"
 import { KhenThuongTab } from "./_components/khen-thuong"
 import { XuHuongTab } from "./_components/xu-huong"
@@ -20,12 +28,20 @@ import { vi } from "date-fns/locale"
 
 const SUB_COMPONENTS: Record<string, { id: string; component: React.ComponentType<{ filters: BaoCaoFilters }> }[]> = {
   "nhan-su": [
+    { id: "tong-hop", component: TongHopTab },
+    { id: "bien-dong", component: BienDongTab },
+    { id: "demo", component: DemoGraphicsTab },
+    { id: "trinh-do", component: TrinhDoTab },
     { id: "hop-dong", component: HopDongTab },
   ],
   "cham-cong": [
+    { id: "tong-hop", component: ChamCongTongHopTab },
+    { id: "nghi-phep", component: NghiPhepTab },
     { id: "di-muon", component: DiMuonTab },
   ],
   "luong": [
+    { id: "chi-phi", component: ChiPhiTab },
+    { id: "thue-bhxh", component: ThueBHXHTab },
     { id: "so-sanh", component: LuongSoSanhTab },
   ],
 }
@@ -57,21 +73,21 @@ function ContentArea({ type, subType, filters }: { type: string; subType: string
     case "xu-huong":
       return <XuHuongTab filters={filters} />
     default:
-      return <HopDongTab filters={filters} />
+      return <TongHopTab filters={filters} />
   }
 }
 
 function BaoCaoContent() {
   const now = new Date()
-  const [filters, setFilters] = useState<BaoCaoFilters>({
-    thang: now.getMonth() + 1,
-    nam: now.getFullYear(),
-  })
-
   const [quickRange, setQuickRange] = useState<QuickRange>("month")
   const [dateFrom, setDateFrom] = useState<Date>(subMonths(now, 1))
   const [dateTo, setDateTo] = useState<Date>(now)
   const [calendarOpen, setCalendarOpen] = useState(false)
+
+  const filters: BaoCaoFilters = {
+    start_date: format(dateFrom, "yyyy-MM-dd"),
+    end_date: format(dateTo, "yyyy-MM-dd"),
+  }
 
   const searchParams = useSearchParams()
   const type = searchParams.get("type") || "nhan-su"
@@ -90,7 +106,6 @@ function BaoCaoContent() {
     }
     setDateFrom(from)
     setDateTo(endOfDay(today))
-    setFilters({ thang: from.getMonth() + 1, nam: from.getFullYear() })
   }
 
   const handleRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
@@ -98,7 +113,6 @@ function BaoCaoContent() {
       setDateFrom(range.from)
       if (range.to) {
         setDateTo(range.to)
-        setFilters({ thang: range.from.getMonth() + 1, nam: range.from.getFullYear() })
         setCalendarOpen(false)
       }
     }
@@ -118,7 +132,7 @@ function BaoCaoContent() {
                 className={cn(
                   "h-7 px-3 text-xs rounded-md transition-all",
                   quickRange === qr.id
-                    ? "bg-blue-600 text-white hover:bg-blue-700 hover:text-white shadow-sm"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
                 onClick={() => handleQuickRange(qr.id)}
@@ -159,7 +173,9 @@ function BaoCaoContent() {
         </div>
 
         {/* Content */}
-        <ContentArea type={type} subType={subType} filters={filters} />
+        <div data-slot="bao-cao-content">
+          <ContentArea type={type} subType={subType} filters={filters} />
+        </div>
       </div>
     </AuthenticatedLayout>
   )

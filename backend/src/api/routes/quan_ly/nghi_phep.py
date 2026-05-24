@@ -35,9 +35,17 @@ from src.app.usecases.nghi_phep import (
     GetChamCongThangDetailQuery,
     MockGenerateChamCongUseCase,
     MockGenerateChamCongCommand,
+    UpdateChamCongThangUseCase,
+    UpdateChamCongThangCommand,
+    XacNhanChamCongUseCase,
+    XacNhanChamCongCommand,
+    DuyetChamCongUseCase,
+    DuyetChamCongCommand,
+    ChotChamCongUseCase,
+    ChotChamCongCommand,
 )
 
-router = APIRouter(tags=["Nghỉ phép & Chấm công"])
+router = APIRouter()
 
 
 # ============================================================
@@ -62,6 +70,8 @@ async def create_don_nghi(
         ly_do=body.get("ly_do", ""),
         files=body.get("files", []),
         nguoi_tao_id=user_context.user_id,
+        skip_document_check=True,
+        auto_approve=True,
     )
 
     use_case = CreateDonNghiUseCase(uow)
@@ -138,122 +148,6 @@ async def get_don_nghi_detail(
         raise ServerError(base_error=error)
 
     return {"message": "Lấy chi tiết thành công", "data": result.value.don}
-
-
-@router.get("/me")
-async def get_my_don_nghi(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
-    trang_thai: Optional[str] = Query(None),
-    user_context: UserContext = Depends(require_permission("nghi_phep:view_own")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """
-    Lấy danh sách đơn nghỉ phép của user hiện tại.
-    Dành cho nhân viên xem đơn của chính mình.
-    """
-    from src.repository.rbac_repository import RBACRepository
-
-    rbac_repo = RBACRepository(uow.session)
-
-    tai_khoan = await rbac_repo.get_tai_khoan_by_id(user_context.user_id)
-    if not tai_khoan or not tai_khoan.nhan_vien_id:
-        raise ClientError(
-            base_error=libs.result.Error(
-                code="not_found", message="Không tìm thấy thông tin nhân viên"
-            ),
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-
-    query = GetDonNghiQuery(
-        page=page,
-        page_size=page_size,
-        nhan_vien_id=tai_khoan.nhan_vien_id,
-        trang_thai=trang_thai,
-        loai_nghi=None,
-    )
-
-    use_case = GetListDonNghiUseCase(uow)
-    result = await use_case.execute(query)
-
-    if is_err(result):
-        raise ServerError(base_error=result.value)
-
-    return {
-        "message": "Lấy danh sách thành công",
-        "data": result.value.items,
-        "metadata": {
-            "total": result.value.total,
-            "page": page,
-            "per_page": page_size,
-            "total_pages": (result.value.total + page_size - 1) // page_size,
-        },
-    }
-
-
-@router.get("/cham-cong/me")
-async def get_my_cham_cong(
-    thang: Optional[int] = Query(None, ge=1, le=12),
-    nam: Optional[int] = Query(None, ge=2000, le=2100),
-    user_context: UserContext = Depends(require_permission("nghi_phep:view_own")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """
-    Lấy chấm công của user hiện tại.
-    Dành cho nhân viên xem chấm công của chính mình.
-    """
-    from src.repository.rbac_repository import RBACRepository
-    from datetime import datetime
-
-    rbac_repo = RBACRepository(uow.session)
-
-    tai_khoan = await rbac_repo.get_tai_khoan_by_id(user_context.user_id)
-    if not tai_khoan or not tai_khoan.nhan_vien_id:
-        raise ClientError(
-            base_error=libs.result.Error(
-                code="not_found", message="Không tìm thấy thông tin nhân viên"
-            ),
-            status_code=status.HTTP_404_NOT_FOUND,
-        )
-
-    now = datetime.now()
-    thang = thang or now.month
-    nam = nam or now.year
-
-    cham_cong = await uow.cham_cong_thang_repository.get_by_nhan_vien_thang_nam(
-        tai_khoan.nhan_vien_id, thang, nam
-    )
-
-    if not cham_cong:
-        return {
-            "message": "Chưa có dữ liệu chấm công",
-            "data": [],
-        }
-
-    return {
-        "message": "Lấy dữ liệu thành công",
-        "data": [
-            {
-                "id": cham_cong.id,
-                "thang": cham_cong.thang,
-                "nam": cham_cong.nam,
-                "nhan_vien_id": cham_cong.nhan_vien_id,
-                "nhan_vien_ho_ten": cham_cong.nhan_vien.ho_ten
-                if cham_cong.nhan_vien
-                else None,
-                "tong_ngay_lam": cham_cong.tong_ngay_lam,
-                "so_ngay_cong": cham_cong.so_ngay_cong,
-                "ngay_cong": {
-                    "co_mat": cham_cong.so_ngay_co_mat,
-                    "vang_co_phep": cham_cong.so_ngay_vang_co_phep,
-                    "vang_khong_phep": cham_cong.so_ngay_vang_khong_phep,
-                    "nghi_le": cham_cong.so_ngay_nghi_le_tet,
-                },
-                "he_so": cham_cong.he_so_ngay_cong,
-                "trang_thai": cham_cong.trang_thai,
-            }
-        ],
-    }
 
 
 @router.put("/don/{don_id}/duyet")
@@ -339,77 +233,6 @@ async def delete_don_nghi(
         raise ServerError(base_error=error)
 
     return {"message": "Xóa đơn nghỉ phép thành công", "data": result.value}
-
-
-# ============================================================
-# DUYỆT 2 CẤP
-# ============================================================
-
-
-@router.put("/don/{don_id}/duyet-cap-1")
-async def duyet_cap_1(
-    don_id: str = Path(..., description="ID đơn nghỉ phép"),
-    body: dict = ...,
-    user_context: UserContext = Depends(require_permission("nghi_phep:approve")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """Duyệt cấp 1 - Trưởng phòng duyệt đơn của nhân viên trong phòng ban mình."""
-    from src.app.usecases.nghi_phep import (
-        DuyetCap1DonNghiCommand,
-        DuyetCap1DonNghiUseCase,
-    )
-
-    command = DuyetCap1DonNghiCommand(
-        don_id=don_id,
-        nguoi_duyet_id=user_context.user_id,
-        ghi_chu=body.get("ghi_chu", ""),
-    )
-
-    use_case = DuyetCap1DonNghiUseCase(uow)
-    result = await use_case.execute(command)
-
-    if is_err(result):
-        error = result.value
-        if error.code == "not_found":
-            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
-        if error.code in ["invalid_status", "not_authorized"]:
-            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
-        raise ServerError(base_error=error)
-
-    return {"message": "Duyệt cấp 1 thành công", "data": result.value.don}
-
-
-@router.put("/don/{don_id}/duyet-cap-2")
-async def duyet_cap_2(
-    don_id: str = Path(..., description="ID đơn nghỉ phép"),
-    body: dict = ...,
-    user_context: UserContext = Depends(require_permission("nghi_phep:approve")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """Duyệt cấp 2 - Quản lý cao cấp duyệt đã qua cấp 1."""
-    from src.app.usecases.nghi_phep import (
-        DuyetCap2DonNghiCommand,
-        DuyetCap2DonNghiUseCase,
-    )
-
-    command = DuyetCap2DonNghiCommand(
-        don_id=don_id,
-        nguoi_duyet_id=user_context.user_id,
-        ghi_chu=body.get("ghi_chu", ""),
-    )
-
-    use_case = DuyetCap2DonNghiUseCase(uow)
-    result = await use_case.execute(command)
-
-    if is_err(result):
-        error = result.value
-        if error.code == "not_found":
-            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
-        if error.code in ["invalid_status", "not_authorized"]:
-            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
-        raise ServerError(base_error=error)
-
-    return {"message": "Duyệt cấp 2 thành công", "data": result.value.don}
 
 
 # ============================================================
@@ -575,55 +398,28 @@ async def update_cham_cong_thang(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Cập nhật chấm công tháng - chỉ khi status = chua_chot."""
-    async with uow:
-        cham_cong = await uow.cham_cong_thang_repository.find_by_id(cham_cong_id)
-        if not cham_cong:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy chấm công"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    command = UpdateChamCongThangCommand(
+        cham_cong_id=cham_cong_id,
+        so_ngay_co_mat=body.so_ngay_co_mat,
+        so_ngay_vang_co_phep=body.so_ngay_vang_co_phep,
+        so_ngay_vang_khong_phep=body.so_ngay_vang_khong_phep,
+        so_ngay_nghi_le_tet=body.so_ngay_nghi_le_tet,
+        so_ngay_cong_tac=body.so_ngay_cong_tac,
+        ghi_chu=body.ghi_chu,
+    )
 
-        if cham_cong.trang_thai != "chua_chot":
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {
-                        "code": "invalid_status",
-                        "message": f"Không thể sửa khi đã chốt (status: {cham_cong.trang_thai})",
-                    },
-                )(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    use_case = UpdateChamCongThangUseCase(uow)
+    result = await use_case.execute(command)
 
-        if body.so_ngay_co_mat is not None:
-            cham_cong.so_ngay_co_mat = body.so_ngay_co_mat
-        if body.so_ngay_vang_co_phep is not None:
-            cham_cong.so_ngay_vang_co_phep = body.so_ngay_vang_co_phep
-        if body.so_ngay_vang_khong_phep is not None:
-            cham_cong.so_ngay_vang_khong_phep = body.so_ngay_vang_khong_phep
-        if body.so_ngay_nghi_le_tet is not None:
-            cham_cong.so_ngay_nghi_le_tet = body.so_ngay_nghi_le_tet
-        if body.so_ngay_cong_tac is not None:
-            cham_cong.so_ngay_cong_tac = body.so_ngay_cong_tac
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        if error.code == "invalid_status":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        raise ServerError(base_error=error)
 
-        cham_cong.tong_ngay_lam = (
-            (cham_cong.so_ngay_co_mat or 0)
-            + (cham_cong.so_ngay_vang_co_phep or 0)
-            + (cham_cong.so_ngay_nghi_le_tet or 0)
-            + (cham_cong.so_ngay_cong_tac or 0)
-        )
-
-        await uow.session.commit()
-
-        return {
-            "message": "Cập nhật chấm công thành công",
-            "data": {"id": cham_cong.id},
-        }
+    return {"message": "Cập nhật chấm công thành công", "data": {"id": result.value.id}}
 
 
 @router.post("/cham-cong/thang/{cham_cong_id}/xac-nhan")
@@ -633,38 +429,20 @@ async def xac_nhan_cham_cong(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Xác nhận chấm công - chua_chot -> da_xac_nhan."""
-    async with uow:
-        cham_cong = await uow.cham_cong_thang_repository.find_by_id(cham_cong_id)
-        if not cham_cong:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy chấm công"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    command = XacNhanChamCongCommand(cham_cong_id=cham_cong_id)
 
-        if cham_cong.trang_thai != "chua_chot":
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {
-                        "code": "invalid_status",
-                        "message": f"Trạng thái không hợp lệ: {cham_cong.trang_thai}",
-                    },
-                )(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    use_case = XacNhanChamCongUseCase(uow)
+    result = await use_case.execute(command)
 
-        cham_cong.trang_thai = "da_xac_nhan"
-        await uow.session.commit()
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        if error.code == "invalid_status":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        raise ServerError(base_error=error)
 
-        return {
-            "message": "Xác nhận chấm công thành công",
-            "data": {"id": cham_cong.id},
-        }
+    return {"message": "Xác nhận chấm công thành công", "data": {"id": result.value.id}}
 
 
 @router.post("/cham-cong/thang/{cham_cong_id}/duyet")
@@ -674,35 +452,20 @@ async def duyet_cham_cong(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Duyệt chấm công - da_xac_nhan -> da_duyet."""
-    async with uow:
-        cham_cong = await uow.cham_cong_thang_repository.find_by_id(cham_cong_id)
-        if not cham_cong:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy chấm công"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    command = DuyetChamCongCommand(cham_cong_id=cham_cong_id)
 
-        if cham_cong.trang_thai != "da_xac_nhan":
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {
-                        "code": "invalid_status",
-                        "message": f"Trạng thái không hợp lệ: {cham_cong.trang_thai}",
-                    },
-                )(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    use_case = DuyetChamCongUseCase(uow)
+    result = await use_case.execute(command)
 
-        cham_cong.trang_thai = "da_duyet"
-        await uow.session.commit()
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        if error.code == "invalid_status":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        raise ServerError(base_error=error)
 
-        return {"message": "Duyệt chấm công thành công", "data": {"id": cham_cong.id}}
+    return {"message": "Duyệt chấm công thành công", "data": {"id": result.value.id}}
 
 
 @router.post("/cham-cong/thang/{cham_cong_id}/chot")
@@ -712,32 +475,17 @@ async def chot_cham_cong(
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
     """Chốt chấm công - da_duyet -> da_chot (lock)."""
-    async with uow:
-        cham_cong = await uow.cham_cong_thang_repository.find_by_id(cham_cong_id)
-        if not cham_cong:
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {"code": "not_found", "message": "Không tìm thấy chấm công"},
-                )(),
-                status_code=status.HTTP_404_NOT_FOUND,
-            )
+    command = ChotChamCongCommand(cham_cong_id=cham_cong_id)
 
-        if cham_cong.trang_thai != "da_duyet":
-            raise ClientError(
-                base_error=type(
-                    "Error",
-                    (),
-                    {
-                        "code": "invalid_status",
-                        "message": f"Phải duyệt trước khi chốt: {cham_cong.trang_thai}",
-                    },
-                )(),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    use_case = ChotChamCongUseCase(uow)
+    result = await use_case.execute(command)
 
-        cham_cong.trang_thai = "da_chot"
-        await uow.session.commit()
+    if is_err(result):
+        error = result.value
+        if error.code == "not_found":
+            raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
+        if error.code == "invalid_status":
+            raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
+        raise ServerError(base_error=error)
 
-        return {"message": "Chốt chấm công thành công", "data": {"id": cham_cong.id}}
+    return {"message": "Chốt chấm công thành công", "data": {"id": result.value.id}}

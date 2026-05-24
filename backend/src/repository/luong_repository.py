@@ -21,6 +21,23 @@ class LuongRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
+    async def get_current_by_nhan_vien(self, nhan_vien_id: str) -> Optional[Luong]:
+        """Get current salary for nhan_vien (hieu_luc_den is None or in future)."""
+        from datetime import date
+
+        today = date.today()
+        result = await self._session.execute(
+            select(Luong)
+            .where(
+                Luong.nhan_vien_id == nhan_vien_id,
+                Luong.hieu_luc_tu <= today,
+                (Luong.hieu_luc_den >= today) | (Luong.hieu_luc_den.is_(None)),
+            )
+            .order_by(Luong.hieu_luc_tu.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def create(self, luong: Luong) -> Luong:
         """Create a new Luong record."""
         self._session.add(luong)
@@ -36,11 +53,12 @@ class LuongRepository:
     async def find_hien_tai(self, nhan_vien_id: str, ngay: date) -> Optional[Luong]:
         """Find current Luong for nhan_vien at a specific date."""
         result = await self._session.execute(
-            select(Luong).where(
+            select(Luong)
+            .where(
                 Luong.nhan_vien_id == nhan_vien_id,
-                Luong.hieu_luc_tu <= ngay,
-                (Luong.hieu_luc_den >= ngay) | (Luong.hieu_luc_den.is_(None)),
+                Luong.hieu_luc_den.is_(None),
             )
+            .order_by(Luong.hieu_luc_tu.desc())
         )
         return result.scalar_one_or_none()
 
@@ -155,6 +173,13 @@ class CauHinhLuongRepository:
         await self._session.refresh(cau_hinh)
         return cau_hinh
 
+    async def find_by_id(self, id: str) -> Optional[CauHinhHeThongLuong]:
+        """Find CauHinhHeThongLuong by ID."""
+        result = await self._session.execute(
+            select(CauHinhHeThongLuong).where(CauHinhHeThongLuong.id == id)
+        )
+        return result.scalar_one_or_none()
+
     async def find_cau_hinh_hien_tai(self, ngay: date) -> Optional[CauHinhHeThongLuong]:
         """Find the current salary configuration for a date."""
         result = await self._session.execute(
@@ -163,7 +188,10 @@ class CauHinhLuongRepository:
                 CauHinhHeThongLuong.ngay_ap_dung <= ngay,
                 CauHinhHeThongLuong.trang_thai.in_(["dang_ap_dung", "sap_hieu_luc"]),
             )
-            .order_by(CauHinhHeThongLuong.ngay_ap_dung.desc())
+            .order_by(
+                CauHinhHeThongLuong.trang_thai,
+                CauHinhHeThongLuong.ngay_ap_dung.desc(),
+            )
             .limit(1)
         )
         return result.scalar_one_or_none()

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Text, SmallInteger, Boolean, ForeignKey, DateTime
-from datetime import datetime
+from sqlalchemy.orm import relationship
+from libs.datetime import get_utc_now
 
 from .base import Base, generate_uuid
 
@@ -15,7 +16,12 @@ class TaiKhoan(Base):
     email = Column(String(100), unique=True)
     trang_thai = Column(Boolean, nullable=False, default=True)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        DateTime(timezone=True),
+        nullable=False,
+        default=get_utc_now,
+        onupdate=get_utc_now,
     )
+
+    roles = relationship("Role", secondary="user_roles", back_populates="users")

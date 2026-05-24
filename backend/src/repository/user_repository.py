@@ -20,9 +20,7 @@ class UserRepository:
 
     async def find_by_id(self, id: str) -> Optional[TaiKhoan]:
         """Find user by ID."""
-        result = await self._session.execute(
-            select(TaiKhoan).where(TaiKhoan.id == id)
-        )
+        result = await self._session.execute(select(TaiKhoan).where(TaiKhoan.id == id))
         return result.scalar_one_or_none()
 
     async def find_by_username(self, username: str) -> Optional[TaiKhoan]:
@@ -33,9 +31,14 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     async def find_by_email(self, email: str) -> Optional[TaiKhoan]:
-        """Find user by email."""
         result = await self._session.execute(
             select(TaiKhoan).where(TaiKhoan.email == email)
+        )
+        return result.scalar_one_or_none()
+
+    async def find_by_nhan_vien_id(self, nhan_vien_id: str) -> Optional[TaiKhoan]:
+        result = await self._session.execute(
+            select(TaiKhoan).where(TaiKhoan.nhan_vien_id == nhan_vien_id)
         )
         return result.scalar_one_or_none()
 
@@ -56,18 +59,14 @@ class UserRepository:
     async def find_by_role(self, vai_tro: str, limit: int = 100) -> list[TaiKhoan]:
         """Find users by role (vai_tro)."""
         result = await self._session.execute(
-            select(TaiKhoan)
-            .where(TaiKhoan.vai_tro == vai_tro)
-            .limit(limit)
+            select(TaiKhoan).where(TaiKhoan.vai_tro == vai_tro).limit(limit)
         )
         return list(result.scalars().all())
 
     async def find_active_users(self, limit: int = 100) -> list[TaiKhoan]:
         """Find all active users."""
         result = await self._session.execute(
-            select(TaiKhoan)
-            .where(TaiKhoan.trang_thai == True)
-            .limit(limit)
+            select(TaiKhoan).where(TaiKhoan.trang_thai == True).limit(limit)
         )
         return list(result.scalars().all())
 

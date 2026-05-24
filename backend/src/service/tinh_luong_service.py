@@ -72,7 +72,10 @@ class TinhLuongService:
             he_so_dac_thu_ap_dung = 1.0
 
         luong_co_ban = (
-            he_so_luong * luong_co_so * he_so_dac_thu_ap_dung * he_so_ngay_cong
+            float(he_so_luong)
+            * int(luong_co_so)
+            * float(he_so_dac_thu_ap_dung)
+            * float(he_so_ngay_cong)
         )
         return int(round(luong_co_ban))
 
@@ -82,7 +85,7 @@ class TinhLuongService:
         he_so_ngay_cong: float,
     ) -> int:
         """Tính phụ cấp chức vụ."""
-        return int(round(phu_cap_chuc_vu * he_so_ngay_cong))
+        return int(round(int(phu_cap_chuc_vu) * float(he_so_ngay_cong)))
 
     def tinh_phu_cap_tham_nien(
         self,
@@ -112,7 +115,12 @@ class TinhLuongService:
             + phu_cap_tham_nien_vuot_khung / luong_co_so
         )
 
-        phu_cap = co_so_tinh * luong_co_so * (ty_le / 100) * he_so_ngay_cong
+        phu_cap = (
+            float(co_so_tinh)
+            * int(luong_co_so)
+            * (float(ty_le) / 100)
+            * float(he_so_ngay_cong)
+        )
         return int(round(phu_cap))
 
     def tinh_phu_cap_uu_dai(
@@ -135,7 +143,12 @@ class TinhLuongService:
             + phu_cap_tham_nien_vuot_khung / luong_co_so
         )
 
-        phu_cap = co_so_tinh * luong_co_so * (ty_le_pc_uu_dai / 100) * he_so_ngay_cong
+        phu_cap = (
+            float(co_so_tinh)
+            * int(luong_co_so)
+            * (float(ty_le_pc_uu_dai) / 100)
+            * float(he_so_ngay_cong)
+        )
         return int(round(phu_cap))
 
     def tinh_phu_cap_khu_vuc(
@@ -145,7 +158,7 @@ class TinhLuongService:
         he_so_ngay_cong: float,
     ) -> int:
         """Tính phụ cấp khu vực."""
-        phu_cap = he_so_khu_vuc * luong_co_so * he_so_ngay_cong
+        phu_cap = float(he_so_khu_vuc) * int(luong_co_so) * float(he_so_ngay_cong)
         return int(round(phu_cap))
 
     def tinh_bao_hiem(
@@ -161,7 +174,7 @@ class TinhLuongService:
 
         Lưu ý: Căn cứ đóng BH = Lương cơ bản (không nhân hệ số ngày công)
         """
-        luong_co_ban = he_so_luong * luong_co_so
+        luong_co_ban = float(he_so_luong) * int(luong_co_so)
 
         return {
             "bhxh": int(round(luong_co_ban * ty_le_bhxh / 100)),
@@ -272,7 +285,7 @@ class TinhLuongService:
             so_ngay_cong_chuan = thong_tin_cham_cong.get("so_ngay_lam_chuan", 0)
             so_ngay_cong_thuc_te = thong_tin_cham_cong.get("so_ngay_lam_thuc_te", 0)
         else:
-            he_so_ngay_cong = 1.0
+            he_so_ngay_cong = 0.0
             so_ngay_cong_chuan = 0
             so_ngay_cong_thuc_te = 0
 
@@ -322,9 +335,11 @@ class TinhLuongService:
 
         pc_tham_nien_vk = int(
             float(thong_tin_luong.get("phu_cap_tham_nien_vuot_khung", 0))
-            * he_so_ngay_cong
+            * float(he_so_ngay_cong)
         )
-        pc_khac = int(float(thong_tin_luong.get("phu_cap_khac", 0)) * he_so_ngay_cong)
+        pc_khac = int(
+            float(thong_tin_luong.get("phu_cap_khac", 0)) * float(he_so_ngay_cong)
+        )
 
         tong_phu_cap = (
             pc_chuc_vu

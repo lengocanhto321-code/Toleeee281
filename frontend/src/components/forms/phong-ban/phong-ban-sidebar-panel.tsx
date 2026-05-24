@@ -88,7 +88,7 @@ export function PhongBanSidebarPanel({ onAdd }: PhongBanSidebarPanelProps) {
                 className="group rounded-lg border border-transparent bg-sidebar p-2.5 transition-all hover:border-sidebar-accent-foreground/10 hover:bg-sidebar-accent"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-[10px] font-bold text-indigo-700">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-[10px] font-bold text-primary">
                     #{idx + 1}
                   </div>
                   <div className="min-w-0 flex-1">
