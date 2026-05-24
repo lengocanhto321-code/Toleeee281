@@ -1,0 +1,120 @@
+<h2>Dashboard layout style?</h2>
+<p class="subtitle">Trang chính khi giáo viên/nhân viên đăng nhập. Ocean Calm palette. Click để chọn.</p>
+
+<div class="cards">
+  <div class="card" data-choice="card-grid" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8fafc;">
+      <div style="max-width: 340px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1e3a5f, #3b82f6); border-radius: 16px 16px 0 0; padding: 20px; color: white;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 13px; opacity: 0.8;">Xin chào 👋</div>
+              <div style="font-size: 18px; font-weight: 700;">Cô Nguyễn Thị Lan</div>
+              <div style="font-size: 11px; opacity: 0.7; margin-top: 2px;">Giáo viên Toán · Tổ Khoa học tự nhiên</div>
+            </div>
+            <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎓</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div style="background: white; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 22px;">🏖️</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1e3a5f; margin-top: 4px;">12</div>
+            <div style="font-size: 11px; color: #64748b;">Ngày phép còn lại</div>
+          </div>
+          <div style="background: white; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 22px;">📊</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1e3a5f; margin-top: 4px;">22</div>
+            <div style="font-size: 11px; color: #64748b;">Ngày làm tháng này</div>
+          </div>
+          <div style="background: white; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 22px;">⏳</div>
+            <div style="font-size: 20px; font-weight: 700; color: #f59e0b; margin-top: 4px;">2</div>
+            <div style="font-size: 11px; color: #64748b;">Đơn chờ duyệt</div>
+          </div>
+          <div style="background: white; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 22px;">📋</div>
+            <div style="font-size: 20px; font-weight: 700; color: #1e3a5f; margin-top: 4px;">0.95</div>
+            <div style="font-size: 11px; color: #64748b;">Hệ số chấm công</div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; padding: 0 16px 16px;">
+          <div style="background: white; border-radius: 14px; padding: 14px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 12px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">Hành động nhanh</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div style="background: #eff6ff; border-radius: 10px; padding: 8px 12px; font-size: 11px; color: #3b82f6; font-weight: 500;">+ Xin nghỉ phép</div>
+              <div style="background: #eff6ff; border-radius: 10px; padding: 8px 12px; font-size: 11px; color: #3b82f6; font-weight: 500;">📷 QR của tôi</div>
+              <div style="background: #eff6ff; border-radius: 10px; padding: 8px 12px; font-size: 11px; color: #3b82f6; font-weight: 500;">💰 Xem lương</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Card Grid</h3>
+      <p>Hero banner + lưới 2x2 stat cards + quick actions. Hiện tại đang dùng pattern này nhưng sẽ làm lại đẹp hơn.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="feed-style" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #f8fafc;">
+      <div style="max-width: 340px; margin: 0 auto;">
+        <div style="background: white; border-radius: 14px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #3b82f6, #93c5fd); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">NL</div>
+            <div style="flex: 1;">
+              <div style="font-size: 15px; font-weight: 700; color: #1e3a5f;">Cô Nguyễn Thị Lan</div>
+              <div style="font-size: 11px; color: #64748b;">GV Toán · Tổ KHTN · Mã: GV001</div>
+            </div>
+            <div style="font-size: 20px;">👋</div>
+          </div>
+        </div>
+        <div style="background: white; border-radius: 14px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+          <div style="font-size: 12px; font-weight: 600; color: #1e3a5f; margin-bottom: 10px;">Hôm nay</div>
+          <div style="display: flex; gap: 10px;">
+            <div style="flex: 1; background: #eff6ff; border-radius: 10px; padding: 10px; text-align: center;">
+              <div style="font-size: 16px; font-weight: 700; color: #3b82f6;">22</div>
+              <div style="font-size: 9px; color: #64748b;">ngày làm</div>
+            </div>
+            <div style="flex: 1; background: #fef3c7; border-radius: 10px; padding: 10px; text-align: center;">
+              <div style="font-size: 16px; font-weight: 700; color: #f59e0b;">2</div>
+              <div style="font-size: 9px; color: #64748b;">chờ duyệt</div>
+            </div>
+            <div style="flex: 1; background: #f0fdf4; border-radius: 10px; padding: 10px; text-align: center;">
+              <div style="font-size: 16px; font-weight: 700; color: #059669;">12</div>
+              <div style="font-size: 9px; color: #64748b;">ngày phép</div>
+            </div>
+          </div>
+        </div>
+        <div style="background: white; border-radius: 14px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+          <div style="font-size: 12px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">Hoạt động gần đây</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f8fafc; border-radius: 8px;">
+              <div style="width: 28px; height: 28px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px;">📅</div>
+              <div style="flex: 1;">
+                <div style="font-size: 11px; font-weight: 600; color: #374151;">Xin nghỉ phép 19/05</div>
+                <div style="font-size: 9px; color: #9ca3af;">Đang chờ duyệt</div>
+              </div>
+              <div style="background: #fef3c7; color: #d97706; font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 600;">Chờ</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f8fafc; border-radius: 8px;">
+              <div style="width: 28px; height: 28px; background: #f0fdf4; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px;">✅</div>
+              <div style="flex: 1;">
+                <div style="font-size: 11px; font-weight: 600; color: #374151;">Chấm công thành công</div>
+                <div style="font-size: 9px; color: #9ca3af;">Hôm nay 07:45</div>
+              </div>
+              <div style="background: #f0fdf4; color: #059669; font-size: 9px; padding: 2px 8px; border-radius: 6px; font-weight: 600;">OK</div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <div style="flex: 1; background: #3b82f6; color: white; border-radius: 12px; padding: 12px; text-align: center; font-size: 12px; font-weight: 600;">+ Xin nghỉ</div>
+          <div style="flex: 1; background: white; color: #3b82f6; border-radius: 12px; padding: 12px; text-align: center; font-size: 12px; font-weight: 600; border: 1px solid #3b82f6;">📷 QR</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Feed Style</h3>
+      <p>Card-based vertical feed - info user → stats hôm nay → activity timeline → action buttons. Cuộn tự nhiên trên phone, mỗi section là 1 card riêng biệt.</p>
+    </div>
+  </div>
+</div>
