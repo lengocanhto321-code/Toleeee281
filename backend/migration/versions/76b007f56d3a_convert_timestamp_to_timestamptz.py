@@ -58,13 +58,6 @@ GROUP1 = [
     ("luong", "updated_at"),
     ("so_ngay_phep", "created_at"),
     ("so_ngay_phep", "updated_at"),
-    ("roles", "created_at"),
-    ("roles", "updated_at"),
-    ("permissions", "created_at"),
-    ("permissions", "updated_at"),
-    ("role_permissions", "created_at"),
-    ("user_roles", "created_at"),
-    ("user_roles", "updated_at"),
     ("khen_thuong_ky_luat", "created_at"),
     ("khen_thuong_ky_luat", "updated_at"),
     ("audit_log", "thoi_gian"),
@@ -114,7 +107,7 @@ def upgrade() -> None:
     for table, column in GROUP2:
         op.execute(
             f"ALTER TABLE {table} ALTER COLUMN {column} TYPE TIMESTAMPTZ "
-            f"USING {column} - INTERVAL '7 hours' AT TIME ZONE 'Asia/Ho_Chi_Minh'"
+            f"USING ({column} - INTERVAL '7 hours') AT TIME ZONE 'Asia/Ho_Chi_Minh'"
         )
 
     for table, column in GROUP1:
@@ -128,7 +121,7 @@ def downgrade() -> None:
     for table, column in GROUP2:
         op.execute(
             f"ALTER TABLE {table} ALTER COLUMN {column} TYPE TIMESTAMP "
-            f"USING {column} AT TIME ZONE 'Asia/Ho_Chi_Minh' + INTERVAL '7 hours'"
+            f"USING ({column} AT TIME ZONE 'Asia/Ho_Chi_Minh') + INTERVAL '7 hours'"
         )
 
     for table, column in GROUP1:
@@ -136,3 +129,4 @@ def downgrade() -> None:
             f"ALTER TABLE {table} ALTER COLUMN {column} TYPE TIMESTAMP "
             f"USING {column} AT TIME ZONE 'UTC'"
         )
+

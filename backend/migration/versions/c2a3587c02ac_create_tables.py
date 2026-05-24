@@ -104,6 +104,26 @@ def upgrade() -> None:
         sa.UniqueConstraint("so_cccd"),
     )
     op.create_table(
+        "tai_lieu_nhan_vien",
+        sa.Column("id", sa.String(length=32), nullable=False),
+        sa.Column("nhan_vien_id", sa.String(length=32), nullable=False),
+        sa.Column("loai_tai_lieu", sa.String(length=30), nullable=False),
+        sa.Column("ten_tai_lieu", sa.String(length=255), nullable=False),
+        sa.Column("duong_dan", sa.String(length=500), nullable=False),
+        sa.Column("ten_file_goc", sa.String(length=255), nullable=True),
+        sa.Column("kich_thuoc", sa.Integer(), nullable=True),
+        sa.Column("dinh_dang", sa.String(length=50), nullable=True),
+        sa.Column("mo_ta", sa.Text(), nullable=True),
+        sa.Column("ngay_het_han", sa.Date(), nullable=True),
+        sa.Column("la_ban_chinh", sa.Boolean(), nullable=True, default=False),
+        sa.Column("trang_thai", sa.String(length=20), nullable=False, default="hieu_luc"),
+        sa.Column("deleted_at", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(["nhan_vien_id"], ["nhan_vien.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
         "bang_cap_chung_chi",
         sa.Column("id", sa.String(length=32), nullable=False),
         sa.Column("nhan_vien_id", sa.String(length=32), nullable=False),
@@ -328,6 +348,7 @@ def downgrade() -> None:
     op.drop_table("khen_thuong_ky_luat")
     op.drop_table("cham_cong")
     op.drop_table("bang_cap_chung_chi")
+    op.drop_table("tai_lieu_nhan_vien")
     op.drop_table("nhan_vien")
     op.drop_table("trinh_do")
     op.drop_table("phong_ban")

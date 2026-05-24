@@ -506,8 +506,8 @@ async def _step_rbac(env, total):
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
                 is_system BOOLEAN NOT NULL DEFAULT FALSE,
                 priority INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
         )
@@ -521,8 +521,8 @@ async def _step_rbac(env, total):
                 resource VARCHAR(50) NOT NULL,
                 action VARCHAR(20) NOT NULL,
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
         """)
         )
@@ -532,7 +532,7 @@ async def _step_rbac(env, total):
                 id VARCHAR(32) PRIMARY KEY,
                 role_id VARCHAR(32) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
                 permission_id VARCHAR(32) NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(role_id, permission_id)
             )
         """)
@@ -544,8 +544,8 @@ async def _step_rbac(env, total):
                 user_id VARCHAR(32) NOT NULL REFERENCES tai_khoan(id) ON DELETE CASCADE,
                 role_id VARCHAR(32) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, role_id)
             )
         """)
@@ -616,6 +616,7 @@ async def _step_admin(env, total):
     _p(4, total, "Creating admin account...")
 
     import bcrypt
+    from datetime import date
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -676,15 +677,15 @@ async def _step_admin(env, total):
         await conn.execute(
             text("""
             INSERT INTO nhan_vien (id, ma_nhan_vien, ho_ten, gioi_tinh, ngay_sinh, email,
-                loai_nhan_vien, loai_hop_dong, trang_thai, created_at, updated_at)
-            VALUES (:id, :ma, :ten, :gt, :ns, :email, 'nhan_vien', 'vien_chuc', 'dang_lam', NOW(), NOW())
+                loai_nhan_vien, loai_hop_dong, trang_thai, la_dang_vien, la_doan_vien, created_at, updated_at)
+            VALUES (:id, :ma, :ten, :gt, :ns, :email, 'nhan_vien', 'vien_chuc', 'dang_lam', FALSE, FALSE, NOW(), NOW())
         """),
             {
                 "id": nhan_vien_id,
                 "ma": "ADMIN001",
                 "ten": "Administrator",
                 "gt": "Nam",
-                "ns": "1990-01-01",
+                "ns": date(1990, 1, 1),
                 "email": ADMIN_EMAIL,
             },
         )
@@ -702,6 +703,7 @@ async def _step_admin(env, total):
 async def _step_salary(env, total):
     _p(5, total, "Seeding salary configuration...")
 
+    from datetime import date
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -724,7 +726,7 @@ async def _step_salary(env, total):
                 """),
                     {
                         "id": cfg["id"],
-                        "ngay": cfg["ngay_ap_dung"],
+                        "ngay": date.fromisoformat(cfg["ngay_ap_dung"]),
                         "lcb": cfg["luong_co_so"],
                         "hsdt": cfg["he_so_dac_thu"],
                         "tlt": cfg["ty_le_quy_thuong"],
@@ -908,8 +910,8 @@ async def _step_lich_cham_cong(env, total):
         """),
             {
                 "id": uuid.uuid4().hex,
-                "gin": LICH_CHAM_CONG_DEFAULT["gio_check_in"],
-                "gout": LICH_CHAM_CONG_DEFAULT["gio_check_out"],
+                "gin": time.fromisoformat(LICH_CHAM_CONG_DEFAULT["gio_check_in"]),
+                "gout": time.fromisoformat(LICH_CHAM_CONG_DEFAULT["gio_check_out"]),
                 "nlv": LICH_CHAM_CONG_DEFAULT["ngay_lam_viec"],
                 "gps": LICH_CHAM_CONG_DEFAULT["bat_gps"],
                 "bkph": LICH_CHAM_CONG_DEFAULT["ban_kinh_cho_phep"],
@@ -924,6 +926,7 @@ async def _step_lich_cham_cong(env, total):
 async def _step_thuong_tet(env, total):
     _p(10, total, "Seeding Tet bonus configuration...")
 
+    from datetime import date
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -946,7 +949,7 @@ async def _step_thuong_tet(env, total):
                 "nam": CAU_HINH_THUONG_TET_DEFAULT["nam"],
                 "tlt": CAU_HINH_THUONG_TET_DEFAULT["ty_le_thuong"],
                 "bl": CAU_HINH_THUONG_TET_DEFAULT["bat_len"],
-                "nad": CAU_HINH_THUONG_TET_DEFAULT["ngay_ap_dung"],
+                "nad": date.fromisoformat(CAU_HINH_THUONG_TET_DEFAULT["ngay_ap_dung"]) if CAU_HINH_THUONG_TET_DEFAULT["ngay_ap_dung"] else None,
                 "gc": CAU_HINH_THUONG_TET_DEFAULT["ghi_chu"],
             },
         )
