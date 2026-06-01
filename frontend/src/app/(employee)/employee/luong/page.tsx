@@ -23,7 +23,7 @@ export default function EmployeeLuongPage() {
   const [nam, setNam] = useState(CURRENT_YEAR)
   const { data: luongData, isLoading } = useEmployeeLuong({ nam })
 
-  const phieuLuongs = luongData?.items || []
+  const phieuLuongs = luongData ?? []
   const latestPhieu = phieuLuongs.length > 0 ? phieuLuongs[0] : null
   const ct = latestPhieu?.chi_tiet
 

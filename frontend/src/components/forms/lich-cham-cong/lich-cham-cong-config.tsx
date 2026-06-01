@@ -10,7 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useLichChamCong, useCreateLichChamCong, useToggleLichChamCong, useTodayQR, useGenerateQr } from "@/hooks/lich-cham-cong"
-import { parseCoordinatePair, toaDoDisplay } from "@/lib/coordinates"
 
 const NGAY_LAM_VIEC = [
   { value: 0, label: "T2" },
@@ -37,10 +36,6 @@ export function LichChamCongConfig() {
   const [gioCheckIn, setGioCheckIn] = useState("07:00")
   const [gioCheckOut, setGioCheckOut] = useState("17:00")
   const [checkedDays, setCheckedDays] = useState<number[]>(DEFAULT_CHECKED_DAYS)
-  const [batGps, setBatGps] = useState(false)
-  const [toaDo, setToaDo] = useState("")
-  const [tenViTri, setTenViTri] = useState("")
-  const [banKinh, setBanKinh] = useState("100")
 
   useEffect(() => {
     if (!data) return
@@ -51,54 +46,17 @@ export function LichChamCongConfig() {
       ? data.ngay_lam_viec.split(",").map(Number).filter((d) => !isNaN(d))
       : DEFAULT_CHECKED_DAYS
     setCheckedDays(days)
-
-    setBatGps(data.bat_gps)
-    if (data.bat_gps) {
-      setToaDo(toaDoDisplay(data.vi_do, data.kinh_do))
-      setTenViTri(data.ten_vi_tri || "")
-      setBanKinh(data.ban_kinh_cho_phep != null ? String(data.ban_kinh_cho_phep) : "100")
-    }
   }, [data])
 
   const handleGenerateTodayQr = () => {
     const today = new Date().toISOString().slice(0, 10)
 
-    if (batGps && !toaDo) {
-      toastError("Lỗi", "Vui lòng nhập tọa độ nếu bật GPS")
-      return
-    }
-
-    const payload: {
-      ngay: string
-      loai: string
-      gio_bat_dau: string
-      gio_ket_thuc: string
-      bat_gps: boolean
-      vi_tri?: { lat?: number; lng?: number; dms?: string; name?: string; radius: number }
-    } = {
+    const payload = {
       ngay: today,
       loai: "all",
       gio_bat_dau: gioCheckIn,
       gio_ket_thuc: gioCheckOut,
-      bat_gps: batGps,
-    }
-
-    if (batGps) {
-      const parsed = parseCoordinatePair(toaDo)
-      if (parsed) {
-        payload.vi_tri = {
-          lat: parsed.lat,
-          lng: parsed.lng,
-          name: tenViTri || undefined,
-          radius: parseInt(banKinh, 10) || 100,
-        }
-      } else {
-        payload.vi_tri = {
-          dms: toaDo,
-          name: tenViTri || undefined,
-          radius: parseInt(banKinh, 10) || 100,
-        }
-      }
+      bat_gps: false,
     }
 
     generateQrMutation.mutate(payload)
@@ -121,35 +79,11 @@ export function LichChamCongConfig() {
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const payload: {
-      gio_check_in: string
-      gio_check_out: string
-      ngay_lam_viec: string
-      bat_gps: boolean
-      vi_tri?: { lat?: number; lng?: number; dms?: string; name?: string; radius: number }
-    } = {
+    const payload = {
       gio_check_in: gioCheckIn,
       gio_check_out: gioCheckOut,
       ngay_lam_viec: checkedDays.sort().join(","),
-      bat_gps: batGps,
-    }
-
-    if (batGps) {
-      const parsed = parseCoordinatePair(toaDo)
-      if (parsed) {
-        payload.vi_tri = {
-          lat: parsed.lat,
-          lng: parsed.lng,
-          name: tenViTri || undefined,
-          radius: parseInt(banKinh) || 100,
-        }
-      } else {
-        payload.vi_tri = {
-          dms: toaDo,
-          name: tenViTri || undefined,
-          radius: parseInt(banKinh) || 100,
-        }
-      }
+      bat_gps: false,
     }
 
     createMutation.mutate(payload)
@@ -170,7 +104,7 @@ export function LichChamCongConfig() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Lịch tự động tạo QR
+          Lịch tự động tạo OTP
         </CardTitle>
         <CardAction>
           <div className="flex items-center gap-2">
@@ -194,9 +128,11 @@ export function LichChamCongConfig() {
 
       <div className="mx-6 mt-2 mb-0 p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs text-blue-600 font-medium">Mã chấm công hôm nay</p>
+          <p className="text-xs text-blue-600 font-medium">
+            Mã OTP hôm nay {todayQr?.ngay ? `(${todayQr.ngay.split("-").reverse().join("/")})` : ""}
+          </p>
           <p className="text-2xl font-mono font-bold tracking-[0.3em] text-blue-900">
-            {todayQr?.ma_nhap ?? "Chưa có mã QR"}
+            {todayQr?.ma_nhap ?? "Chưa có mã OTP"}
           </p>
         </div>
         <div className="flex flex-col sm:items-end gap-2">
@@ -210,7 +146,7 @@ export function LichChamCongConfig() {
               onClick={handleGenerateTodayQr}
               disabled={!!todayQr?.id || generateQrMutation.isPending}
             >
-              {todayQr?.id ? "QR hôm nay đã có" : generateQrMutation.isPending ? "Đang tạo..." : "Tạo mã hôm nay"}
+              {todayQr?.id ? "OTP hôm nay đã có" : generateQrMutation.isPending ? "Đang tạo..." : "Tạo mã OTP hôm nay"}
             </Button>
             {todayQr?.ma_nhap && (
               <Button
@@ -273,63 +209,6 @@ export function LichChamCongConfig() {
                 </label>
               ))}
             </div>
-          </fieldset>
-
-          <fieldset className="space-y-3" disabled={hasConfig && !isActive}>
-            <legend className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Xác thực GPS
-            </legend>
-            <Separator />
-            <div className="flex items-center gap-2 mb-2">
-              <Switch
-                checked={batGps}
-                onCheckedChange={setBatGps}
-              />
-              <Label>Bật kiểm tra vị trí GPS</Label>
-            </div>
-
-            {batGps && (
-              <div className="space-y-3 pl-1">
-                <div className="space-y-1.5">
-                  <Label htmlFor="ten_vi_tri">Tên vị trí</Label>
-                  <Input
-                    id="ten_vi_tri"
-                    value={tenViTri}
-                    onChange={(e) => setTenViTri(e.target.value)}
-                    placeholder="VD: Trường THPT Thăng Long"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="toa_do">Tọa độ</Label>
-                  <Input
-                    id="toa_do"
-                    value={toaDo}
-                    onChange={(e) => setToaDo(e.target.value)}
-                    placeholder={"Dán từ Google Maps, vd: 21°00'24.1\"N 105°46'41.7\"E hoặc 21.0285, 105.8542"}
-                  />
-                  {toaDo && (
-                    <p className="text-xs text-muted-foreground">
-                      {(() => {
-                        const parsed = parseCoordinatePair(toaDo)
-                        return parsed
-                          ? `Đã nhận: ${parsed.lat.toFixed(6)}, ${parsed.lng.toFixed(6)}`
-                          : "Không nhận dạng được tọa độ"
-                      })()}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1.5 w-1/2">
-                  <Label htmlFor="ban_kinh">Bán kính cho phép (mét)</Label>
-                  <Input
-                    id="ban_kinh"
-                    type="number"
-                    value={banKinh}
-                    onChange={(e) => setBanKinh(e.target.value)}
-                    placeholder="100"
-                  />
-                </div>
-              </div>
-            )}
           </fieldset>
 
           <CardFooter className="px-0 pt-2">

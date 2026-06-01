@@ -81,7 +81,7 @@ async def create_don_nghi(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
-        if error.code in ["invalid_data", "missing_document"]:
+        if error.code in ["invalid_data", "missing_document", "overlapping_request"]:
             raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
         raise ServerError(base_error=error)
 

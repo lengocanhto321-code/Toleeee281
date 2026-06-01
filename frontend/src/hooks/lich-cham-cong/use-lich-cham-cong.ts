@@ -66,11 +66,11 @@ export function useGenerateQr() {
       bat_gps: boolean
     }) => apiGateway.post(ApiEndpoints.ADMIN_CHAM_CONG_QR_GENERATE, data),
     onSuccess: () => {
-      toastSuccess("Thành công", "Đã tạo mã QR chấm công")
+      toastSuccess("Thành công", "Đã tạo mã OTP chấm công")
       queryClient.invalidateQueries({ queryKey: lichChamCongKeys.todayQr() })
     },
     onError: (error: unknown) => {
-      const message = (error as { response?: any })?.response?.data?.detail?.message || "Tạo mã QR thất bại"
+      const message = (error as any)?.message || "Tạo mã OTP thất bại"
       toastError("Lỗi", message)
     },
   })

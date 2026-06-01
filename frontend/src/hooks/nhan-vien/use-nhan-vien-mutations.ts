@@ -13,7 +13,7 @@ export function useCreateNhanVien() {
       apiGateway.post<NhanVien>(ApiEndpoints.NHAN_VIEN_CREATE, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: nhanVienQueryKeys.all });
-      toastSuccess("Thêm nhân viên thành công");
+      toastSuccess("Phân bổ phòng ban thành công");
     },
     onError: (error: unknown) => {
       const message = (error as { message?: string })?.message || "Thêm nhân viên thất bại";

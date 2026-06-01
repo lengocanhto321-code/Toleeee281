@@ -8,11 +8,6 @@ from src.app.usecases.cham_cong.bulk_generate_qr_uc import (
     BulkGenerateQRCommand,
     BulkGenerateQRResult,
 )
-from src.app.usecases.cham_cong.check_in_uc import (
-    CheckInUseCase,
-    CheckInCommand,
-    CheckInResult,
-)
 from src.app.usecases.cham_cong.check_out_uc import (
     CheckOutUseCase,
     CheckOutCommand,
@@ -73,9 +68,6 @@ __all__ = [
     "BulkGenerateQRUseCase",
     "BulkGenerateQRCommand",
     "BulkGenerateQRResult",
-    "CheckInUseCase",
-    "CheckInCommand",
-    "CheckInResult",
     "CheckOutUseCase",
     "CheckOutCommand",
     "CheckOutResult",

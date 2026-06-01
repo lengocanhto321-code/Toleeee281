@@ -81,6 +81,7 @@ async def nv_create_don_nghi(
         ly_do=body.get("ly_do", ""),
         files=body.get("files", []),
         nguoi_tao_id=user_context.user_id,
+        skip_document_check=True,
     )
 
     use_case = CreateDonNghiUseCase(uow)
@@ -90,7 +91,7 @@ async def nv_create_don_nghi(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=status.HTTP_404_NOT_FOUND)
-        if error.code in ["invalid_data", "missing_document"]:
+        if error.code in ["invalid_data", "missing_document", "overlapping_request"]:
             raise ClientError(base_error=error, status_code=status.HTTP_400_BAD_REQUEST)
         raise ServerError(base_error=error)
 

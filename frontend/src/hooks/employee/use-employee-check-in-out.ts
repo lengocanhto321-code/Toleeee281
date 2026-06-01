@@ -32,33 +32,26 @@ interface TodayRecord {
   check_in_status: string | null
 }
 
-interface HistoryResponse {
-  data: TodayRecord[]
-  total: number
-}
-
 interface ActiveQRResponse {
   id?: string
   ngay?: string
   loai?: string
   ma_nhap?: string
-  qr_data?: string
   gio_bat_dau?: string
   gio_ket_thuc?: string
   trang_thai?: string
-  bat_gps?: boolean
 }
 
 export function useEmployeeTodayAttendance() {
   return useQuery({
     queryKey: employeeAttendanceKeys.today(),
     queryFn: async () => {
-      const res = await apiGateway.get<HistoryResponse>(
+      const res = await apiGateway.get<TodayRecord[]>(
         ApiEndpoints.EMPLOYEE_ATTENDANCE_HISTORY,
         { params: { page: 1, page_size: 1 } }
       )
       const today = getTodayVN()
-      const record = res.data?.[0]
+      const record = res?.[0]
       if (record && record.check_in_time?.startsWith(today)) {
         return record
       }
@@ -72,18 +65,18 @@ export function useEmployeeTodayQr() {
   return useQuery({
     queryKey: [...employeeAttendanceKeys.all, "today-qr"],
     queryFn: async () => {
-      const res = await apiGateway.get<{ data: ActiveQRResponse }>(ApiEndpoints.EMPLOYEE_ACTIVE_QR)
-      return res.data.data
+      const res = await apiGateway.get<ActiveQRResponse>(ApiEndpoints.EMPLOYEE_ACTIVE_QR)
+      return res
     },
     refetchOnWindowFocus: true,
     refetchInterval: 30000,
   })
 }
 
-export function useEmployeeCheckIn() {
+export function useEmployeeCheckInByCode() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { qr_data: string; latitude?: number; longitude?: number; dms?: string }) => {
+    mutationFn: async (data: { ma_nhap: string }) => {
       return apiGateway.post<CheckInResponse>(ApiEndpoints.EMPLOYEE_CHECK_IN, data)
     },
     onSuccess: (res) => {
@@ -91,26 +84,7 @@ export function useEmployeeCheckIn() {
       queryClient.invalidateQueries({ queryKey: employeeAttendanceKeys.today() })
     },
     onError: (err: any) => {
-      const message =
-        err?.response?.data?.detail?.message || err?.response?.data?.message || "Lỗi không xác định"
-      toastError("Check-in thất bại", message)
-    },
-  })
-}
-
-export function useEmployeeCheckInByCode() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: { ma_nhap: string; latitude?: number; longitude?: number; dms?: string }) => {
-      return apiGateway.post<CheckInResponse>(ApiEndpoints.EMPLOYEE_CHECK_IN_BY_CODE, data)
-    },
-    onSuccess: (res) => {
-      toastSuccess("Check-in", res.message || "Check-in thành công")
-      queryClient.invalidateQueries({ queryKey: employeeAttendanceKeys.today() })
-    },
-    onError: (err: any) => {
-      const message =
-        err?.response?.data?.detail?.message || err?.response?.data?.message || "Mã không hợp lệ"
+      const message = err?.message || "Mã không hợp lệ"
       toastError("Check-in thất bại", message)
     },
   })
@@ -119,15 +93,15 @@ export function useEmployeeCheckInByCode() {
 export function useEmployeeCheckOut() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data?: { latitude?: number; longitude?: number; dms?: string }) => {
-      return apiGateway.post<CheckOutResponse>(ApiEndpoints.EMPLOYEE_CHECK_OUT, data || {})
+    mutationFn: async () => {
+      return apiGateway.post<CheckOutResponse>(ApiEndpoints.EMPLOYEE_CHECK_OUT, {})
     },
     onSuccess: (res) => {
       toastSuccess("Check-out", res.message || "Check-out thành công")
       queryClient.invalidateQueries({ queryKey: employeeAttendanceKeys.today() })
     },
     onError: (err: any) => {
-      toastError("Check-out thất bại", err?.response?.data?.detail?.message || "Lỗi không xác định")
+      toastError("Check-out thất bại", err?.message || "Lỗi không xác định")
     },
   })
 }

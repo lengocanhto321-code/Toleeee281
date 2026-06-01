@@ -7,11 +7,6 @@ export const employeeLuongQueryKeys = {
   list: () => [...employeeLuongQueryKeys.all, "list"] as const,
 }
 
-interface LuongResponse {
-  items: EmployeeLuong["phieu_luong"]
-  total: number
-}
-
 export function useEmployeeLuong(params?: { nam?: number }) {
   return useQuery({
     queryKey: [...employeeLuongQueryKeys.list(), params],
@@ -19,7 +14,7 @@ export function useEmployeeLuong(params?: { nam?: number }) {
       const searchParams = new URLSearchParams()
       if (params?.nam) searchParams.set("nam", params.nam.toString())
       const query = searchParams.toString() ? `?${searchParams.toString()}` : ""
-      return apiGateway.get<LuongResponse>(`/api/v1/nhan-vien/luong/me${query}`)
+      return apiGateway.get<EmployeeLuong["phieu_luong"]>(`/api/v1/nhan-vien/luong/me${query}`)
     },
   })
 }

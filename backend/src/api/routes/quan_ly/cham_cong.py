@@ -1,5 +1,5 @@
 """
-Admin QR Attendance API Routes - Dành cho quản lý tạo QR và xem báo cáo
+Admin Attendance API Routes - Dành cho quản lý tạo OTP và xem báo cáo
 """
 
 import logging
@@ -38,52 +38,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class ViTriRequest(BaseModel):
-    lat: Optional[float] = None
-    lng: Optional[float] = None
-    dms: Optional[str] = None
-    name: Optional[str] = None
-    radius: int = 100
-
-    def to_dict(self) -> Optional[dict]:
-        from src.service.qr_attendance_service import parse_dms, parse_coordinate_pair
-
-        lat = self.lat
-        lng = self.lng
-
-        if self.dms:
-            pair = parse_coordinate_pair(self.dms)
-            if pair:
-                lat, lng = pair
-            else:
-                parsed = parse_dms(self.dms)
-                if parsed is not None:
-                    if lat is None:
-                        lat = parsed
-                    elif lng is None:
-                        lng = parsed
-
-        if lat is None or lng is None:
-            return None
-
-        return {"lat": lat, "lng": lng, "name": self.name, "radius": self.radius}
-
-
 class GenerateQRRequest(BaseModel):
     ngay: str
     loai: str = "all"
-    phong_ban_id: Optional[str] = None
-    vi_tri: Optional[dict] = None
     gio_bat_dau: str = "07:00"
     gio_ket_thuc: str = "17:30"
-    bat_gps: bool = True
 
 
 class BulkGenerateQRRequest(BaseModel):
     tu_ngay: str
     den_ngay: str
-    phong_ban_id: Optional[str] = None
-    vi_tri: Optional[dict] = None
     exclude_weekends: bool = True
 
 
@@ -99,15 +63,12 @@ async def generate_qr(
     current_user: UserContext = Depends(require_permission("cham_cong:manage")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Tạo QR code cho ngày được chỉ định."""
+    """Tạo OTP cho ngày được chỉ định."""
     command = GenerateQRCommand(
         ngay=body.ngay,
         loai=body.loai,
-        phong_ban_id=body.phong_ban_id,
-        vi_tri=body.vi_tri,
         gio_bat_dau=body.gio_bat_dau,
         gio_ket_thuc=body.gio_ket_thuc,
-        bat_gps=body.bat_gps,
     )
 
     use_case = GenerateQRUseCase(uow)
@@ -120,7 +81,7 @@ async def generate_qr(
         raise ServerError(base_error=error)
 
     return APIResponse(
-        message="Tạo QR thành công",
+        message="Tạo OTP thành công",
         data=result.value.__dict__,
     )
 
@@ -131,12 +92,10 @@ async def bulk_generate_qr(
     current_user: UserContext = Depends(require_permission("cham_cong:manage")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Tạo QR code hàng loạt trong khoảng ngày."""
+    """Tạo OTP hàng loạt trong khoảng ngày."""
     command = BulkGenerateQRCommand(
         tu_ngay=body.tu_ngay,
         den_ngay=body.den_ngay,
-        phong_ban_id=body.phong_ban_id,
-        vi_tri=body.vi_tri,
         exclude_weekends=body.exclude_weekends,
     )
 
@@ -147,21 +106,21 @@ async def bulk_generate_qr(
         raise ServerError(base_error=result.value)
 
     return APIResponse(
-        message=f"Tạo QR: {result.value.created} tạo, {result.value.skipped} bỏ qua",
+        message=f"Tạo OTP: {result.value.created} tạo, {result.value.skipped} bỏ qua",
         data=result.value.__dict__,
     )
 
 
 @router.get("/qr/by-date", response_model=APIResponse[List[dict]])
 async def get_qr_by_date(
-    ngay: str = Query(..., description="Ngày cần lấy QR (YYYY-MM-DD)"),
-    loai: Optional[str] = Query(None, description="Loại QR (check_in, check_out, all)"),
+    ngay: str = Query(..., description="Ngày cần lấy OTP (YYYY-MM-DD)"),
+    loai: Optional[str] = Query(None, description="Loại OTP (check_in, check_out, all)"),
     current_user: UserContext = Depends(
         require_permission("cham_cong:manage", "cham_cong:view_own")
     ),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Lấy QR code theo ngày."""
+    """Lấy OTP theo ngày."""
     query = GetQRByDateQuery(
         ngay=ngay,
         loai=loai,
@@ -175,18 +134,18 @@ async def get_qr_by_date(
 
     data = result.value
     return APIResponse(
-        message="Lấy QR thành công",
+        message="Lấy OTP thành công",
         data=[qr.__dict__ for qr in data.qr_codes],
     )
 
 
 @router.get("/qr/{qr_id}", response_model=APIResponse[dict])
 async def get_qr_detail(
-    qr_id: str = Path(..., description="ID QR code"),
+    qr_id: str = Path(..., description="ID OTP config"),
     current_user: UserContext = Depends(require_permission("cham_cong:manage")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Lấy chi tiết một QR code."""
+    """Lấy chi tiết một OTP config."""
     query = GetQRDetailQuery(qr_id=qr_id)
 
     use_case = GetQRDetailUseCase(uow)
@@ -199,7 +158,7 @@ async def get_qr_detail(
         raise ServerError(base_error=error)
 
     return APIResponse(
-        message="Lấy chi tiết QR thành công",
+        message="Lấy chi tiết OTP thành công",
         data=result.value.data,
     )
 

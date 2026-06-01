@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from libs.result import Result, Return, Error
 from src.domain.models.phong_ban import PhongBan
 from src.domain.models.nhan_vien import NhanVien
-from src.domain.models.cong_tac import CongTac
 
 
 class PhongBanRepository:
@@ -72,9 +71,8 @@ class PhongBanRepository:
                 .filter(NhanVien.trang_thai == "dang_lam")
                 .label("so_luong_dang_lam"),
             )
-            .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
-            .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
-            .where(PhongBan.deleted_at.is_(None))
+            .outerjoin(NhanVien, NhanVien.phong_ban_id == PhongBan.id)
+            .where(PhongBan.deleted_at.is_(None), NhanVien.deleted_at.is_(None))
             .group_by(PhongBan.id)
         )
 
@@ -154,9 +152,8 @@ class PhongBanRepository:
                 .filter(NhanVien.trang_thai == "dang_lam")
                 .label("so_luong_dang_lam"),
             )
-            .outerjoin(CongTac, CongTac.phong_ban_id == PhongBan.id)
-            .outerjoin(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
-            .where(PhongBan.id == id, PhongBan.deleted_at.is_(None))
+            .outerjoin(NhanVien, NhanVien.phong_ban_id == PhongBan.id)
+            .where(PhongBan.id == id, PhongBan.deleted_at.is_(None), NhanVien.deleted_at.is_(None))
             .group_by(PhongBan.id)
         )
 
@@ -188,9 +185,7 @@ class PhongBanRepository:
         """Count employees in a department."""
         stmt = (
             select(func.count(NhanVien.id))
-            .select_from(CongTac)
-            .join(NhanVien, NhanVien.id == CongTac.nhan_vien_id)
-            .where(CongTac.phong_ban_id == id)
+            .where(NhanVien.phong_ban_id == id, NhanVien.deleted_at.is_(None))
         )
         if active_only:
             stmt = stmt.where(NhanVien.trang_thai == "dang_lam")

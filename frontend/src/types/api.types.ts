@@ -137,7 +137,7 @@ export const ApiEndpoints = {
 
   // Employee QR Attendance
   EMPLOYEE_CHECK_IN: "/api/v1/nhan-vien/cham-cong/check-in",
-  EMPLOYEE_CHECK_IN_BY_CODE: "/api/v1/nhan-vien/cham-cong/check-in-by-code",
+
   EMPLOYEE_CHECK_OUT: "/api/v1/nhan-vien/cham-cong/check-out",
   EMPLOYEE_ATTENDANCE_HISTORY: "/api/v1/nhan-vien/cham-cong/history",
   EMPLOYEE_ACTIVE_QR: "/api/v1/nhan-vien/cham-cong/active-qr",

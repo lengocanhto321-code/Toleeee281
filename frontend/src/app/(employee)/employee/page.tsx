@@ -101,8 +101,8 @@ export default function EmployeeDashboardPage() {
           onClick={() => router.push("/employee/my-qr")}
           className="bg-blue-900 rounded-2xl p-3 text-center hover:bg-blue-950 transition-colors"
         >
-          <div className="text-lg mb-0.5">📷</div>
-          <div className="text-[11px] text-white font-semibold">QR của tôi</div>
+          <div className="text-lg mb-0.5">🔢</div>
+          <div className="text-[11px] text-white font-semibold">Mã chấm công</div>
         </button>
         <button
           onClick={() => router.push("/employee/luong")}

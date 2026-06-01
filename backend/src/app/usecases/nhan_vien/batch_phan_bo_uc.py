@@ -60,54 +60,51 @@ class BatchPhanBoUseCase:
 
                 existing_nv.phong_ban_id = command.phong_ban_id
 
-                new_chuc_vu_id = existing_nv.chuc_vu_id
+                current_cong_tac = await cong_tac_repo.get_current_by_nhan_vien_id(
+                    nv_id
+                )
+                if current_cong_tac:
+                    await cong_tac_repo.end_assignment(current_cong_tac)
+                    old_ct_data = serialize_model_to_dict(current_cong_tac)
+                    old_ct_data["ngay_ket_thuc"] = serialize_dt(get_utc_now())
+                    old_ct_data["trang_thai"] = "da_chuyen"
 
-                if command.phong_ban_id and new_chuc_vu_id:
-                    current_cong_tac = await cong_tac_repo.get_current_by_nhan_vien_id(
-                        nv_id
-                    )
-                    if current_cong_tac:
-                        await cong_tac_repo.end_assignment(current_cong_tac)
-                        old_ct_data = serialize_model_to_dict(current_cong_tac)
-                        old_ct_data["ngay_ket_thuc"] = serialize_dt(get_utc_now())
-                        old_ct_data["trang_thai"] = "da_chuyen"
-
-                        audit_log_end = AuditLog(
-                            tai_khoan_id=command.actor_id,
-                            hanh_dong="UPDATE",
-                            bang_du_lieu="nhan_vien_cong_tac",
-                            ban_ghi_id=current_cong_tac.id,
-                            du_lieu_cu=old_ct_data,
-                            du_lieu_moi=serialize_model_to_dict(current_cong_tac),
-                            ghi_chu="Kết thúc phân công do phân bổ hàng loạt",
-                        )
-                        await audit_repo.create(audit_log_end)
-
-                    new_cong_tac = CongTac(
-                        nhan_vien_id=nv_id,
-                        phong_ban_id=command.phong_ban_id,
-                        chuc_vu_id=new_chuc_vu_id,
-                        ngay_bat_dau=get_utc_now(),
-                        is_primary=True,
-                        he_so_luong=existing_nv.he_so_luong,
-                        bac_luong=str(existing_nv.bac_luong)
-                        if existing_nv.bac_luong is not None
-                        else None,
-                        trang_thai="dang_cong_tac",
-                    )
-                    created_ct = await cong_tac_repo.create(new_cong_tac)
-
-                    audit_log_new = AuditLog(
+                    audit_log_end = AuditLog(
                         tai_khoan_id=command.actor_id,
-                        hanh_dong="CREATE",
+                        hanh_dong="UPDATE",
                         bang_du_lieu="nhan_vien_cong_tac",
-                        ban_ghi_id=created_ct.id,
-                        du_lieu_cu=None,
-                        du_lieu_moi=serialize_model_to_dict(created_ct),
-                        ghi_chu=f"Phân công mới do phân bổ hàng loạt: "
-                        f"{old_phong_ban_id or 'N/A'} → {command.phong_ban_id}",
+                        ban_ghi_id=current_cong_tac.id,
+                        du_lieu_cu=old_ct_data,
+                        du_lieu_moi=serialize_model_to_dict(current_cong_tac),
+                        ghi_chu="Kết thúc phân công do phân bổ hàng loạt",
                     )
-                    await audit_repo.create(audit_log_new)
+                    await audit_repo.create(audit_log_end)
+
+                new_cong_tac = CongTac(
+                    nhan_vien_id=nv_id,
+                    phong_ban_id=command.phong_ban_id,
+                    chuc_vu_id=existing_nv.chuc_vu_id,
+                    ngay_bat_dau=get_utc_now(),
+                    is_primary=True,
+                    he_so_luong=existing_nv.he_so_luong,
+                    bac_luong=str(existing_nv.bac_luong)
+                    if existing_nv.bac_luong is not None
+                    else None,
+                    trang_thai="dang_cong_tac",
+                )
+                created_ct = await cong_tac_repo.create(new_cong_tac)
+
+                audit_log_new = AuditLog(
+                    tai_khoan_id=command.actor_id,
+                    hanh_dong="CREATE",
+                    bang_du_lieu="nhan_vien_cong_tac",
+                    ban_ghi_id=created_ct.id,
+                    du_lieu_cu=None,
+                    du_lieu_moi=serialize_model_to_dict(created_ct),
+                    ghi_chu=f"Phân công mới do phân bổ hàng loạt: "
+                    f"{old_phong_ban_id or 'N/A'} → {command.phong_ban_id}",
+                )
+                await audit_repo.create(audit_log_new)
 
                 await nhan_vien_repo.update(existing_nv)
 

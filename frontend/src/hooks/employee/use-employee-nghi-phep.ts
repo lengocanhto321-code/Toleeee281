@@ -11,13 +11,6 @@ export const employeeNghiPhepQueryKeys = {
   remaining: () => [...employeeNghiPhepQueryKeys.all, "remaining"] as const,
 }
 
-interface DonNghiPhepResponse {
-  items: DonXinNghiEmployee[]
-  total: number
-  page: number
-  page_size: number
-}
-
 export function useEmployeeNghiPhepList(params?: { trang_thai?: string }) {
   return useQuery({
     queryKey: [...employeeNghiPhepQueryKeys.list(), params],
@@ -25,7 +18,7 @@ export function useEmployeeNghiPhepList(params?: { trang_thai?: string }) {
       const searchParams = new URLSearchParams()
       if (params?.trang_thai) searchParams.set("trang_thai", params.trang_thai)
       const query = searchParams.toString() ? `?${searchParams.toString()}` : ""
-      return apiGateway.get<DonNghiPhepResponse>(`/api/v1/nhan-vien/nghi-phep/me${query}`)
+      return apiGateway.get<DonXinNghiEmployee[]>(`/api/v1/nhan-vien/nghi-phep/me${query}`)
     },
   })
 }
@@ -43,9 +36,9 @@ export function useCreateEmployeeDonNghi() {
       queryClient.invalidateQueries({ queryKey: employeeNghiPhepQueryKeys.list() })
       queryClient.invalidateQueries({ queryKey: employeeQueryKeys.dashboard() })
     },
-    onError: () => {
+    onError: (err: any) => {
       toast.error("Gửi đơn thất bại!", {
-        description: "Vui lòng thử lại sau.",
+        description: err?.message || "Vui lòng thử lại sau.",
       })
     },
   })
@@ -56,14 +49,16 @@ export function useHuyDonNghi() {
 
   return useMutation({
     mutationFn: (donId: string) =>
-      apiGateway.put(`/api/v1/nhan-vien/nghi-phep/don/${donId}/huy`),
+      apiGateway.delete<any>(`/api/v1/nhan-vien/nghi-phep/don/${donId}`),
     onSuccess: () => {
       toast.success("Hủy đơn thành công!")
       queryClient.invalidateQueries({ queryKey: employeeNghiPhepQueryKeys.list() })
       queryClient.invalidateQueries({ queryKey: employeeQueryKeys.dashboard() })
     },
-    onError: () => {
-      toast.error("Hủy đơn thất bại!")
+    onError: (err: any) => {
+      toast.error("Hủy đơn thất bại!", {
+        description: err?.message || "Vui lòng thử lại sau.",
+      })
     },
   })
 }

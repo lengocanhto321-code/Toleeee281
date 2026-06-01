@@ -54,7 +54,7 @@ export default function EmployeeNghiPhepPage() {
   const huyMutation = useHuyDonNghi()
 
   const nghiPhep = dashboard?.nghi_phep
-  const donList = nghiPhepList?.items ?? []
+  const donList = nghiPhepList ?? []
   const nhanVienId = dashboard?.nhan_vien?.id ?? ""
   const hoTen = dashboard?.nhan_vien?.ho_ten ?? ""
 

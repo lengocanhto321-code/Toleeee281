@@ -1,5 +1,5 @@
 """
-Employee QR Attendance API Routes - Dành cho nhân viên check-in/check-out bằng QR
+Employee Attendance API Routes - Dành cho nhân viên check-in/check-out bằng OTP 6 số
 """
 
 import logging
@@ -20,8 +20,6 @@ from src.service.unit_of_work import UnitOfWork
 from src.api.error import ClientError, ServerError
 from src.api.schemas.common import APIResponse
 from src.app.usecases.cham_cong import (
-    CheckInCommand,
-    CheckInUseCase,
     CheckInByCodeCommand,
     CheckInByCodeUseCase,
     CheckOutCommand,
@@ -36,99 +34,23 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class CheckInRequest(BaseModel):
-    qr_data: str
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    dms: Optional[str] = None
-
-
 class CheckOutRequest(BaseModel):
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    dms: Optional[str] = None
+    pass
 
 
 class CheckInByCodeRequest(BaseModel):
     ma_nhap: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    dms: Optional[str] = None
 
     model_config = ConfigDict(str_strip_whitespace=True)
 
 
-def _resolve_location(body) -> Optional[dict]:
-    from src.service.qr_attendance_service import parse_coordinate_pair
-
-    lat = body.latitude
-    lng = body.longitude
-
-    if hasattr(body, "dms") and body.dms:
-        pair = parse_coordinate_pair(body.dms)
-        if pair:
-            lat, lng = pair
-
-    if lat is not None and lng is not None:
-        return {"lat": lat, "lng": lng}
-    return None
-
-
 @router.post("/check-in", response_model=APIResponse[dict])
-async def check_in(
-    body: CheckInRequest,
-    current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
-    uow: UnitOfWork = Depends(get_unit_of_work),
-):
-    """Check-in bằng QR code."""
-    if not current_user.nhan_vien_id:
-        raise ClientError(
-            base_error=Error(
-                code="employee_not_linked",
-                message="Tài khoản của bạn không được liên kết với hồ sơ nhân viên nào.",
-                reason="EmployeeNotLinked",
-            ),
-            status_code=400,
-        )
-    command = CheckInCommand(
-        nhan_vien_id=current_user.nhan_vien_id,
-        qr_data=body.qr_data,
-        thoi_gian=get_utc_now().isoformat(),
-        vi_tri=_resolve_location(body),
-    )
-
-    use_case = CheckInUseCase(uow)
-    result = await use_case.execute(command)
-
-    if is_err(result):
-        error = result.value
-        if error.code == "not_found":
-            raise ClientError(base_error=error, status_code=404)
-        if error.code in ["invalid_qr", "already_checked_in", "invalid_location", "location_required"]:
-            raise ClientError(base_error=error, status_code=400)
-        if error.code in ["qr_not_found", "invalid_time"]:
-            raise ClientError(base_error=error, status_code=400)
-        raise ServerError(base_error=error)
-
-    return APIResponse(
-        message="Check-in thành công",
-        data={
-            "id": result.value.id,
-            "thoi_gian": result.value.thoi_gian,
-            "trang_thai": result.value.trang_thai,
-            "is_late": result.value.is_late,
-            "message": result.value.message,
-        },
-    )
-
-
-@router.post("/check-in-by-code", response_model=APIResponse[dict])
 async def check_in_by_code(
     body: CheckInByCodeRequest,
     current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Check-in bằng mã 6 chữ số."""
+    """Check-in bằng mã OTP 6 chữ số."""
     if not current_user.nhan_vien_id:
         raise ClientError(
             base_error=Error(
@@ -142,7 +64,6 @@ async def check_in_by_code(
         nhan_vien_id=current_user.nhan_vien_id,
         ma_nhap=body.ma_nhap.strip(),
         thoi_gian=get_utc_now().isoformat(),
-        vi_tri=_resolve_location(body),
     )
 
     use_case = CheckInByCodeUseCase(uow)
@@ -153,8 +74,6 @@ async def check_in_by_code(
         if error.code in [
             "invalid_code",
             "already_checked_in",
-            "invalid_location",
-            "location_required",
             "invalid_time",
         ]:
             raise ClientError(base_error=error, status_code=400)
@@ -178,7 +97,7 @@ async def check_out(
     current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Check-out (sử dụng QR code từ lần check-in gần nhất)."""
+    """Check-out."""
     if not current_user.nhan_vien_id:
         raise ClientError(
             base_error=Error(
@@ -191,7 +110,6 @@ async def check_out(
     command = CheckOutCommand(
         nhan_vien_id=current_user.nhan_vien_id,
         thoi_gian=get_utc_now().isoformat(),
-        vi_tri=_resolve_location(body),
     )
 
     use_case = CheckOutUseCase(uow)
@@ -201,7 +119,7 @@ async def check_out(
         error = result.value
         if error.code == "not_found":
             raise ClientError(base_error=error, status_code=404)
-        if error.code in ["not_checked_in", "already_checked_out", "too_early", "invalid_location", "location_required"]:
+        if error.code in ["not_checked_in", "already_checked_out", "too_early"]:
             raise ClientError(base_error=error, status_code=400)
         raise ServerError(base_error=error)
 
@@ -283,58 +201,32 @@ async def get_my_monthly_attendance(
     )
 
 
-@router.get("/my-qr", response_model=APIResponse[dict])
-async def get_my_qr(
-    current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
-):
-    """Lấy QR code cá nhân của user đang login."""
-    from src.service.qr_attendance_service import QRAttendanceService
-
-    qr_service = QRAttendanceService()
-    qr_data = qr_service.generate_user_qr(
-        user_id=current_user.nhan_vien_id or current_user.user_id, ngay=date.today()
-    )
-
-    return APIResponse(
-        message="Lấy QR cá nhân thành công",
-        data={
-            "qr_data": qr_data,
-            "expires_at": get_utc_now().isoformat(),
-        },
-    )
-
-
 @router.get("/active-qr", response_model=APIResponse[dict])
 async def get_active_qr(
     current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
     uow: UnitOfWork = Depends(get_unit_of_work),
 ):
-    """Lấy mã QR chấm công đang hoạt động cho ngày hôm nay."""
-    phong_ban_id = None
-    if current_user.nhan_vien_id:
-        nhan_vien = await uow.nhan_vien_repository.find_by_id(current_user.nhan_vien_id)
-        phong_ban_id = nhan_vien.phong_ban_id if nhan_vien else None
+    """Lấy mã OTP chấm công đang hoạt động cho ngày hôm nay."""
+    async with uow as ctx:
+        active_qr = await ctx.qr_config_repository.find_active_by_ngay(
+            date.today(),
+            nhan_vien_id=current_user.nhan_vien_id,
+        )
 
-    active_qr = await uow.qr_config_repository.find_active_by_ngay(
-        date.today(),
-        phong_ban_id=phong_ban_id,
-        nhan_vien_id=current_user.nhan_vien_id,
-    )
+        if not active_qr:
+            return APIResponse(message="Chưa có mã OTP chấm công hoạt động cho hôm nay", data={})
 
-    if not active_qr:
-        return APIResponse(message="Chưa có mã QR chấm công hoạt động cho hôm nay", data={})
-
-    return APIResponse(
-        message="Lấy mã QR hoạt động thành công",
-        data={
+        data = {
             "id": active_qr.id,
             "ngay": active_qr.ngay.isoformat(),
             "loai": active_qr.loai,
             "ma_nhap": active_qr.ma_nhap,
-            "qr_data": active_qr.qr_data,
             "gio_bat_dau": active_qr.gio_bat_dau.strftime("%H:%M") if active_qr.gio_bat_dau else None,
             "gio_ket_thuc": active_qr.gio_ket_thuc.strftime("%H:%M") if active_qr.gio_ket_thuc else None,
             "trang_thai": active_qr.trang_thai,
-            "bat_gps": active_qr.bat_gps,
-        },
+        }
+
+    return APIResponse(
+        message="Lấy mã OTP hoạt động thành công",
+        data=data,
     )
