@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useLichChamCong, useCreateLichChamCong, useToggleLichChamCong, useTodayQR } from "@/hooks/lich-cham-cong"
+import { useLichChamCong, useCreateLichChamCong, useToggleLichChamCong, useTodayQR, useGenerateQr } from "@/hooks/lich-cham-cong"
 import { parseCoordinatePair, toaDoDisplay } from "@/lib/coordinates"
 
 const NGAY_LAM_VIEC = [
@@ -28,6 +28,7 @@ export function LichChamCongConfig() {
   const { data, isLoading } = useLichChamCong()
   const createMutation = useCreateLichChamCong()
   const toggleMutation = useToggleLichChamCong()
+  const generateQrMutation = useGenerateQr()
   const { data: todayQr } = useTodayQR()
 
   const hasConfig = !!data
@@ -58,6 +59,50 @@ export function LichChamCongConfig() {
       setBanKinh(data.ban_kinh_cho_phep != null ? String(data.ban_kinh_cho_phep) : "100")
     }
   }, [data])
+
+  const handleGenerateTodayQr = () => {
+    const today = new Date().toISOString().slice(0, 10)
+
+    if (batGps && !toaDo) {
+      toastError("Lỗi", "Vui lòng nhập tọa độ nếu bật GPS")
+      return
+    }
+
+    const payload: {
+      ngay: string
+      loai: string
+      gio_bat_dau: string
+      gio_ket_thuc: string
+      bat_gps: boolean
+      vi_tri?: { lat?: number; lng?: number; dms?: string; name?: string; radius: number }
+    } = {
+      ngay: today,
+      loai: "all",
+      gio_bat_dau: gioCheckIn,
+      gio_ket_thuc: gioCheckOut,
+      bat_gps: batGps,
+    }
+
+    if (batGps) {
+      const parsed = parseCoordinatePair(toaDo)
+      if (parsed) {
+        payload.vi_tri = {
+          lat: parsed.lat,
+          lng: parsed.lng,
+          name: tenViTri || undefined,
+          radius: parseInt(banKinh, 10) || 100,
+        }
+      } else {
+        payload.vi_tri = {
+          dms: toaDo,
+          name: tenViTri || undefined,
+          radius: parseInt(banKinh, 10) || 100,
+        }
+      }
+    }
+
+    generateQrMutation.mutate(payload)
+  }
 
   const toggleDay = (day: number) => {
     setCheckedDays((prev) =>
@@ -147,17 +192,38 @@ export function LichChamCongConfig() {
         </CardAction>
       </CardHeader>
 
-      {todayQr?.ma_nhap && (
-        <div className="mx-6 mt-2 mb-0 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-blue-600 font-medium">Mã chấm công hôm nay</p>
-            <p className="text-2xl font-mono font-bold tracking-[0.3em] text-blue-900">{todayQr.ma_nhap}</p>
-          </div>
-          <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
-            {todayQr.trang_thai === "active" ? "Đang hoạt động" : todayQr.trang_thai}
-          </Badge>
+      <div className="mx-6 mt-2 mb-0 p-3 rounded-xl bg-blue-50 border border-blue-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs text-blue-600 font-medium">Mã chấm công hôm nay</p>
+          <p className="text-2xl font-mono font-bold tracking-[0.3em] text-blue-900">
+            {todayQr?.ma_nhap ?? "Chưa có mã QR"}
+          </p>
         </div>
-      )}
+        <div className="flex flex-col sm:items-end gap-2">
+          <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">
+            {todayQr?.trang_thai === "active" ? "Đang hoạt động" : todayQr?.trang_thai ?? "Chưa có"}
+          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleGenerateTodayQr}
+              disabled={!!todayQr?.id || generateQrMutation.isPending}
+            >
+              {todayQr?.id ? "QR hôm nay đã có" : generateQrMutation.isPending ? "Đang tạo..." : "Tạo mã hôm nay"}
+            </Button>
+            {todayQr?.ma_nhap && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => navigator.clipboard.writeText(todayQr.ma_nhap || "")}
+              >
+                Sao chép mã
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       <CardContent>
         <form onSubmit={handleSave} className="space-y-5">

@@ -52,6 +52,30 @@ export function useToggleLichChamCong() {
   })
 }
 
+export function useGenerateQr() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      ngay: string
+      loai: string
+      phong_ban_id?: string
+      vi_tri?: { lat?: number; lng?: number; dms?: string; name?: string; radius: number }
+      gio_bat_dau: string
+      gio_ket_thuc: string
+      bat_gps: boolean
+    }) => apiGateway.post(ApiEndpoints.ADMIN_CHAM_CONG_QR_GENERATE, data),
+    onSuccess: () => {
+      toastSuccess("Thành công", "Đã tạo mã QR chấm công")
+      queryClient.invalidateQueries({ queryKey: lichChamCongKeys.todayQr() })
+    },
+    onError: (error: unknown) => {
+      const message = (error as { response?: any })?.response?.data?.detail?.message || "Tạo mã QR thất bại"
+      toastError("Lỗi", message)
+    },
+  })
+}
+
 interface TodayQR {
   id: string
   ngay: string

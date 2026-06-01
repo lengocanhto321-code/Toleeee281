@@ -133,12 +133,14 @@ export const ApiEndpoints = {
   ADMIN_CHAM_CONG_LICH: "/api/v1/admin/cham-cong/lich",
   ADMIN_CHAM_CONG_LICH_TOGGLE: (id: string) => `/api/v1/admin/cham-cong/lich/${id}/trang-thai`,
   ADMIN_CHAM_CONG_QR_BY_DATE: "/api/v1/admin/cham-cong/qr/by-date",
+  ADMIN_CHAM_CONG_QR_GENERATE: "/api/v1/admin/cham-cong/qr/generate",
 
   // Employee QR Attendance
   EMPLOYEE_CHECK_IN: "/api/v1/nhan-vien/cham-cong/check-in",
   EMPLOYEE_CHECK_IN_BY_CODE: "/api/v1/nhan-vien/cham-cong/check-in-by-code",
   EMPLOYEE_CHECK_OUT: "/api/v1/nhan-vien/cham-cong/check-out",
   EMPLOYEE_ATTENDANCE_HISTORY: "/api/v1/nhan-vien/cham-cong/history",
+  EMPLOYEE_ACTIVE_QR: "/api/v1/nhan-vien/cham-cong/active-qr",
 
   // Auth
   AUTH_CHANGE_PASSWORD: "/api/v1/change-password",

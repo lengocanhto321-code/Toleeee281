@@ -37,6 +37,18 @@ interface HistoryResponse {
   total: number
 }
 
+interface ActiveQRResponse {
+  id?: string
+  ngay?: string
+  loai?: string
+  ma_nhap?: string
+  qr_data?: string
+  gio_bat_dau?: string
+  gio_ket_thuc?: string
+  trang_thai?: string
+  bat_gps?: boolean
+}
+
 export function useEmployeeTodayAttendance() {
   return useQuery({
     queryKey: employeeAttendanceKeys.today(),
@@ -56,6 +68,18 @@ export function useEmployeeTodayAttendance() {
   })
 }
 
+export function useEmployeeTodayQr() {
+  return useQuery({
+    queryKey: [...employeeAttendanceKeys.all, "today-qr"],
+    queryFn: async () => {
+      const res = await apiGateway.get<{ data: ActiveQRResponse }>(ApiEndpoints.EMPLOYEE_ACTIVE_QR)
+      return res.data.data
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
+  })
+}
+
 export function useEmployeeCheckIn() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -67,7 +91,9 @@ export function useEmployeeCheckIn() {
       queryClient.invalidateQueries({ queryKey: employeeAttendanceKeys.today() })
     },
     onError: (err: any) => {
-      toastError("Check-in thất bại", err?.response?.data?.detail?.message || "Lỗi không xác định")
+      const message =
+        err?.response?.data?.detail?.message || err?.response?.data?.message || "Lỗi không xác định"
+      toastError("Check-in thất bại", message)
     },
   })
 }
@@ -83,7 +109,9 @@ export function useEmployeeCheckInByCode() {
       queryClient.invalidateQueries({ queryKey: employeeAttendanceKeys.today() })
     },
     onError: (err: any) => {
-      toastError("Check-in thất bại", err?.response?.data?.detail?.message || "Mã không hợp lệ")
+      const message =
+        err?.response?.data?.detail?.message || err?.response?.data?.message || "Mã không hợp lệ"
+      toastError("Check-in thất bại", message)
     },
   })
 }

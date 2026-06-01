@@ -44,7 +44,14 @@ class CheckInUseCase:
         ngay = thoi_gian_dt.date()
 
         async with self.unit_of_work as uow:
-            qr_config = await uow.qr_config_repository.find_active_by_ngay(ngay)
+            nhan_vien = await uow.nhan_vien_repository.find_by_id(command.nhan_vien_id)
+            phong_ban_id = nhan_vien.phong_ban_id if nhan_vien else None
+
+            qr_config = await uow.qr_config_repository.find_active_by_ngay(
+                ngay,
+                phong_ban_id=phong_ban_id,
+                nhan_vien_id=command.nhan_vien_id,
+            )
             if not qr_config:
                 return Return.err(
                     Error(

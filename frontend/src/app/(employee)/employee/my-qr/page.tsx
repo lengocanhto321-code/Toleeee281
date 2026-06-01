@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Html5Qrcode } from "html5-qrcode"
 import {
   useEmployeeTodayAttendance,
+  useEmployeeTodayQr,
   useEmployeeCheckIn,
   useEmployeeCheckInByCode,
   useEmployeeCheckOut,
@@ -14,12 +15,12 @@ import { formatTimeVN } from "@/lib/date-utils"
 export default function QRScannerPage() {
   const [scanning, setScanning] = useState<"check_in" | "check_out" | null>(null)
   const [result, setResult] = useState<{ type: "success" | "error"; message: string } | null>(null)
-  const [codeMode, setCodeMode] = useState(false)
+  const [codeMode, setCodeMode] = useState(true)
   const [codeInput, setCodeInput] = useState("")
-  const [loadingLocation, setLoadingLocation] = useState(false)
   const scannerRef = useRef<Html5Qrcode | null>(null)
 
   const { data: todayRecord, isLoading: loadingToday } = useEmployeeTodayAttendance()
+  const { data: activeQr, isLoading: loadingQr } = useEmployeeTodayQr()
   const checkInMutation = useEmployeeCheckIn()
   const checkInByCodeMutation = useEmployeeCheckInByCode()
   const checkOutMutation = useEmployeeCheckOut()
@@ -35,38 +36,12 @@ export default function QRScannerPage() {
     }
   }, [])
 
-  const getCurrentLocation = (): Promise<{ latitude: number; longitude: number } | null> => {
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve(null)
-        return
-      }
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          })
-        },
-        () => {
-          resolve(null)
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      )
-    })
-  }
-
   const handleCheckIn = async (qrData: string) => {
     setResult(null)
-    setLoadingLocation(true)
-    const loc = await getCurrentLocation()
-    setLoadingLocation(false)
 
     checkInMutation.mutate(
       {
         qr_data: qrData,
-        latitude: loc?.latitude ?? undefined,
-        longitude: loc?.longitude ?? undefined,
       },
       {
         onSuccess: (res) => {
@@ -86,15 +61,10 @@ export default function QRScannerPage() {
     const code = codeInput
     setCodeInput("")
     setResult(null)
-    setLoadingLocation(true)
-    const loc = await getCurrentLocation()
-    setLoadingLocation(false)
 
     checkInByCodeMutation.mutate(
       {
         ma_nhap: code,
-        latitude: loc?.latitude ?? undefined,
-        longitude: loc?.longitude ?? undefined,
       },
       {
         onSuccess: (res) => {
@@ -111,15 +81,8 @@ export default function QRScannerPage() {
 
   const handleCheckOut = async () => {
     setResult(null)
-    setLoadingLocation(true)
-    const loc = await getCurrentLocation()
-    setLoadingLocation(false)
 
-    checkOutMutation.mutate(
-      {
-        latitude: loc?.latitude ?? undefined,
-        longitude: loc?.longitude ?? undefined,
-      },
+    checkOutMutation.mutate({},
       {
         onSuccess: (res) => {
           setResult({
@@ -143,7 +106,11 @@ export default function QRScannerPage() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText) => {
-          await scanner.stop()
+          try {
+            await scanner.stop()
+          } catch {
+            // scanner may already be stopped or not running yet
+          }
           scannerRef.current = null
           setScanning(null)
 
@@ -220,6 +187,25 @@ export default function QRScannerPage() {
         )}
       </div>
 
+      <div className="bg-white rounded-2xl border border-slate-200 p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">Mã chấm công hôm nay</p>
+            <p className="mt-1 text-2xl font-mono tracking-[0.3em] text-slate-900">
+              {loadingQr ? "Đang tải..." : activeQr?.ma_nhap || "Chưa có mã"}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="self-start rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
+            disabled={!activeQr?.ma_nhap}
+            onClick={() => navigator.clipboard.writeText(activeQr?.ma_nhap || "")}
+          >
+            Sao chép mã
+          </button>
+        </div>
+      </div>
+
       <div
         id="qr-reader"
         className={`rounded-2xl overflow-hidden ${scanning ? "block" : "hidden"}`}
@@ -239,14 +225,6 @@ export default function QRScannerPage() {
         </div>
       )}
 
-      {loadingLocation && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-center animate-pulse flex items-center justify-center gap-2">
-          <div className="size-4 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
-          <p className="text-sm font-medium text-blue-700">
-            Đang xác định vị trí của bạn qua GPS...
-          </p>
-        </div>
-      )}
 
       {result && (
         <div
@@ -272,22 +250,37 @@ export default function QRScannerPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
               {!isCheckedIn ? (
                 <>
-                  <p className="text-sm font-medium text-slate-700">Nhập mã chấm công</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={codeInput}
-                      onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="000000"
-                      className="flex-1 text-center text-2xl tracking-[0.5em] font-mono rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      onKeyDown={async (e) => {
-                        if (e.key === "Enter" && codeInput.length === 6) {
-                          await handleCheckInByCode()
-                        }
-                      }}
-                    />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">Nhập mã chấm công</p>
+                    <p className="text-xs text-slate-500 mt-1">Mã gồm 6 chữ số, dùng để chấm công nhanh</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoFocus
+                        maxLength={6}
+                        value={codeInput}
+                        onChange={(e) => setCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="000000"
+                        className="flex-1 text-center text-2xl tracking-[0.5em] font-mono rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onKeyDown={async (e) => {
+                          if (e.key === "Enter" && codeInput.length === 6) {
+                            await handleCheckInByCode()
+                          }
+                        }}
+                      />
+                    </div>
+                    {activeQr?.ma_nhap && (
+                      <button
+                        type="button"
+                        onClick={() => setCodeInput(activeQr.ma_nhap || "")}
+                        className="w-full rounded-xl border border-blue-200 bg-blue-50 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        Dùng mã hiện tại: {activeQr.ma_nhap}
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={async () => {
@@ -295,10 +288,10 @@ export default function QRScannerPage() {
                         await handleCheckInByCode()
                       }
                     }}
-                    disabled={codeInput.length !== 6 || checkInByCodeMutation.isPending || loadingLocation}
+                    disabled={codeInput.length !== 6 || checkInByCodeMutation.isPending}
                     className="w-full rounded-xl py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 transition-colors"
                   >
-                    {checkInByCodeMutation.isPending || loadingLocation ? "Đang xử lý..." : "Xác nhận"}
+                    {checkInByCodeMutation.isPending ? "Đang xử lý..." : "Xác nhận"}
                   </button>
                 </>
               ) : (
@@ -308,10 +301,10 @@ export default function QRScannerPage() {
                     onClick={async () => {
                       await handleCheckOut()
                     }}
-                    disabled={isCheckedOut || checkOutMutation.isPending || loadingLocation}
+                    disabled={isCheckedOut || checkOutMutation.isPending}
                     className="w-full rounded-xl py-3 text-sm font-semibold text-white bg-blue-900 hover:bg-blue-950 disabled:bg-slate-200 disabled:text-slate-400 transition-colors"
                   >
-                    {checkOutMutation.isPending || loadingLocation ? "Đang xử lý..." : "Xác nhận Check-out"}
+                    {checkOutMutation.isPending ? "Đang xử lý..." : "Xác nhận Check-out"}
                   </button>
                 </>
               )}
@@ -328,7 +321,7 @@ export default function QRScannerPage() {
               }`}
             >
               <Keyboard className="w-4 h-4 inline mr-1" />
-              {codeMode ? "Nhập mã" : "Nhập mã"}
+              {codeMode ? "Dùng QR" : "Dùng mã 6 số"}
             </button>
           </div>
 

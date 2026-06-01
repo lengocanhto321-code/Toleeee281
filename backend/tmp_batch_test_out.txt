@@ -1,0 +1,5 @@
+D:\hr_management\backend\tmp_batch_test.py:23: DeprecationWarning: Accessing `.value` on Result type is deprecated, please use `.ok_value` or `.err_value` instead
+  print('value', result.value)
+type <class 'libs.result.Ok'>
+is_ok <bound method Ok.is_ok of Ok(BatchPhanBoResult(success_count=1, failed_ids=[]))>
+value BatchPhanBoResult(success_count=1, failed_ids=[])

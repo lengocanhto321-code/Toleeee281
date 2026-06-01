@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useNhanVienList, useBatchPhanBo } from "@/hooks/nhan-vien"
 import { usePhongBanAll } from "@/hooks/phong-ban"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toastError } from "@/lib/utils"
 import { LOAI_NHAN_VIEN_LABELS } from "@/types/nhan-vien.types"
 
 function getInitials(name: string) {
@@ -30,7 +31,11 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
   const [successCount, setSuccessCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
 
-  const { data: nhanViensResult } = useNhanVienList({ page: 1, page_size: 100 })
+  const { data: nhanViensResult, isLoading: isLoadingNhanViens } = useNhanVienList({
+    page: 1,
+    page_size: 100,
+    search: searchTerm || undefined,
+  })
   const nhanViensAll = nhanViensResult?.data || []
   const nhanViens = nhanViensAll.filter((nv: any) => nv.trang_thai === "dang_lam")
   const { data: phongBansData = [] } = usePhongBanAll()
@@ -48,14 +53,7 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
     return { alreadyInDept: inDept, availableForAssign: available }
   }, [nhanViens, selectedPhongBanId])
 
-  const filteredAvailable = useMemo(() => {
-    if (!searchTerm.trim()) return availableForAssign
-    const term = searchTerm.toLowerCase()
-    return availableForAssign.filter((nv: any) =>
-      nv.ho_ten?.toLowerCase().includes(term) ||
-      nv.ma_nhan_vien?.toLowerCase().includes(term)
-    )
-  }, [availableForAssign, searchTerm])
+  const filteredAvailable = availableForAssign
 
   const toggleEmployee = (id: string) => {
     setSelectedEmployeeIds((prev) => {
@@ -80,20 +78,28 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
   const handleSubmit = async () => {
     if (selectedEmployeeIds.size === 0 || !selectedPhongBanId) return
 
-    const result = await batchMutation.mutateAsync({
-      nhan_vien_ids: Array.from(selectedEmployeeIds),
-      phong_ban_id: selectedPhongBanId,
-    })
-    setSuccessCount(result.success_count)
-    setSuccess(true)
-    setTimeout(() => {
-      setSuccess(false)
-      setSuccessCount(0)
-      setSelectedEmployeeIds(new Set())
-      setSelectedPhongBanId(null)
-      setSearchTerm("")
-      onOpenChange(false)
-    }, 2000)
+    try {
+      const result = await batchMutation.mutateAsync({
+        nhan_vien_ids: Array.from(selectedEmployeeIds),
+        phong_ban_id: selectedPhongBanId,
+      })
+      setSuccessCount(result.success_count)
+      setSuccess(true)
+      setTimeout(() => {
+        setSuccess(false)
+        setSuccessCount(0)
+        setSelectedEmployeeIds(new Set())
+        setSelectedPhongBanId(null)
+        setSearchTerm("")
+        onOpenChange(false)
+      }, 2000)
+    } catch (error) {
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message || "Phân bổ phòng ban thất bại"
+      toastError("Lỗi phân bổ phòng ban", message)
+    }
   }
 
   const handleClose = () => {
@@ -168,7 +174,7 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
                     </div>
 
                     {alreadyInDept.length > 0 && (
-                      <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+                      <div className="border rounded-lg max-h-75 overflow-y-auto">
                         <div className="divide-y">
                           {alreadyInDept.map((nv: any) => (
                             <div
@@ -233,6 +239,10 @@ export function PhongBanPhanBoDialog({ open, onOpenChange }: PhongBanPhanBoDialo
                   {!selectedPhongBanId ? (
                     <div className="p-8 text-center text-sm text-muted-foreground">
                       Vui lòng chọn phòng ban đích trước
+                    </div>
+                  ) : isLoadingNhanViens ? (
+                    <div className="p-8 text-center text-sm text-muted-foreground">
+                      Đang tải danh sách nhân viên...
                     </div>
                   ) : filteredAvailable.length === 0 ? (
                     <div className="p-8 text-center text-sm text-muted-foreground">

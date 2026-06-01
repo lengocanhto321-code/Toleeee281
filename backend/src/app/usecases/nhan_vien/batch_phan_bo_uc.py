@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from typing import List
 
-from libs.datetime import get_utc_now
+from libs.datetime import get_utc_now, serialize_dt
 
 from libs.result import Result, Error, Return
 from src.domain.models.nhan_vien import NhanVien
@@ -69,7 +69,7 @@ class BatchPhanBoUseCase:
                     if current_cong_tac:
                         await cong_tac_repo.end_assignment(current_cong_tac)
                         old_ct_data = serialize_model_to_dict(current_cong_tac)
-                        old_ct_data["ngay_ket_thuc"] = get_utc_now()
+                        old_ct_data["ngay_ket_thuc"] = serialize_dt(get_utc_now())
                         old_ct_data["trang_thai"] = "da_chuyen"
 
                         audit_log_end = AuditLog(
@@ -90,7 +90,9 @@ class BatchPhanBoUseCase:
                         ngay_bat_dau=get_utc_now(),
                         is_primary=True,
                         he_so_luong=existing_nv.he_so_luong,
-                        bac_luong=existing_nv.bac_luong,
+                        bac_luong=str(existing_nv.bac_luong)
+                        if existing_nv.bac_luong is not None
+                        else None,
                         trang_thai="dang_cong_tac",
                     )
                     created_ct = await cong_tac_repo.create(new_cong_tac)

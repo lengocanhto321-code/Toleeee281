@@ -21,7 +21,7 @@ export function ChamCongSidebarPanel({ onRefresh }: ChamCongSidebarPanelProps) {
   const now = new Date()
   const { data, isLoading } = useChamCongThangList({
     page: 1,
-    page_size: 1000,
+    page_size: 100,
     thang: now.getMonth() + 1,
     nam: now.getFullYear(),
   })

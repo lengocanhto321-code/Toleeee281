@@ -114,7 +114,12 @@ export function useBatchPhanBo() {
       queryClient.invalidateQueries({ queryKey: nhanVienQueryKeys.all });
     },
     onError: (error: unknown) => {
-      const message = (error as { message?: string })?.message || "Phân bổ thất bại";
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message ||
+            JSON.stringify(error) ||
+            "Phân bổ thất bại";
       toastError("Lỗi", message);
     },
   });
@@ -130,7 +135,12 @@ export function useBatchPhanBoChucVu() {
       queryClient.invalidateQueries({ queryKey: nhanVienQueryKeys.all });
     },
     onError: (error: unknown) => {
-      const message = (error as { message?: string })?.message || "Phân bổ chức vụ thất bại";
+      const message =
+        typeof error === "string"
+          ? error
+          : (error as { message?: string })?.message ||
+            JSON.stringify(error) ||
+            "Phân bổ chức vụ thất bại";
       toastError("Lỗi", message);
     },
   });

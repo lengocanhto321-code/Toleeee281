@@ -10,7 +10,7 @@ from libs.datetime import get_utc_now
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, Path, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from libs.result import is_err, Error
 from libs.datetime import get_utc_now
@@ -50,10 +50,12 @@ class CheckOutRequest(BaseModel):
 
 
 class CheckInByCodeRequest(BaseModel):
-    ma_nhap: str
+    ma_nhap: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     dms: Optional[str] = None
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
 
 def _resolve_location(body) -> Optional[dict]:
@@ -298,5 +300,41 @@ async def get_my_qr(
         data={
             "qr_data": qr_data,
             "expires_at": get_utc_now().isoformat(),
+        },
+    )
+
+
+@router.get("/active-qr", response_model=APIResponse[dict])
+async def get_active_qr(
+    current_user: UserContext = Depends(require_permission("cham_cong:check_in")),
+    uow: UnitOfWork = Depends(get_unit_of_work),
+):
+    """Lấy mã QR chấm công đang hoạt động cho ngày hôm nay."""
+    phong_ban_id = None
+    if current_user.nhan_vien_id:
+        nhan_vien = await uow.nhan_vien_repository.find_by_id(current_user.nhan_vien_id)
+        phong_ban_id = nhan_vien.phong_ban_id if nhan_vien else None
+
+    active_qr = await uow.qr_config_repository.find_active_by_ngay(
+        date.today(),
+        phong_ban_id=phong_ban_id,
+        nhan_vien_id=current_user.nhan_vien_id,
+    )
+
+    if not active_qr:
+        return APIResponse(message="Chưa có mã QR chấm công hoạt động cho hôm nay", data={})
+
+    return APIResponse(
+        message="Lấy mã QR hoạt động thành công",
+        data={
+            "id": active_qr.id,
+            "ngay": active_qr.ngay.isoformat(),
+            "loai": active_qr.loai,
+            "ma_nhap": active_qr.ma_nhap,
+            "qr_data": active_qr.qr_data,
+            "gio_bat_dau": active_qr.gio_bat_dau.strftime("%H:%M") if active_qr.gio_bat_dau else None,
+            "gio_ket_thuc": active_qr.gio_ket_thuc.strftime("%H:%M") if active_qr.gio_ket_thuc else None,
+            "trang_thai": active_qr.trang_thai,
+            "bat_gps": active_qr.bat_gps,
         },
     )

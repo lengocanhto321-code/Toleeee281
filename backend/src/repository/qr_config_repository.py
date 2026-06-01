@@ -1,6 +1,6 @@
 from typing import Optional, List, Tuple
 from datetime import date, time
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.models.qr_config import QRConfig
@@ -29,21 +29,67 @@ class QRConfigRepository:
         result = await self._session.execute(query)
         return list(result.scalars().all())
 
-    async def find_active_by_ngay(self, ngay: date) -> Optional[QRConfig]:
-        result = await self._session.execute(
-            select(QRConfig).where(
-                and_(QRConfig.ngay == ngay, QRConfig.trang_thai == "active")
-            )
+    async def find_active_by_ngay(
+        self,
+        ngay: date,
+        phong_ban_id: Optional[str] = None,
+        nhan_vien_id: Optional[str] = None,
+    ) -> Optional[QRConfig]:
+        base_query = select(QRConfig).where(
+            and_(QRConfig.ngay == ngay, QRConfig.trang_thai == "active")
         )
-        return result.scalar_one_or_none()
 
-    async def find_by_ma_nhap(self, ma_nhap: str) -> Optional[QRConfig]:
+        if nhan_vien_id:
+            result = await self._session.execute(
+                base_query.where(QRConfig.nhan_vien_id == nhan_vien_id)
+            )
+            qr = result.scalars().first()
+            if qr:
+                return qr
+
+        if phong_ban_id:
+            result = await self._session.execute(
+                base_query.where(QRConfig.phong_ban_id == phong_ban_id)
+            )
+            qr = result.scalars().first()
+            if qr:
+                return qr
+
         result = await self._session.execute(
-            select(QRConfig).where(
-                and_(QRConfig.ma_nhap == ma_nhap, QRConfig.trang_thai == "active")
+            base_query.where(
+                QRConfig.phong_ban_id.is_(None),
+                QRConfig.nhan_vien_id.is_(None),
             )
         )
-        return result.scalar_one_or_none()
+        qr = result.scalars().first()
+        if qr:
+            return qr
+
+        result = await self._session.execute(base_query)
+        return result.scalars().first()
+
+    async def find_by_ma_nhap(
+        self,
+        ma_nhap: str,
+        phong_ban_id: Optional[str] = None,
+        nhan_vien_id: Optional[str] = None,
+    ) -> Optional[QRConfig]:
+        query = select(QRConfig).where(
+            and_(QRConfig.ma_nhap == ma_nhap, QRConfig.trang_thai == "active")
+        )
+
+        if phong_ban_id is not None or nhan_vien_id is not None:
+            scope_conditions = [
+                and_(QRConfig.phong_ban_id.is_(None), QRConfig.nhan_vien_id.is_(None)),
+            ]
+            if phong_ban_id is not None:
+                scope_conditions.append(QRConfig.phong_ban_id == phong_ban_id)
+            if nhan_vien_id is not None:
+                scope_conditions.append(QRConfig.nhan_vien_id == nhan_vien_id)
+            query = query.where(or_(*scope_conditions))
+
+        result = await self._session.execute(query)
+        return result.scalars().first()
 
     async def find_by_date_range(self, tu_ngay: date, den_ngay: date) -> List[QRConfig]:
         result = await self._session.execute(

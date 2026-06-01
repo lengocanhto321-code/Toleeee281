@@ -18,7 +18,7 @@ interface NghiPhepSidebarPanelProps {
 }
 
 export function NghiPhepSidebarPanel({ onCreate }: NghiPhepSidebarPanelProps) {
-  const { data } = useDonXinNghiList({ page: 1, page_size: 1000 })
+  const { data } = useDonXinNghiList({ page: 1, page_size: 100 })
   const items = data?.data || []
 
   const stats = useMemo(() => {

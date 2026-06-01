@@ -53,7 +53,14 @@ class CheckOutUseCase:
                     )
                 )
 
-            qr_config = await uow.qr_config_repository.find_active_by_ngay(ngay)
+            nhan_vien = await uow.nhan_vien_repository.find_by_id(command.nhan_vien_id)
+            phong_ban_id = nhan_vien.phong_ban_id if nhan_vien else None
+
+            qr_config = await uow.qr_config_repository.find_active_by_ngay(
+                ngay,
+                phong_ban_id=phong_ban_id,
+                nhan_vien_id=command.nhan_vien_id,
+            )
             qr_id = check_in.check_in_qr_id
             current_lat = None
             current_lng = None
